@@ -1,0 +1,280 @@
+/* =========================================================
+   Responsive — mobile-first hardening
+   Breakpoints: 320 / 360 / 375 / 390 / 414 / 430 / 480 /
+   768 / 1024 / 1280 / 1440+
+   Strategy: base = mobile-first fluid; desktop refinements
+   added with min-width where it prevents regression.
+   Goal: NO horizontal scroll, NO clipped text, NO overlap,
+   touch targets >= 44px, fluid type & spacing via clamp().
+   ========================================================= */
+
+/* =========================================================
+   BASE / MOBILE-FIRST (applies to all widths, <= all)
+   These rules make the site usable from 320px up.
+   ========================================================= */
+.container { padding-inline: clamp(16px, 5vw, 80px); }
+
+.section { padding-block: clamp(56px, 12vw, 160px); }
+.section--tight { padding-block: clamp(40px, 9vw, 96px); }
+
+/* Fluid type already in variables.css (clamp). Clamp section heads. */
+.section-head { max-width: 720px; }
+.section-head h2 { font-size: var(--fs-h2); }
+
+/* Navbar: compact, wrap-safe, touch targets */
+.navbar {
+  padding: 14px clamp(16px, 5vw, 80px);
+  gap: 10px;
+}
+.brand { font-size: 1.15rem; gap: 10px; }
+.brand img { height: 34px; }
+.brand__mark { font-size: 1.25rem; }
+.nav-actions { gap: 10px; }
+.lang-toggle, .theme-toggle {
+  padding: 10px 12px; min-height: 42px; font-size: 0.7rem; letter-spacing: 0.04em;
+}
+.nav-actions .btn { padding: 12px 18px; font-size: 0.72rem; }
+/* Avoid navbar overflow on the smallest phones: the floating
+   "Book a Stay" button already provides the CTA. */
+@media (max-width: 480px) {
+  .nav-actions .btn { display: none; }
+  .navbar { gap: 8px; }
+  .lang-toggle, .theme-toggle { padding: 9px 10px; }
+}
+
+/* Floating pill — mobile tuning */
+@media (max-width: 860px) {
+  .navbar { padding: 12px var(--gutter); }
+  .navbar__pill { padding: 8px 10px 8px 16px; gap: 10px; }
+  .brand__sub { display: none; }
+  .nav-links { display: none; }
+  .nav-burger { display: flex; }
+}
+
+/* Show burger, hide inline nav on small screens */
+.nav-links { display: none; }
+.nav-burger { display: flex; }
+
+/* Hero */
+.hero { min-height: 560px; height: 100svh; }
+.hero__content { max-width: 100%; }
+.hero__title { font-size: clamp(2.6rem, 13vw, 8.5rem); line-height: 1; }
+.hero__sub { font-size: clamp(1rem, 4.2vw, 1.4rem); max-width: 100%; }
+.hero__cta { flex-direction: column; align-items: stretch; gap: 12px; }
+.hero__cta .btn { width: 100%; min-height: 52px; }
+.scroll-indicator { bottom: 18px; }
+
+/* Booking → vertical stack */
+.booking {
+  grid-template-columns: 1fr;
+  gap: 14px; padding: clamp(18px, 5vw, 32px);
+  margin-top: 0; position: relative; z-index: 6;
+}
+.booking .btn { width: 100%; min-height: 52px; grid-column: auto; }
+.booking .field { min-width: 0; }
+
+/* Section that pulls booking up over hero (desktop only) */
+.booking-section { margin-top: 0; }
+
+/* Splits stack */
+.split { grid-template-columns: 1fr; gap: clamp(24px, 7vw, 64px); }
+.split--img-right .split__media { order: 0; }
+
+/* Grids → single column by default on mobile */
+.grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+.grid { gap: clamp(16px, 5vw, 32px); }
+
+/* Stats: 2-up on phones, then 4-up later */
+.grid-4 { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+/* Room cards */
+.room-card__media { aspect-ratio: 16 / 11; }
+.room-card__body { padding: clamp(18px, 5vw, 32px); gap: 12px; }
+.room-card__price { font-size: 1.3rem; }
+.room-card__amen span { padding: 6px 12px; font-size: 0.72rem; }
+
+/* Amenities */
+.amenity { padding: clamp(18px, 5vw, 32px); gap: 12px; }
+.amenity__icon { width: 40px; height: 40px; }
+
+/* Gallery masonry → 1 col on phone, more later */
+.masonry { columns: 1; column-gap: 14px; }
+.masonry .g-item { margin-bottom: 14px; }
+
+/* Testimonials: arrows hidden on phone, fluid card */
+.voices { grid-template-columns: 1fr; gap: 16px; }
+.voices__arrow { display: none; }
+.voice-card { padding: 20px 0; }
+.voice-card__text { font-size: clamp(1.25rem, 5.5vw, 2.4rem); }
+/* On touch / small, show compact dots below */
+.voices__dots { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
+
+/* FAQ accordion */
+.acc-head { padding: 18px 0; font-size: 1.05rem; }
+
+/* Contact form stacks fully */
+#contactForm { padding: clamp(20px, 5vw, 40px); }
+#contactForm .grid-2 { grid-template-columns: 1fr; gap: 16px; }
+.float-book, .back-to-top { bottom: 16px; }
+.float-book { left: 16px; padding: 12px 18px; font-size: 0.72rem; min-height: 44px; }
+.back-to-top { right: 16px; width: 46px; height: 46px; }
+
+/* Footer */
+.footer { padding-block: clamp(48px, 12vw, 128px) clamp(28px, 6vw, 80px); }
+.footer > .container { grid-template-columns: 1fr; gap: 28px; row-gap: 32px; }
+.footer__bottom { flex-direction: column; gap: 8px; }
+
+/* Buttons: enforce touch target */
+.btn { min-height: 48px; padding: 15px 28px; }
+.lang-toggle { min-height: 44px; }
+
+/* Inputs taller for touch */
+.input, .select, textarea.input { padding: 14px 16px; font-size: 16px; }
+
+/* Location iframe */
+#location .media-frame { aspect-ratio: 16 / 10; }
+
+/* =========================================================
+   BURGER VISIBLE <= 860px (covers tablet + phone)
+   Inline nav hidden. (base already hides .nav-links)
+   ========================================================= */
+@media (max-width: 860px) {
+  .nav-links { display: none !important; }
+  .nav-burger { display: flex; }
+  /* keep "Book Stay" but allow wrap */
+  .nav-actions .btn { white-space: nowrap; }
+}
+
+/* =========================================================
+   360px and up — slightly roomier grids
+   ========================================================= */
+@media (min-width: 360px) {
+  .grid-4 { gap: 16px; }
+  .room-card__amen { gap: 8px; }
+}
+
+/* =========================================================
+   480px and up — gallery 2 cols, dining list comfortable
+   ========================================================= */
+@media (min-width: 480px) {
+  .masonry { columns: 2; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .hero__cta { flex-direction: row; align-items: center; }
+  .hero__cta .btn { width: auto; }
+  .footer > .container { grid-template-columns: 1fr 1fr; gap: 28px; }
+  .footer__bottom { flex-direction: row; }
+}
+
+/* =========================================================
+   600px and up — room/amenity 2-up, booking 2-col
+   ========================================================= */
+@media (min-width: 600px) {
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .amenities-grid, #amenityGrid { grid-template-columns: repeat(2, 1fr); }
+  .booking { grid-template-columns: 1fr 1fr; align-items: end; }
+  .booking .btn { grid-column: 1 / -1; }
+  .split { gap: clamp(32px, 6vw, 64px); }
+  .voices__arrow { display: grid; width: 48px; height: 48px; }
+  .voices { grid-template-columns: auto 1fr auto; }
+  .voice-card { padding: 20px 12px; }
+}
+
+/* =========================================================
+   768px (tablet) — 3-up rooms, 4-up stats, footer 4-col
+   ========================================================= */
+@media (min-width: 768px) {
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .amenities-grid, #amenityGrid { grid-template-columns: repeat(4, 1fr); }
+  .masonry { columns: 3; }
+  .footer > .container { grid-template-columns: 1.4fr 1fr 1fr 1fr; }
+  .hero { min-height: 600px; }
+  .contact .split { grid-template-columns: 1fr 1fr; }
+  #contactForm .grid-2 { grid-template-columns: 1fr 1fr; }
+  .room-card__media { aspect-ratio: 4 / 3; }
+}
+
+/* =========================================================
+   900px (small laptop) — restore inline nav, hide burger
+   ========================================================= */
+@media (min-width: 900px) {
+  .nav-links { display: flex; }
+  .nav-burger { display: none; }
+  .mobile-menu { display: none; }
+  .navbar { padding: 22px clamp(20px, 5vw, 80px); }
+  .brand { font-size: 1.35rem; }
+  .brand__mark { font-size: 1.5rem; }
+  .booking {
+    grid-template-columns: repeat(4, 1fr) auto;
+    align-items: end; padding: var(--sp-4);
+  }
+  .booking .btn { grid-column: auto; width: auto; }
+  .split--img-right .split__media { order: 2; }
+  .split { grid-template-columns: 1fr 1fr; }
+  .hero__cta { flex-wrap: wrap; }
+}
+
+/* =========================================================
+   1024px — fine-tune spacing
+   ========================================================= */
+@media (min-width: 1024px) {
+  :root { --sp-9: 120px; --sp-8: 96px; }
+  .container { max-width: var(--max-w); }
+}
+
+/* =========================================================
+   1280px — default desktop (no change needed; fluid scales)
+   ========================================================= */
+@media (min-width: 1280px) {
+  .grid-3 { gap: var(--sp-4); }
+  .hero__title { font-size: var(--fs-display); }
+}
+
+/* =========================================================
+   1440px+ — cap container, slightly larger rhythm
+   ========================================================= */
+@media (min-width: 1440px) {
+  :root { --max-w: 1440px; --sp-9: 160px; --sp-8: 128px; }
+  .hero { height: 100vh; }
+}
+
+/* Ultra-wide */
+@media (min-width: 1600px) {
+  :root { --max-w: 1560px; }
+}
+
+/* =========================================================
+   LANDSCAPE (short viewports) — phones rotated
+   Prevent vertical overflow, keep hero usable.
+   ========================================================= */
+@media (max-height: 520px) and (orientation: landscape) {
+  .hero { height: auto; min-height: 100svh; padding-block: 90px; }
+  .scroll-indicator { display: none; }
+  .mobile-menu { justify-content: flex-start; padding-top: 64px; overflow-y: auto; }
+  .mobile-menu a { font-size: 1.4rem; padding: 8px; }
+}
+
+/* =========================================================
+   Rough phones landscape height guard
+   ========================================================= */
+@media (max-width: 860px) and (orientation: landscape) {
+  .hero { height: auto; min-height: 420px; padding-block: 80px; }
+}
+
+/* =========================================================
+   Reduced motion
+   ========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  html.has-anim .reveal,
+  html.has-anim .reveal-left,
+  html.has-anim .reveal-right,
+  html.has-anim .reveal-scale,
+  html.has-anim .img-reveal { opacity: 1 !important; transform: none !important; clip-path: none !important; }
+}

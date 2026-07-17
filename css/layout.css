@@ -1,0 +1,83 @@
+/* =========================================================
+   Layout — containers, grids, section rhythm
+   ========================================================= */
+
+.container {
+  width: 100%;
+  max-width: var(--max-w);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  padding-block: var(--sp-9);
+  position: relative;
+}
+.section--tight { padding-block: var(--sp-7); }
+
+.section-head {
+  max-width: 720px;
+  margin-bottom: var(--sp-6);
+}
+.section-head--center {
+  margin-inline: auto;
+  text-align: center;
+}
+.section-head--center .eyebrow::before { display: none; }
+
+/* Editorial split */
+.split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-7);
+  align-items: center;
+}
+.split--img-right .split__media { order: 2; }
+
+/* Grid helpers */
+.grid { display: grid; gap: var(--sp-4); }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.grid-auto { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+
+.stack > * + * { margin-top: var(--sp-3); }
+
+/* Media frame with overflow reveal */
+.media-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+.media-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s var(--ease);
+}
+.media-frame:hover img { transform: scale(1.05); }
+
+/* Spacing utilities */
+.mt-1 { margin-top: var(--sp-1); } .mt-2 { margin-top: var(--sp-2); }
+.mt-3 { margin-top: var(--sp-3); } .mt-4 { margin-top: var(--sp-4); }
+.mt-5 { margin-top: var(--sp-5); } .mt-6 { margin-top: var(--sp-6); }
+.mb-2 { margin-bottom: var(--sp-2); } .mb-3 { margin-bottom: var(--sp-3); }
+.mb-4 { margin-bottom: var(--sp-4); } .mb-5 { margin-bottom: var(--sp-5); }
+.text-center { text-align: center; }
+.divider {
+  height: 1px; width: 100%;
+  background: var(--border);
+  margin-block: var(--sp-6);
+}
+
+@media (max-width: 900px) {
+  .split { grid-template-columns: 1fr; gap: var(--sp-5); }
+  .split--img-right .split__media { order: 0; }
+  .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .section { padding-block: var(--sp-7); }
+}

@@ -1,0 +1,124 @@
+/* =========================================================
+   Animations — cinematic reveal system (GSAP-driven)
+   Elements only hide when JS is active (html.has-anim),
+   so the site still works with JS disabled / reduced motion.
+   ========================================================= */
+
+/* ---------- Reveal base states ---------- */
+.reveal, .reveal-left, .reveal-right, .reveal-scale,
+.mask-reveal, .img-reveal { opacity: 1; transform: none; }
+.img-reveal, .mask-reveal { clip-path: none; }
+
+html.has-anim .reveal      { opacity: 0; transform: translateY(48px); }
+html.has-anim .reveal-left { opacity: 0; transform: translateX(-60px); }
+html.has-anim .reveal-right{ opacity: 0; transform: translateX(60px); }
+html.has-anim .reveal-scale{ opacity: 0; transform: scale(0.92); }
+html.has-anim .mask-reveal { clip-path: inset(0 0 100% 0); }
+html.has-anim .img-reveal  { clip-path: inset(0 0 100% 0); }
+
+/* ---------- Lock scroll while loading (no layout shift) ---------- */
+html.is-loading, html.is-loading body { overflow: hidden; height: 100%; }
+
+/* ---------- Scroll progress bar ---------- */
+.scroll-progress {
+  position: fixed; top: 0; left: 0; height: 3px; width: 0;
+  background: linear-gradient(90deg, var(--accent), #e6c98a);
+  z-index: var(--z-progress); transform-origin: left;
+  box-shadow: 0 0 12px rgba(198,161,91,0.6);
+}
+
+/* ---------- Page transition overlay ---------- */
+.page-transition {
+  position: fixed; inset: 0; z-index: var(--z-transition);
+  background: var(--primary); transform: translateY(100%);
+  pointer-events: none; will-change: transform;
+}
+
+/* ---------- Loader (cinematic) ---------- */
+.loader {
+  position: fixed; inset: 0; z-index: var(--z-loader);
+  background: var(--primary); display: grid; place-items: center;
+  will-change: transform, opacity;
+}
+.loader__inner { text-align: center; color: #fff; }
+.loader__logo {
+  font-family: var(--font-head); font-size: clamp(2.2rem, 7vw, 3.4rem);
+  letter-spacing: 0.04em; overflow: hidden; line-height: 1.1;
+}
+.loader__logo span { color: var(--accent); }
+.loader__sub {
+  font-size: var(--fs-xs); letter-spacing: 0.4em; text-transform: uppercase;
+  color: var(--accent); margin-top: 12px; opacity: 0.85;
+}
+.loader__bar {
+  width: min(240px, 56vw); height: 2px; background: rgba(255,255,255,0.14);
+  margin: var(--sp-4) auto 0; overflow: hidden; border-radius: 2px;
+}
+.loader__bar span {
+  display: block; height: 100%; width: 0; background: var(--accent);
+  box-shadow: 0 0 10px rgba(198,161,91,0.7); border-radius: 2px;
+}
+.loader__count {
+  font-family: var(--font-head); font-size: clamp(2rem, 6vw, 3rem);
+  color: var(--accent); margin-top: var(--sp-3); font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Hero ---------- */
+.hero { position: relative; height: 100vh; min-height: 640px; overflow: hidden; display: flex; align-items: center; }
+.hero__bg { position: absolute; inset: -12% 0; z-index: 0; will-change: transform; transform: scale(1.12); }
+.hero__bg img { width: 100%; height: 124%; object-fit: cover; }
+.hero__overlay {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg, rgba(15,23,42,0.45) 0%, rgba(15,23,42,0.22) 42%, rgba(15,23,42,0.62) 100%);
+}
+.hero__content { position: relative; z-index: 2; color: #fff; max-width: 880px; will-change: transform; }
+.hero__title { color: #fff; font-size: var(--fs-display); line-height: 0.98; }
+.hero__title .line { display: block; overflow: hidden; padding-bottom: 0.04em; }
+.hero__title .line > span { display: block; will-change: transform; }
+.hero__sub { color: rgba(255,255,255,0.86); font-size: var(--fs-h4); max-width: 560px; margin-top: var(--sp-3); }
+.hero__cta { display: flex; gap: var(--sp-3); margin-top: var(--sp-5); flex-wrap: wrap; }
+.hero .btn--ghost { --btn-fg: #fff; border-color: rgba(255,255,255,0.5); }
+.hero .btn--ghost::after { background: #fff; }
+.hero .btn--ghost:hover { color: var(--primary); }
+.scroll-indicator { position: absolute; bottom: 26px; left: 50%; transform: translateX(-50%); z-index: 3; text-align: center; color: rgba(255,255,255,0.8); }
+.scroll-indicator__line { width: 1px; height: 46px; background: rgba(255,255,255,0.3); margin: 10px auto 0; position: relative; overflow: hidden; }
+.scroll-indicator__line span { position: absolute; top: -50%; left: 0; width: 100%; height: 50%; background: var(--accent); animation: scrollLine 2.2s var(--ease-soft) infinite; }
+@keyframes scrollLine { 0% { top: -50%; } 100% { top: 100%; } }
+
+/* Floating decorative element */
+.float-deco { position: absolute; pointer-events: none; z-index: 1; will-change: transform; opacity: 0.5; }
+.float-deco--ring {
+  width: 220px; height: 220px; border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50%; top: 12%; right: 8%; animation: floaty 9s ease-in-out infinite;
+}
+.float-deco--line { width: 1px; height: 200px; background: linear-gradient(rgba(255,255,255,0.4), transparent); bottom: 10%; left: 12%; animation: floaty 7s ease-in-out infinite reverse; }
+@keyframes floaty { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-22px) rotate(4deg); } }
+
+/* ---------- Marquee ---------- */
+.marquee { overflow: hidden; white-space: nowrap; border-block: 1px solid var(--border); padding-block: var(--sp-3); }
+.marquee__track { display: inline-flex; gap: var(--sp-6); animation: marquee 26s linear infinite; will-change: transform; }
+.marquee span { font-family: var(--font-head); font-size: 1.6rem; color: var(--primary); display: inline-flex; align-items: center; gap: var(--sp-6); }
+.marquee span::after { content: "✦"; color: var(--accent); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* ---------- Parallax helper ---------- */
+.parallax { will-change: transform; }
+
+/* ---------- Magnetic buttons ---------- */
+.magnetic { will-change: transform; }
+
+/* ---------- Keyframes ---------- */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+.float-el { animation: float 6s var(--ease-soft) infinite; }
+
+@keyframes shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, rgba(0,0,0,0.06) 37%, var(--border) 63%);
+  background-size: 1200px 100%; animation: shimmer 1.6s infinite linear; border-radius: 8px;
+}

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Residences — Marshal Al-Gezira (Concept)</title>
+  <meta name="description" content="Explore the concept residences of Marshal Al-Gezira — deluxe rooms, Nile suites and the presidential villa." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/animations.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body class="custom-cursor">
+  <div class="scroll-progress" id="scrollProgress"></div>
+  <div class="page-transition" id="pageTransition"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <header class="navbar" id="navbar">
+    <div class="navbar__pill">
+    <a href="../index.html" class="brand"><span class="brand__mark">Marshal<small class="brand__sub">Al-Gezira</small></span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="../index.html#experience">Experience</a>
+      <a href="../index.html#rooms">Rooms</a>
+      <a href="../index.html#amenities">Amenities</a>
+      <a href="../index.html#gallery">Gallery</a>
+      <a href="../index.html#dining">Dining</a>
+      <a href="../index.html#contact">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="lang-toggle" id="langToggle">EN / ع</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></button>
+      <a href="../index.html#booking" class="btn btn--primary">Book Stay</a>
+      <button class="nav-burger" id="navBurger"><span></span><span></span><span></span></button>
+    </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu"><button class="nav-close" id="navClose">×</button>
+    <a href="../index.html#experience">Experience</a><a href="../index.html#rooms">Rooms</a><a href="../index.html#amenities">Amenities</a><a href="../index.html#gallery">Gallery</a><a href="../index.html#dining">Dining</a><a href="../index.html#contact">Contact</a>
+  </div>
+
+  <main>
+    <section class="section" style="padding-top:160px">
+      <div class="container">
+        <div class="section-head section-head--center">
+          <span class="eyebrow reveal" data-i18n="rooms_kicker">Accommodation</span>
+          <h1 class="reveal" data-i18n="all_rooms">All Residences</h1>
+          <p class="text-muted reveal">Twelve room types, one philosophy — space, light, and quiet.</p>
+        </div>
+        <div class="grid grid-3" id="roomGrid">
+          <!-- 9 cards (bilingual, re-renders on language change) -->
+          <script>
+            const ROOMS = [
+              { en:"Deluxe Garden Room", ar:"غرفة حديقة ديلوكس", price:"$420", en_d:"42m² · Garden view", ar_d:"42م² · إطلالة الحديقة", img:"https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=80", a:["King Bed","Rain Shower","Smart TV"] },
+              { en:"Deluxe City Room", ar:"غرفة مدينة ديلوكس", price:"$460", en_d:"44m² · City view", ar_d:"44م² · إطلالة المدينة", img:"https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=900&q=80", a:["King Bed","Workspace","Nespresso"] },
+              { en:"Executive Suite", ar:"جناح تنفيذي", price:"$680", en_d:"65m² · Lounge", ar_d:"65م² · صالة", img:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=900&q=80", a:["Lounge","Bath Tub","Butler"] },
+              { en:"Nile View Suite", ar:"جناح إطلالة النيل", price:"$780", en_d:"70m² · River view", ar_d:"70م² · إطلالة النيل", img:"https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80", a:["River View","Lounge","Butler"] },
+              { en:"Corner Studio", ar:"استوديو ركني", price:"$540", en_d:"52m² · Corner", ar_d:"52م² · ركني", img:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=900&q=80", a:["Studio","Kitchenette","Balcony"] },
+              { en:"Garden Villa", ar:"فيلا حدائق", price:"$1,150", en_d:"110m² · Private garden", ar_d:"110م² · حديقة خاصة", img:"https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80", a:["Garden","Plunge Pool","Outdoor"] },
+              { en:"Family Residence", ar:"إقامة عائلية", price:"$980", en_d:"95m² · Two bedrooms", ar_d:"95م² · غرفتا نوم", img:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80", a:["2 Bedrooms","Kids Pool","Bunk"] },
+              { en:"Royal Suite", ar:"جناح ملكي", price:"$1,650", en_d:"140m² · Top floor", ar_d:"140م² · الطابق العلوي", img:"https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80", a:["Piano","Dining","Terrace"] },
+              { en:"Presidential Villa", ar:"الفيلا الرئاسية", price:"$2,400", en_d:"240m² · Private rooftop", ar_d:"240م² · سطح خاص", img:"https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=80", a:["Private Pool","Chef","Rooftop"] }
+            ];
+            const grid = document.getElementById("roomGrid");
+            function renderRooms() {
+              const lang = (window.MGLang && window.MGLang.get()) || "en";
+              grid.innerHTML = "";
+              ROOMS.forEach(r => {
+                const el = document.createElement("article");
+                el.className = "card room-card reveal";
+                const view = lang === "ar" ? (window.MGLang ? window.MGLang.t("view") : "عرض التفاصيل") : "View Details";
+                el.innerHTML = `<div class="media-frame room-card__media"><img src="${r.img}" alt="${r[lang]}" loading="lazy"></div>
+                  <div class="room-card__body"><h3 class="fs-h4">${r[lang]}</h3><p class="text-muted">${lang === "ar" ? r.ar_d : r.en_d}</p>
+                  <div class="room-card__price">${r.price} <span>/ night</span></div>
+                  <div class="room-card__amen">${r.a.map(x=>`<span>${x}</span>`).join("")}</div>
+                  <a href="room-details.html" class="btn btn--outline btn--block mt-2">${view}</a></div>`;
+                grid.appendChild(el);
+              });
+              if (window.gsap && window.ScrollTrigger) ScrollTrigger.refresh();
+            }
+            renderRooms();
+            document.addEventListener("lang:change", renderRooms);
+          </script>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">
+    <div><div class="brand"><span class="brand__mark">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></div><p class="mt-2" style="max-width:320px" data-i18n="foot_p">A premium concept redesign — original content, not affiliated.</p></div>
+    <div><h4 data-i18n="f_explore">Explore</h4><a href="../index.html#rooms" data-i18n="nav_rooms">Rooms</a><a href="../index.html#amenities" data-i18n="nav_amenities">Amenities</a><a href="../index.html#dining" data-i18n="nav_dining">Dining</a><a href="gallery.html" data-i18n="nav_gallery">Gallery</a></div>
+    <div><h4 data-i18n="f_pages">Pages</h4><a href="rooms.html" data-i18n="all_rooms">All Rooms</a><a href="room-details.html" data-i18n="room_details">Room Details</a><a href="about.html" data-i18n="nav_experience">About</a><a href="contact.html" data-i18n="nav_contact">Contact</a></div>
+    <div><h4 data-i18n="f_contact">Contact</h4><a href="#" data-i18n="con_e">stay@marshalgezira.concept</a><a href="#" data-i18n="con_t">+20 2 000 0000</a><a href="../index.html#location" data-i18n="loc_title">Al-Gezira, Cairo</a></div>
+  </div><div class="footer__bottom"><span>© <span id="year"></span> Marshal Al-Gezira — Concept.</span><span data-i18n="foot_note">Designed as a portfolio concept · Original content</span></div></footer>
+
+  <button class="back-to-top" id="backTop" aria-label="Back to top"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <script src="../js/i18n/en.js"></script>
+  <script src="../js/i18n/ar.js"></script>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/cursor.js"></script>
+  <script src="../js/animations.js"></script>
+  <script src="../js/booking.js"></script>
+</body>
+</html>
