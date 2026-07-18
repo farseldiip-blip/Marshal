@@ -219,7 +219,7 @@
    1024px — fine-tune spacing
    ========================================================= */
 @media (min-width: 1024px) {
-  :root { --sp-9: 120px; --sp-8: 96px; }
+  :root { --sp-9: 120px; --sp-8: 96px; --sp-7: 72px; }
   .container { max-width: var(--max-w); }
 }
 
@@ -235,7 +235,7 @@
    1440px+ — cap container, slightly larger rhythm
    ========================================================= */
 @media (min-width: 1440px) {
-  :root { --max-w: 1440px; --sp-9: 160px; --sp-8: 128px; }
+  :root { --max-w: 1440px; --sp-9: 160px; --sp-8: 128px; --sp-7: 96px; }
   .hero { height: 100vh; }
 }
 
@@ -271,6 +271,12 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  /* The brand marquee must keep scrolling seamlessly regardless of
+     motion preferences (requirement: continuous loop, no blank state). */
+  .marquee__track {
+    animation-duration: 26s !important;
+    animation-iteration-count: infinite !important;
   }
   html.has-anim .reveal,
   html.has-anim .reveal-left,

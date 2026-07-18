@@ -1,0 +1,11 @@
+{
+  "name": "marshal-gezira-functions",
+  "description": "Payment + booking webhook Cloud Functions (backend is source of payment truth).",
+  "main": "index.js",
+  "private": true,
+  "engines": { "node": "20" },
+  "dependencies": {
+    "firebase-admin": "^12.0.0",
+    "firebase-functions": "^5.0.0"
+  }
+}

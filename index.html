@@ -17,7 +17,7 @@
   <link rel="stylesheet" href="css/base.css" />
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/animations.css?v=20260718" />
   <link rel="stylesheet" href="css/responsive.css" />
 </head>
 <body class="custom-cursor">
@@ -139,14 +139,47 @@
           </div>
           <button class="btn btn--primary" id="bkSearch" data-i18n="bk_search">Search</button>
         </div>
+
+        <!-- Booking result / summary (js/booking-core.js + booking.js) -->
+        <div id="bkResult" class="booking-result" hidden></div>
+
+        <!-- My Booking lookup (js/site-booking-lookup.js) -->
+        <div class="booking-lookup reveal" id="bkLookup">
+          <div class="booking-lookup__head">
+            <span class="eyebrow" data-i18n="lk_kicker">Your Stay</span>
+            <h3 data-i18n="lk_title">Find my booking</h3>
+            <p class="text-muted" data-i18n="lk_sub">Enter your booking reference and the email or phone you booked with.</p>
+          </div>
+          <div class="booking-lookup__form">
+            <div class="field">
+              <label data-i18n="lk_ref">Booking Reference</label>
+              <input class="input" id="lkRef" placeholder="pb_…" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label data-i18n="lk_email">Email</label>
+              <input class="input" id="lkEmail" type="email" placeholder="you@email.com" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label data-i18n="lk_phone">Phone</label>
+              <input class="input" id="lkPhone" type="tel" placeholder="+20 …" autocomplete="off" />
+            </div>
+            <button class="btn btn--primary" id="lkSearch" data-i18n="lk_search">Look up</button>
+          </div>
+          <div id="lkStates" class="booking-result" hidden></div>
+          <div id="lkResult" class="booking-result" hidden></div>
+        </div>
       </div>
     </section>
 
     <!-- ===== Marquee ===== -->
     <div class="marquee" aria-hidden="true">
       <div class="marquee__track" id="marqueeTrack">
-        <span>Spa &amp; Wellness</span><span>Fine Dining</span><span>Private Marina</span><span>Rooftop Pool</span><span>Butler Service</span><span>Art Collection</span>
-        <span>Spa &amp; Wellness</span><span>Fine Dining</span><span>Private Marina</span><span>Rooftop Pool</span><span>Butler Service</span><span>Art Collection</span>
+        <div class="marquee__group">
+          <span>Spa &amp; Wellness</span><span>Fine Dining</span><span>Private Marina</span><span>Rooftop Pool</span><span>Butler Service</span><span>Art Collection</span>
+        </div>
+        <div class="marquee__group" aria-hidden="true">
+          <span>Spa &amp; Wellness</span><span>Fine Dining</span><span>Private Marina</span><span>Rooftop Pool</span><span>Butler Service</span><span>Art Collection</span>
+        </div>
       </div>
     </div>
 
@@ -173,10 +206,10 @@
     <!-- ===== Stats ===== -->
     <section class="section--tight">
       <div class="container grid grid-4">
-        <div class="stat reveal"><div class="stat__num" data-count="120">0</div><div class="stat__label" data-i18n="st_rooms">Suites</div></div>
-        <div class="stat reveal"><div class="stat__num" data-count="5">0</div><div class="stat__label" data-i18n="st_dining">Restaurants</div></div>
-        <div class="stat reveal"><div class="stat__num" data-count="9">0</div><div class="stat__label" data-i18n="st_awards">Awards</div></div>
-        <div class="stat reveal"><div class="stat__num" data-count="100">0</div><div class="stat__label" data-i18n="st_rate">% Recommending</div></div>
+        <div class="stat reveal"><div class="stat__num" data-target="120">0</div><div class="stat__label" data-i18n="st_rooms">Suites</div></div>
+        <div class="stat reveal"><div class="stat__num" data-target="5">0</div><div class="stat__label" data-i18n="st_dining">Restaurants</div></div>
+        <div class="stat reveal"><div class="stat__num" data-target="9">0</div><div class="stat__label" data-i18n="st_awards">Awards</div></div>
+        <div class="stat reveal"><div class="stat__num" data-target="100" data-suffix="%">0</div><div class="stat__label" data-i18n="st_rate">% Recommending</div></div>
       </div>
     </section>
 
@@ -187,41 +220,10 @@
           <span class="eyebrow reveal" data-i18n="rooms_kicker">Accommodation</span>
           <h2 class="reveal" data-i18n="rooms_title">Featured Residences</h2>
         </div>
-        <div class="grid grid-3" id="roomGrid">
-          <!-- Room cards injected/styled below; static for resilience -->
-          <article class="card room-card reveal">
-            <div class="media-frame room-card__media"><img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=80" alt="Deluxe Room" loading="lazy" /></div>
-            <div class="room-card__body">
-              <span class="badge" data-i18n="rt_deluxe">Deluxe Room</span>
-              <h3 class="fs-h4" data-i18n="room1">Deluxe Garden Room</h3>
-              <p class="text-muted" data-i18n="room1_d">A serene 42m² retreat opening to private gardens.</p>
-              <div class="room-card__price">$420 <span>/ night</span></div>
-              <div class="room-card__amen"><span>King Bed</span><span>Rain Shower</span><span>Smart TV</span></div>
-              <a href="pages/room-details.html" class="btn btn--outline btn--block mt-2" data-i18n="view">View Details</a>
-            </div>
-          </article>
-          <article class="card room-card reveal">
-            <div class="media-frame room-card__media"><img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=900&q=80" alt="Nile Suite" loading="lazy" /></div>
-            <div class="room-card__body">
-              <span class="badge" data-i18n="rt_nile">Nile View Suite</span>
-              <h3 class="fs-h4" data-i18n="room2">Nile View Suite</h3>
-              <p class="text-muted" data-i18n="room2_d">Floor-to-ceiling glass framing the river's slow light.</p>
-              <div class="room-card__price">$780 <span>/ night</span></div>
-              <div class="room-card__amen"><span>Lounge</span><span>Nile View</span><span>Butler</span></div>
-              <a href="pages/room-details.html" class="btn btn--outline btn--block mt-2" data-i18n="view">View Details</a>
-            </div>
-          </article>
-          <article class="card room-card reveal">
-            <div class="media-frame room-card__media"><img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80" alt="Presidential Villa" loading="lazy" /></div>
-            <div class="room-card__body">
-              <span class="badge" data-i18n="rt_pres">Presidential Villa</span>
-              <h3 class="fs-h4" data-i18n="room3">Presidential Villa</h3>
-              <p class="text-muted" data-i18n="room3_d">A private two-bedroom sanctuary with rooftop plunge.</p>
-              <div class="room-card__price">$2,400 <span>/ night</span></div>
-              <div class="room-card__amen"><span>Private Pool</span><span>Terrace</span><span>Chef</span></div>
-              <a href="pages/room-details.html" class="btn btn--outline btn--block mt-2" data-i18n="view">View Details</a>
-            </div>
-          </article>
+        <div class="grid grid-3" id="roomGrid" data-limit="3">
+          <!-- Rooms injected from Firestore (rooms collection); demo seed fallback. -->
+          <div class="dash-loading" id="roomGridLoading" style="grid-column:1/-1">Loading…</div>
+          <p class="text-center text-muted" id="roomGridEmpty" style="grid-column:1/-1;display:none">No residences available yet.</p>
         </div>
         <div class="text-center mt-5 reveal">
           <a href="pages/rooms.html" class="btn btn--primary" data-i18n="all_rooms">All Residences</a>
@@ -281,12 +283,9 @@
           <h2 class="reveal" data-i18n="gal_title">The Gallery</h2>
         </div>
         <div class="masonry" id="masonry">
-          <a class="g-item reveal" href="https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=900&q=80" data-lightbox><img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=600&q=80" alt="Gallery" loading="lazy" /></a>
-          <a class="g-item reveal" href="https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80" data-lightbox><img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=600&q=80" alt="Gallery" loading="lazy" /></a>
-          <a class="g-item reveal" href="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=900&q=80" data-lightbox><img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=600&q=80" alt="Gallery" loading="lazy" /></a>
-          <a class="g-item reveal" href="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=900&q=80" data-lightbox><img src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80" alt="Gallery" loading="lazy" /></a>
-          <a class="g-item reveal" href="https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=900&q=80" data-lightbox><img src="https://images.unsplash.com/photo-1445019980597-93fa8acb246c?auto=format&fit=crop&w=600&q=80" alt="Gallery" loading="lazy" /></a>
-          <a class="g-item reveal" href="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=80" data-lightbox><img src="https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=600&q=80" alt="Gallery" loading="lazy" /></a>
+          <!-- Gallery injected from Firestore (gallery collection); demo seed fallback. -->
+          <div class="dash-loading" style="grid-column:1/-1">Loading…</div>
+          <p class="text-center text-muted gallery-empty" style="grid-column:1/-1;display:none">No images yet.</p>
         </div>
         <div class="text-center mt-5 reveal">
           <a href="pages/gallery.html" class="btn btn--outline" data-i18n="gal_all">Full Gallery</a>
@@ -312,6 +311,19 @@
             </ul>
           </div>
         </div>
+
+        <!-- Data-driven Restaurant / Menu grid (js/site-menu.js) -->
+        <div class="mt-5">
+          <div class="section-head section-head--center" style="margin-bottom:1.5rem">
+            <span class="eyebrow reveal" data-i18n="menu_kicker">The Table</span>
+            <h3 class="reveal" data-i18n="menu_title">Restaurant &amp; Menus</h3>
+          </div>
+          <div class="menu-filters" id="menuFilters"></div>
+          <div class="grid grid-auto" id="diningMenu"></div>
+          <div class="voices__status" id="menuLoading" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">Loading menu…</div>
+          <div class="voices__status" id="menuEmpty" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">No menu items yet.</div>
+          <div class="voices__status" id="menuError" hidden style="text-align:center;color:#c0392b;padding:2rem 0"></div>
+        </div>
       </div>
     </section>
 
@@ -327,49 +339,13 @@
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 5l-7 7 7 7"/></svg>
           </button>
           <div class="swiper voices__swiper" id="testiSwiper">
-            <div class="swiper-wrapper">
-              <div class="swiper-slide">
-                <figure class="voice-card">
-                  <div class="voice-card__stars" aria-hidden="true">★★★★★</div>
-                  <blockquote class="voice-card__text" data-i18n="tst_q1">The most calm I've felt in a hotel. Light, linen, silence — perfect.</blockquote>
-                  <figcaption class="voice-card__by">
-                    <span class="voice-card__avatar">LM</span>
-                    <span class="voice-card__meta"><span class="voice-card__name">Layla M.</span><span class="voice-card__loc text-muted">Dubai</span></span>
-                  </figcaption>
-                </figure>
-              </div>
-              <div class="swiper-slide">
-                <figure class="voice-card">
-                  <div class="voice-card__stars" aria-hidden="true">★★★★★</div>
-                  <blockquote class="voice-card__text" data-i18n="tst_q2">Service that anticipates without intruding. A masterclass in restraint.</blockquote>
-                  <figcaption class="voice-card__by">
-                    <span class="voice-card__avatar">JR</span>
-                    <span class="voice-card__meta"><span class="voice-card__name">James R.</span><span class="voice-card__loc text-muted">London</span></span>
-                  </figcaption>
-                </figure>
-              </div>
-              <div class="swiper-slide">
-                <figure class="voice-card">
-                  <div class="voice-card__stars" aria-hidden="true">★★★★★</div>
-                  <blockquote class="voice-card__text" data-i18n="tst_q3">The Nile Suite at sunrise is a memory I'll keep for years.</blockquote>
-                  <figcaption class="voice-card__by">
-                    <span class="voice-card__avatar">SK</span>
-                    <span class="voice-card__meta"><span class="voice-card__name">Sara K.</span><span class="voice-card__loc text-muted">Cairo</span></span>
-                  </figcaption>
-                </figure>
-              </div>
-              <div class="swiper-slide">
-                <figure class="voice-card">
-                  <div class="voice-card__stars" aria-hidden="true">★★★★★</div>
-                  <blockquote class="voice-card__text" data-i18n="tst_q4">Every detail intentional. This is what luxury should feel like.</blockquote>
-                  <figcaption class="voice-card__by">
-                    <span class="voice-card__avatar">OT</span>
-                    <span class="voice-card__meta"><span class="voice-card__name">Omar T.</span><span class="voice-card__loc text-muted">Paris</span></span>
-                  </figcaption>
-                </figure>
-              </div>
+            <div class="swiper-wrapper" id="testiWrap">
+              <!-- Guest Voices slides injected from the `reviews` collection (js/site-reviews.js) -->
             </div>
             <div class="swiper-pagination voices__dots"></div>
+            <div class="voices__status" id="testiLoading" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">Loading guest voices…</div>
+            <div class="voices__status" id="testiEmpty" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">No guest voices yet.</div>
+            <div class="voices__status" id="testiError" hidden style="text-align:center;color:#c0392b;padding:2rem 0"></div>
           </div>
           <button class="voices__arrow voices__arrow--next" id="testiNext" aria-label="Next">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5l7 7-7 7"/></svg>
@@ -486,16 +462,34 @@
   <div class="lightbox" id="lightbox"><button class="lightbox__close" aria-label="Close">×</button><img src="" alt="Enlarged" /></div>
 
   <!-- ===== Scripts ===== -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+  <!-- Firebase (config-only until keys set; safe in demo mode) + public data layer -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/firebase-services.js"></script>
+  <script src="js/seed-data.js"></script>
+  <script src="js/site-data.js"></script>
+  <script src="js/site-rooms.js"></script>
+  <script src="js/site-gallery.js"></script>
+  <script src="js/site-reviews.js"></script>
+  <script src="js/site-menu.js"></script>
+  <script src="js/booking-core.js"></script>
+  <script src="js/site-booking-lookup.js"></script>
+  <script src="js/payment-config.js"></script>
+  <script src="js/site-payment.js"></script>
+  <!-- Core UI (counters + marquee) runs FIRST and independently of the CDNs,
+       so a slow/blocked animation CDN can never stop it. -->
+  <script src="js/ui-core.js?v=20260718"></script>
+  <!-- CDN libs are async so a slow/blocked CDN never stalls the page -->
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script async src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
   <script src="js/i18n/en.js"></script>
   <script src="js/i18n/ar.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/app.js"></script>
   <script src="js/cursor.js"></script>
   <script src="js/animations.js"></script>
-  <script src="js/booking.js"></script>
+  <script src="js/booking.js?v=20260718"></script>
 </body>
 </html>

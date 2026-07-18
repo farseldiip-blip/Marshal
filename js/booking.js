@@ -20,24 +20,174 @@
     });
   }
 
+  /* ---------- Booking flow (Phase 1: availability + Pending booking) ---------- */
   const search = document.getElementById("bkSearch");
-  if (search) {
-    search.addEventListener("click", () => {
-      const nights = Math.max(1, Math.round((new Date(co.value) - new Date(ci.value)) / 86400000));
-      const room = document.getElementById("bkRoom").value;
-      const guests = document.getElementById("bkGuests").value;
-      const orig = search.textContent;
-      search.textContent = (window.MGLang && window.MGLang.get() === "ar") ? "جارٍ البحث…" : "Searching…";
+  const result = document.getElementById("bkResult");
+
+  function t(key, en, ar) {
+    const lang = window.MGLang && window.MGLang.get && window.MGLang.get();
+    return lang === "ar" ? ar : en;
+  }
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  /* ---------- Basic input validation (no OTP / no verification) ---------- */
+  // Full name: >=3 chars, letters and spaces only, must look like a name
+  // (not a single repeated char, not a dictionary-ish "test"/"user").
+  function validateName(v) {
+    v = (v || "").trim();
+    if (!v) return t("v_name_req", "Please enter your full name.", "يرجى إدخال الاسم الكامل.");
+    if (v.length < 3) return t("v_name_min", "Name must be at least 3 characters.", "يجب أن يكون الاسم 3 أحرف على الأقل.");
+    if (!/^[A-Za-z\u0600-\u06FF\s]+$/.test(v))
+      return t("v_name_chars", "Name may contain letters and spaces only.", "يُسمح بالأحرف والمسافات فقط في الاسم.");
+    // Reject sequences of one repeated character (e.g. "aaaa", "dddd").
+    if (/(.)\1{2,}/.test(v.replace(/\s/g, "")))
+      return t("v_name_rep", "Please enter a valid name.", "يرجى إدخال اسم صحيح.");
+    // Reject obvious non-names.
+    const low = v.toLowerCase().replace(/\s+/g, "");
+    const banned = ["test", "user", "guest", "abc", "xyz", "name", "asdf", "qwerty"];
+    if (banned.some(b => low.indexOf(b) !== -1))
+      return t("v_name_real", "Please enter your real name.", "يرجى إدخال اسمك الحقيقي.");
+    const words = v.trim().split(/\s+/).filter(Boolean);
+    if (words.length < 1 || words.every(w => w.length < 2))
+      return t("v_name_real", "Please enter your real name.", "يرجى إدخال اسمك الحقيقي.");
+    return null;
+  }
+
+  // Email: required, valid-ish format (local@domain.tld).
+  function validateEmail(v) {
+    v = (v || "").trim();
+    if (!v) return t("v_email_req", "Please enter your email.", "يرجى إدخال البريد الإلكتروني.");
+    // Must contain exactly one "@" with a dot in the domain part.
+    const m = v.match(/^[^@\s]+@[^@\s]+\.[^@\s]+$/);
+    if (!m) return t("v_email_fmt", "Please enter a valid email (e.g. name@example.com).", "يرجى إدخال بريد صحيح (مثال: name@example.com).");
+    return null;
+  }
+
+  // Phone: required, digits/spaces/+"-" only, realistic length.
+  // Supports Egyptian: 01[0-2,5] + 8 digits, or +20 1[0-2,5] 8 digits.
+  function validatePhone(v) {
+    v = (v || "").trim();
+    if (!v) return t("v_phone_req", "Please enter your phone number.", "يرجى إدخال رقم الهاتف.");
+    if (/[A-Za-z]/.test(v)) return t("v_phone_chars", "Phone may contain digits only (no letters).", "يُسمح بالأرقام فقط في الهاتف (لا أحرف).");
+    const digits = v.replace(/[\s+()-]/g, "");
+    if (!/^\d{8,15}$/.test(digits))
+      return t("v_phone_len", "Please enter a valid phone number.", "يرجى إدخال رقم هاتف صحيح.");
+    // If it looks Egyptian, enforce the local pattern.
+    if (/^(?:\+?20)?01[0125]\d{8}$/.test(digits)) return null;
+    // Otherwise accept any 8–15 digit international number.
+    if (/^\d{8,15}$/.test(digits)) return null;
+    return t("v_phone_fmt", "Please enter a valid phone number.", "يرجى إدخال رقم هاتف صحيح.");
+  }
+
+  // Show an inline error under a field; clear if valid.
+  function setFieldError(inputEl, msg) {
+    if (!inputEl) return;
+    let err = inputEl.parentNode.querySelector(".bk-field-err");
+    if (msg) {
+      if (!err) {
+        err = document.createElement("div");
+        err.className = "bk-field-err";
+        inputEl.parentNode.appendChild(err);
+      }
+      err.textContent = msg;
+      inputEl.classList.add("input--error");
+    } else if (err) {
+      err.textContent = "";
+      inputEl.classList.remove("input--error");
+    }
+  }
+
+  if (search && result && window.MGBooking) {
+    search.addEventListener("click", async () => {
+      if (!ci.value || !co.value) { alert(t("bk_err_dates", "Please choose check-in and check-out dates.", "يرجى اختيار تاريخ الدخول والخروج.")); return; }
+      const n = Math.round((new Date(co.value) - new Date(ci.value)) / 86400000);
+      if (n <= 0) { alert(t("bk_err_range", "Check-out must be after check-in.", "يجب أن يكون الخروج بعد الدخول.")); return; }
+
+      const type = document.getElementById("bkRoom").value;
+      const room = window.MGBooking.resolveRoom(type);
+      const guestsVal = document.getElementById("bkGuests").value;
+      const adults = parseInt(guestsVal, 10) || 1;
+
+      search.textContent = t("bk_searching", "Checking availability…", "جارٍ التحقق من التوفر…");
       search.disabled = true;
-      setTimeout(() => {
-        const msg = (window.MGLang && window.MGLang.get() === "ar")
-          ? `تم العثور على خيارات: ${room} · ${guests} · ${nights} ليلة`
-          : `Found options: ${room} · ${guests} · ${nights} night(s)`;
-        search.textContent = (window.MGLang && window.MGLang.get() === "ar") ? "احجز الآن" : "Book Now";
+      try {
+        const avail = await window.MGBooking.getAvailability(room.id, ci.value, co.value);
+        if (!avail.available) {
+          result.hidden = false;
+          result.innerHTML = `<div class="booking-msg booking-msg--error">${t("bk_unavail", "Sorry, " + esc(room.name) + " is not available for those dates.", "عذرًا، " + esc(room.name) + " غير متاح في تلك التواريخ.")}</div>`;
+          return;
+        }
+        const price = window.MGBooking.priceFor(room, n, 1);
+        result.hidden = false;
+        result.innerHTML = `
+          <div class="booking-msg booking-msg--ok">
+            ${t("bk_avail", esc(room.name) + " is available.", esc(room.name) + " متاح.")}
+          </div>
+          <div class="booking-summary">
+            <div class="booking-summary__row"><span>${t("bk_dates", "Dates", "التواريخ")}</span><strong>${esc(ci.value)} → ${esc(co.value)} · ${n} ${t("bk_nights", "night(s)", "ليلة")}</strong></div>
+            <div class="booking-summary__row"><span>${t("bk_guests_l", "Guests", "الضيوف")}</span><strong>${adults} ${t("bk_adults", "adult(s)", "بالغ")}</strong></div>
+            <div class="booking-summary__row"><span>${t("bk_total", "Estimated total", "الإجمالي التقديري")}</span><strong>$${price.toLocaleString()}</strong></div>
+          </div>
+          <div class="booking-form">
+            <div class="field"><label>${t("bk_name", "Full name", "الاسم الكامل")}</label><input class="input" id="bkName" /></div>
+            <div class="field"><label>Email</label><input class="input" id="bkEmail" type="email" /></div>
+            <div class="field"><label>${t("bk_phone", "Phone", "الهاتف")}</label><input class="input" id="bkPhone" /></div>
+            <button class="btn btn--primary" id="bkConfirm">${t("bk_confirm", "Confirm Booking", "تأكيد الحجز")}</button>
+            <div class="booking-msg" id="bkConfirmMsg" hidden></div>
+          </div>`;
+
+        const confirmBtn = document.getElementById("bkConfirm");
+        confirmBtn.addEventListener("click", async () => {
+          const nameEl = document.getElementById("bkName");
+          const emailEl = document.getElementById("bkEmail");
+          const phoneEl = document.getElementById("bkPhone");
+          const name = nameEl.value.trim();
+          const email = emailEl.value.trim();
+          const phone = phoneEl.value.trim();
+          const msgEl = document.getElementById("bkConfirmMsg");
+
+          // Basic realistic validation — block submission until valid.
+          const nameErr = validateName(name);
+          const emailErr = validateEmail(email);
+          const phoneErr = validatePhone(phone);
+          setFieldError(nameEl, nameErr);
+          setFieldError(emailEl, emailErr);
+          setFieldError(phoneEl, phoneErr);
+          if (nameErr || emailErr || phoneErr) {
+            msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--error";
+            msgEl.textContent = t("bk_err_fix", "Please correct the highlighted fields.", "يرجى تصحيح الحقول المميزة.");
+            return;
+          }
+
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = t("bk_submitting", "Submitting…", "جارٍ الإرسال…");
+          try {
+            const created = await window.MGBooking.createBooking({
+              guestName: name, email, phone,
+              roomId: room.id, checkin: ci.value, checkout: co.value,
+              adults, children: 0, rooms: 1
+            });
+            // Hold the booking (incl. server-issued accessToken) in memory
+            // for the current payment session. NOT persisted to localStorage;
+            // NOT placed in the URL. Cleared on navigation away.
+            window.__mgCurrentBooking = created;
+            msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--ok";
+            msgEl.innerHTML = `${t("bk_done", "Booking confirmed! Reference: ", "تم تأكيد الحجز! المرجع: ")}<strong>${esc(created.id)}</strong><br>${t("bk_status", "Status: Pending · Payment: Unpaid", "الحالة: قيد الانتظار · الدفع: غير مدفوع")}`;
+            confirmBtn.textContent = t("bk_confirmed", "Booked", "تم الحجز");
+          } catch (e) {
+            msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--error";
+            msgEl.textContent = t("bk_fail", "Could not complete booking: " + e.message, "تعذّر إتمام الحجز: " + e.message);
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = t("bk_confirm", "Confirm Booking", "تأكيد الحجز");
+          }
+        });
+      } finally {
+        search.textContent = t("bk_search", "Search", "بحث");
         search.disabled = false;
-        alert(msg);
-        window.location.href = "pages/rooms.html";
-      }, 900);
+      }
     });
   }
 
@@ -58,15 +208,33 @@
     });
   });
 
-  /* ---------- Testimonials swiper ---------- */
-  if (window.Swiper && document.getElementById("testiSwiper")) {
+  /* ---------- Testimonials swiper ----------
+     Swiper is loaded via an async CDN <script>, so window.Swiper may not
+     exist yet when this script runs. Retry briefly until it's available.
+     Exposed as window.initTestiSwiper so the data layer can (re)init after
+     dynamically injecting review slides. */
+  function initTestimonials() {
+    const el = document.getElementById("testiSwiper");
+    if (!el || !window.Swiper) return false;
+    // Destroy any prior instance so re-rendered slides start clean.
+    if (el.swiper) el.swiper.destroy(true, true);
     new Swiper("#testiSwiper", {
       slidesPerView: 1, spaceBetween: 24, grabCursor: true, loop: true,
       autoHeight: true,
-      pagination: { el: ".testi__dots", clickable: true },
+      pagination: { el: ".voices__dots", clickable: true },
       navigation: { prevEl: "#testiPrev", nextEl: "#testiNext" },
       breakpoints: { 900: { slidesPerView: 1 } }
     });
+    return true;
+  }
+  window.initTestiSwiper = initTestimonials;
+
+  if (!initTestimonials()) {
+    let tries = 0;
+    const t = setInterval(() => {
+      tries++;
+      if (initTestimonials() || tries > 40) clearInterval(t);
+    }, 150);
   }
 
   /* ---------- Lightbox (event-delegated so injected items work) ---------- */

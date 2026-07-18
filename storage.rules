@@ -1,0 +1,22 @@
+rules_version = '2';
+
+// Marshal Al-Gezira — Firebase Storage Security Rules
+// Paste into: Firebase Console -> Storage -> Rules.
+// Public read (images shown on the site); only authenticated
+// admins may upload/delete. Uploads land under images/.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /images/{fileName} {
+      allow read: if true;
+      // Uploads/modifications require the admin custom claim.
+      allow write: if isAdmin()
+                   && request.resource.size < 10 * 1024 * 1024
+                   && request.resource.contentType.matches('image/.*');
+    }
+    // Deny everything else by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

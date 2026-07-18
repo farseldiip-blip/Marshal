@@ -26,43 +26,16 @@
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-  /* ---------------- Demo store (localStorage) ---------------- */
+  /* ---------------- Demo store (localStorage) ----------------
+     SHARED key (mg-demo-db) is the single demo source. Both the
+     admin dashboard AND the public booking flow (js/booking-core.js)
+     read/write this same key/shape, so a public booking shows in
+     admin and admin status changes affect public availability.
+     The Demo object is stateless: it (re)loads from localStorage on
+     every op so external mutations (public site) are always visible. */
   const DEMO_KEY = "mg-demo-db";
-  const seed = () => ({
-    rooms: [
-      { id: "r1", name: "Deluxe Garden Room", type: "Deluxe Room", price: 420, size: "42m²", desc: "A serene retreat opening to private gardens.", amenities: ["King Bed", "Rain Shower", "Smart TV"], image: "https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=80", featured: true },
-      { id: "r2", name: "Nile View Suite", type: "Nile View Suite", price: 780, size: "70m²", desc: "Floor-to-ceiling glass framing the river's slow light.", amenities: ["Lounge", "Nile View", "Butler"], image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80", featured: true },
-      { id: "r3", name: "Presidential Villa", type: "Presidential Villa", price: 2400, size: "240m²", desc: "A private two-bedroom sanctuary with rooftop plunge.", amenities: ["Private Pool", "Chef", "Rooftop"], image: "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=80", featured: false }
-    ],
-    bookings: [
-      { id: "b1", guest: "Layla M.", room: "Nile View Suite", checkin: "2026-08-01", checkout: "2026-08-05", guests: 2, status: "Confirmed", revenue: 3900 },
-      { id: "b2", guest: "James R.", room: "Deluxe Garden Room", checkin: "2026-08-03", checkout: "2026-08-06", guests: 1, status: "Pending", revenue: 1260 },
-      { id: "b3", guest: "Sara K.", room: "Presidential Villa", checkin: "2026-09-10", checkout: "2026-09-14", guests: 4, status: "Confirmed", revenue: 9600 }
-    ],
-    customers: [
-      { id: "c1", name: "Layla M.", email: "layla@example.com", phone: "+971 50 000 0000", country: "UAE", visits: 3 },
-      { id: "c2", name: "James R.", email: "james@example.com", phone: "+44 20 0000", country: "UK", visits: 1 }
-    ],
-    reviews: [
-      { id: "v1", author: "Sara K.", rating: 5, text: "The Nile Suite at sunrise is a memory I'll keep for years.", status: "Published" },
-      { id: "v2", author: "Omar T.", rating: 5, text: "Every detail intentional. This is what luxury should feel like.", status: "Pending" }
-    ],
-    gallery: [
-      { id: "g1", url: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=900&q=80", title: "Lobby" },
-      { id: "g2", url: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=900&q=80", title: "Suite" }
-    ],
-    menu: [
-      { id: "m1", name: "Lumen", category: "Levantine", desc: "modern Levantine, courtyard seating", price: "$$$" },
-      { id: "m2", name: "Kawa", category: "Café", desc: "all-day café & patisserie", price: "$$" },
-      { id: "m3", name: "Sato", category: "Omakase", desc: "omakase counter, 10 seats", price: "$$$$" }
-    ],
-    amenities: [
-      { id: "a1", name: "Spa & Wellness", desc: "Hammam rituals and river-facing treatment suites." },
-      { id: "a2", name: "Rooftop Pool", desc: "Infinity edge above the city skyline." }
-    ],
-    hotel: { name: "Marshal Al-Gezira", tagline: "A Quiet Luxury on the Nile's Edge", email: "stay@marshalgezira.concept", phone: "+20 2 000 0000", address: "Al-Gezira, Cairo, Egypt", about: "A premium concept redesign." },
-    settings: { theme: "light", currency: "USD", lang: "en" }
-  });
+  // Canonical seed now lives in js/seed-data.js (window.__mgSeed).
+  const seed = window.__mgSeed;
 
   function loadDemo() {
     let d = localStorage.getItem(DEMO_KEY);
@@ -73,13 +46,12 @@
   function saveDemo(db) { localStorage.setItem(DEMO_KEY, JSON.stringify(db)); }
 
   const Demo = {
-    db: loadDemo(),
-    async list(col) { return [...(this.db[col] || [])]; },
-    async add(col, item) { item.id = item.id || (col[0] + Date.now()); (this.db[col] = this.db[col] || []).push(item); saveDemo(this.db); return item; },
-    async update(col, id, patch) { const i = (this.db[col] || []).findIndex(x => x.id === id); if (i > -1) { this.db[col][i] = { ...this.db[col][i], ...patch }; saveDemo(this.db); } },
-    async remove(col, id) { this.db[col] = (this.db[col] || []).filter(x => x.id !== id); saveDemo(this.db); },
-    async set(col, obj) { this.db[col] = obj; saveDemo(this.db); },
-    async getDoc(col) { return this.db[col]; }
+    async list(col) { const db = loadDemo(); return [...(db[col] || [])]; },
+    async add(col, item) { const db = loadDemo(); item.id = item.id || (col[0] + Date.now()); (db[col] = db[col] || []).push(item); saveDemo(db); return item; },
+    async update(col, id, patch) { const db = loadDemo(); const i = (db[col] || []).findIndex(x => x.id === id); if (i > -1) { db[col][i] = { ...db[col][i], ...patch }; saveDemo(db); } },
+    async remove(col, id) { const db = loadDemo(); db[col] = (db[col] || []).filter(x => x.id !== id); saveDemo(db); },
+    async set(col, obj) { const db = loadDemo(); db[col] = obj; saveDemo(db); },
+    async getDoc(col) { const db = loadDemo(); return db[col]; }
   };
 
   /* ---------------- Data abstraction ---------------- */
@@ -202,7 +174,24 @@
       "Hotel info saved": "تم حفظ معلومات الفندق", "Settings saved": "تم حفظ الإعدادات", "Deleted": "تم الحذف",
       "Add Room": "إضافة غرفة", "Add Booking": "إضافة حجز", "Add Customer": "إضافة عميل",
       "Add Review": "إضافة تقييم", "Add Gallery": "إضافة صورة", "Add Menu": "إضافة عنصر",
-      "Add Amenity": "إضافة مرفق", "Login failed:": "فشل الدخول:"
+      "Add Amenity": "إضافة مرفق", "Login failed:": "فشل الدخول:",
+      "Bookings Management": "إدارة الحجوزات", "Search bookings…": "بحث في الحجوزات…",
+      "All Statuses": "كل الحالات", "All Payments": "كل المدفوعات",
+      "Check-in from": "الوصول من", "Check-out to": "المغادرة إلى",
+      "Reference": "المرجع", "Guest": "النزيل", "Room": "الغرفة",
+      "Total": "الإجمالي", "Payment": "الدفع", "Actions": "الإجراءات",
+      "View": "عرض", "Confirm": "تأكيد", "Cancel Booking": "إلغاء الحجز",
+      "Check In": "تسجيل الدخول", "Check Out": "تسجيل الخروج",
+      "Booking Details": "تفاصيل الحجز", "No bookings found": "لا توجد حجوزات",
+      "Loading bookings…": "جارٍ تحميل الحجوزات…",       "Could not load bookings": "تعذّر تحميل الحجوزات",
+      "Not authorized": "غير مصرح", "Admin claim required": "يتطلب صلاحية المدير",
+      "Booked updated": "تم تحديث الحجز", "Already": "بالفعل", "Confirmed": "مؤكد",
+      "Checked In": "سجّل دخوله", "Checked Out": "سجّل خروجه", "Unpaid": "غير مدفوع",
+      "Paid": "مدفوع", "Pending": "قيد الانتظار", "Failed": "فشل", "Refunded": "مُسترد",
+      "Cancelled": "ملغى", "Email": "البريد", "Phone": "الهاتف", "Adults": "بالغون",
+      "Children": "أطفال", "Rooms": "غرف", "Nights": "ليالٍ", "Created": "أُنشئ",
+      "Mark Pending": "تحديد قيد الانتظار", "Mark Paid": "تحديد مدفوع",
+      "Mark Failed": "تحديد فشل", "Mark Refunded": "تحديد مُسترد", "Payment:": "الدفع:"
     }
   };
   // Reverse lookup: English -> key for AR column headers built from field labels
@@ -222,15 +211,54 @@
   }
 
   /* ---------------- Auth ---------------- */
+  // Verify the signed-in user holds the `admin` custom claim.
+  // Returns the claims object; throws "not_admin" otherwise.
+  async function assertAdmin() {
+    if (!FB || !FB.idTokenClaims) throw new Error("not_authed");
+    const res = await FB.idTokenClaims(false);
+    if (!res || !res.claims || res.claims.admin !== true) throw new Error("not_admin");
+    return res.claims;
+  }
+
   async function attemptLogin(email, pass) {
     await ready();
-    if (Data.mode === "firebase" && FB) { await FB.signIn(email, pass); sessionStorage.setItem("mg-auth", "fb"); return true; }
+    if (Data.mode === "firebase" && FB) {
+      await FB.signIn(email, pass);              // throws on bad creds
+      // Authorization (defense-in-depth, NOT relying on rules alone):
+      // a signed-in user MUST hold the admin claim to use the dashboard.
+      try { await assertAdmin(); }
+      catch (e) {
+        await FB.signOut().catch(() => {});
+        sessionStorage.removeItem("mg-auth");
+        throw new Error("Not authorized — admin access required.");
+      }
+      sessionStorage.setItem("mg-auth", "fb");
+      return true;
+    }
     if (email && pass) { sessionStorage.setItem("mg-auth", "demo"); return true; }
     throw new Error("Credentials required");
   }
 
+  // Render a clear "not authorized" state (authed but no admin claim).
+  function renderNotAuthorized() {
+    const app = document.getElementById("dash");
+    if (!app) return;
+    app.className = "";
+    app.innerHTML = `<div class="dash-login"><div class="dash-login__card">
+      <div class="dash-brand">Marshal<span>Al-Gezira</span></div>
+      <p class="dash-login__sub" style="color:#f0a3a3">${tr("Not authorized")}</p>
+      <p class="dash-note">${tr("Admin claim required")}</p>
+      <button type="button" class="btn btn--outline btn--block" id="naLogout">${tr("Logout")}</button>
+    </div></div>`;
+    const b = document.getElementById("naLogout");
+    if (b) b.addEventListener("click", logout);
+  }
+
   /* ---------------- Sections registry ---------------- */
   let currentSection = "home";
+  // Admin authorization flag, derived from the Firebase custom claim
+  // (claims.admin === true). Mutation UI is hidden unless true.
+  let adminOk = false;
   const SECTIONS = [
     { id: "home", label: "Dashboard", icon: "▦", i18n: "d_dashboard" },
     { id: "rooms", label: "Rooms", icon: "🛏", i18n: "d_rooms" },
@@ -299,18 +327,7 @@
         { k: "featured", label: "Featured", type: "checkbox" }
       ]
     });
-    if (id === "bookings") return renderCrud(view, "bookings", {
-      cols: ["guest", "room", "checkin", "checkout", "guests", "revenue", "status"],
-      fields: [
-        { k: "guest", label: "Guest", type: "text" },
-        { k: "room", label: "Room", type: "text" },
-        { k: "checkin", label: "Check-in", type: "date" },
-        { k: "checkout", label: "Check-out", type: "date" },
-        { k: "guests", label: "Guests", type: "number" },
-        { k: "revenue", label: "Revenue", type: "number" },
-        { k: "status", label: "Status", type: "select", options: ["Pending", "Confirmed", "Cancelled", "Checked-in", "Checked-out"] }
-      ]
-    });
+    if (id === "bookings") return renderBookings(view);
     if (id === "customers") return renderCrud(view, "customers", {
       cols: ["name", "email", "phone", "country", "visits"],
       fields: [
@@ -452,6 +469,263 @@
       ${dots}</svg>`;
   }
 
+  /* ---------------- Bookings management (dedicated) ---------------- */
+  const BOOKING_STATUSES = ["Pending", "Confirmed", "Checked In", "Checked Out", "Cancelled"];
+  const PAYMENT_STATUSES = ["Unpaid", "Pending", "Paid", "Failed", "Refunded"];
+
+  // Allowed forward transitions. Cancelled / Checked Out are terminal.
+  function nextActions(status) {
+    switch (status) {
+      case "Pending":    return ["confirm", "cancel"];
+      case "Confirmed":  return ["checkin", "cancel"];
+      case "Checked In": return ["checkout"];
+      case "Checked Out":return [];
+      case "Cancelled":  return [];
+      default:           return [];
+    }
+  }
+  const ACTION_LABEL = { confirm: "Confirm", cancel: "Cancel Booking", checkin: "Check In", checkout: "Check Out" };
+  // Payment status transitions (INDEPENDENT of booking status).
+  // Unpaid -> Pending / Paid ; Pending -> Paid / Failed ; Paid -> Refunded.
+  // Cancelled bookings can be refunded (Unpaid/Pending -> Refunded).
+  // Failed & Refunded are terminal. Never auto-mark Paid without a real
+  // payment confirmation (enforced by design: admin does it manually).
+  function nextPaymentActions(payment) {
+    switch (payment || "Unpaid") {
+      case "Unpaid":  return ["pay_pending", "pay_paid", "pay_refunded"];
+      case "Pending": return ["pay_paid", "pay_failed", "pay_refunded"];
+      case "Paid":    return ["pay_refunded"];
+      case "Cancelled":return [];   // booking-level; payment still refundable below
+      case "Failed":  return [];
+      case "Refunded":return [];
+      default:        return [];
+    }
+  }
+  // Allow a refunded payment regardless of booking status (e.g. Cancelled/Refunded).
+  function nextPaymentActionsForBooking(payment, bookingStatus) {
+    const base = nextPaymentActions(payment);
+    if ((bookingStatus === "Cancelled") && payment !== "Refunded" && !base.includes("pay_refunded")) {
+      return base.concat("pay_refunded");
+    }
+    return base;
+  }
+  const PAY_ACTION_LABEL = {
+    pay_pending: "Mark Pending", pay_paid: "Mark Paid",
+    pay_failed: "Mark Failed", pay_refunded: "Mark Refunded"
+  };
+  const PAY_TO_STATUS = {
+    pay_pending: "Pending", pay_paid: "Paid",
+    pay_failed: "Failed", pay_refunded: "Refunded"
+  };
+  function statusTag(s) {
+    const map = { "Checked In": "CheckedIn", "Checked Out": "CheckedOut" };
+    const cls = "tag tag-" + (map[s] || s);
+    return `<span class="${cls}">${esc(s)}</span>`;
+  }
+  function payTag(p) {
+    const cls = "tag tag-" + (p === "Paid" ? "Paid" : p === "Unpaid" ? "Unpaid" : p);
+    return `<span class="${cls}">${esc(p || "Unpaid")}</span>`;
+  }
+  const STATUS_KEY = {
+    "Pending": "Pending", "Confirmed": "Confirmed", "Checked In": "Checked In",
+    "Checked Out": "Checked Out", "Cancelled": "Cancelled"
+  };
+  const PAY_KEY = {
+    "Unpaid": "Unpaid", "Pending": "Pending", "Paid": "Paid", "Failed": "Failed", "Refunded": "Refunded"
+  };
+
+  async function renderBookings(view) {
+    // Filter state (persists across re-renders within this view).
+    const state = {
+      q: "", status: "all", payment: "all",
+      cinFrom: "", coutTo: ""
+    };
+
+    view.innerHTML = `
+      <div class="dash-panel">
+        <div class="dash-panel__head"><h3>${tr("Bookings Management")}</h3></div>
+        <div class="bk-filters">
+          <div class="field"><label>${tr("Search bookings…")}</label><input class="input" id="bkSearchInput" placeholder="${tr("Search bookings…")}"></div>
+          <div class="field"><label>${tr("All Statuses")}</label><select class="select" id="bkStatusFilter">${['<option value="all">' + tr("All Statuses") + "</option>"].concat(BOOKING_STATUSES.map(s => `<option value="${s}">${tr(STATUS_KEY[s])}</option>`)).join("")}</select></div>
+          <div class="field"><label>${tr("All Payments")}</label><select class="select" id="bkPayFilter">${['<option value="all">' + tr("All Payments") + "</option>"].concat(PAYMENT_STATUSES.map(s => `<option value="${s}">${tr(PAY_KEY[s])}</option>`)).join("")}</select></div>
+          <div class="field"><label>${tr("Check-in from")}</label><input type="date" class="input" id="bkCinFrom"></div>
+          <div class="field"><label>${tr("Check-out to")}</label><input type="date" class="input" id="bkCoutTo"></div>
+        </div>
+        <div id="bkStates"></div>
+        <div class="table-wrap"><table class="dash-table">
+          <thead><tr><th>${tr("Reference")}</th><th>${tr("Guest")}</th><th>${tr("Room")}</th><th>${tr("Check-in")}</th><th>${tr("Check-out")}</th><th>${tr("Guests")}</th><th>${tr("Total")}</th><th>${tr("Status")}</th><th>${tr("Payment")}</th><th>${tr("Actions")}</th></tr></thead>
+          <tbody id="bkTbody"></tbody>
+        </table></div>
+      </div>
+
+      <div class="dash-modal" id="bkModal" hidden>
+        <div class="dash-modal__box">
+          <h3 id="bkModalTitle">${tr("Booking Details")}</h3>
+          <div id="bkModalBody"></div>
+          <div class="dash-modal__actions" id="bkModalActions"></div>
+          <div class="dash-form__actions" style="margin-top:18px"><button type="button" class="btn-mini" id="bkModalClose">${tr("Cancel")}</button></div>
+        </div>
+      </div>`;
+
+    const tbody = $("#bkTbody", view);
+    const states = $("#bkStates", view);
+    const modal = $("#bkModal", view);
+    const modalBody = $("#bkModalBody", view);
+    const modalActions = $("#bkModalActions", view);
+
+    async function load() {
+      states.innerHTML = `<div class="dash-loading">${tr("Loading bookings…")}</div>`;
+      tbody.innerHTML = "";
+      let items;
+      try {
+        items = (await Data.list("bookings")) || [];
+      } catch (e) {
+        states.innerHTML = `<div class="dash-loading" style="color:#f0a3a3">${tr("Could not load bookings")}</div>`;
+        return;
+      }
+      states.innerHTML = "";
+
+      const q = state.q.trim().toLowerCase();
+      const filtered = items.filter(b => {
+        if (q) {
+          const hay = [b.id, b.guestName || b.guest, b.email, b.phone].join(" ").toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        if (state.status !== "all" && (b.status || "Pending") !== state.status) return false;
+        if (state.payment !== "all" && (b.paymentStatus || "Unpaid") !== state.payment) return false;
+        if (state.cinFrom && (b.checkin || "") < state.cinFrom) return false;
+        if (state.coutTo && (b.checkout || "") > state.coutTo) return false;
+        return true;
+      });
+
+      if (!filtered.length) {
+        states.innerHTML = `<div class="dash-loading">${tr("No bookings found")}</div>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(b => {
+        const actions = nextActions(b.status || "Pending");
+        const payActions = nextPaymentActionsForBooking(b.paymentStatus, b.status || "Pending");
+        // Mutation controls are admin-claim gated (defense-in-depth).
+        // Non-admins see only the read-only "View" action.
+        const btns = `<button class="btn-mini" data-view="${b.id}">${tr("View")}</button>` +
+          (adminOk
+            ? actions.map(a => `<button class="btn-mini ${a === "cancel" ? "danger" : "btn--gold"}" data-act="${a}" data-id="${b.id}">${tr(ACTION_LABEL[a])}</button>`).join("") +
+              (payActions.length ? `<span class="bk-sep"></span>` + payActions.map(a => `<button class="btn-mini" data-pay="${a}" data-id="${b.id}">${tr(PAY_ACTION_LABEL[a])}</button>`).join("") : "")
+            : "");
+        return `<tr>
+          <td>${esc(b.id)}</td>
+          <td>${esc(b.guestName || b.guest || "")}</td>
+          <td>${esc(b.roomName || b.room || "")}</td>
+          <td>${esc(b.checkin || "")}</td>
+          <td>${esc(b.checkout || "")}</td>
+          <td>${esc(b.guests != null ? b.guests : ((b.adults || 0) + (b.children || 0)))}</td>
+          <td>${money(b.total != null ? b.total : b.revenue)}</td>
+          <td>${statusTag(b.status || "Pending")}</td>
+          <td>${payTag(b.paymentStatus)}</td>
+          <td class="dash-actions">${btns}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    function statusUpdate(id, patch, okMsg) {
+      return async () => {
+        try {
+          await Data.update("bookings", id, patch);
+          toast(tr(okMsg));
+          modal.hidden = true;
+          await load();
+        } catch (e) { toast("Error: " + e.message, "err"); }
+      };
+    }
+
+    function openDetails(b) {
+      const row = (k, v) => `<dt>${tr(k)}</dt><dd>${esc(v == null ? "" : v)}</dd>`;
+      modalBody.innerHTML = `<dl class="dash-dl">
+        ${row("Reference", b.id)}
+        ${row("Guest", b.guestName || b.guest)}
+        ${row("Email", b.email)}
+        ${row("Phone", b.phone)}
+        ${row("Room", b.roomName || b.room)}
+        ${row("Check-in", b.checkin)}
+        ${row("Check-out", b.checkout)}
+        ${row("Adults", b.adults)}
+        ${row("Children", b.children)}
+        ${row("Rooms", b.rooms)}
+        ${row("Nights", b.nights)}
+        ${row("Total", money(b.total != null ? b.total : b.revenue))}
+        ${row("Status", b.status || "Pending")}
+        ${row("Payment", b.paymentStatus || "Unpaid")}
+        ${row("Created", b.created)}
+      </dl>`;
+      const actions = nextActions(b.status || "Pending");
+      const payActions = nextPaymentActionsForBooking(b.paymentStatus, b.status || "Pending");
+      // Mutation controls are admin-claim gated; non-admins get a
+      // read-only details view (no status/payment change buttons).
+      modalActions.innerHTML = adminOk
+        ? actions.map(a =>
+            `<button class="btn-mini ${a === "cancel" ? "danger" : "btn--gold"}" data-act="${a}">${tr(ACTION_LABEL[a])}</button>`
+          ).join("") +
+          (payActions.length ? `<span class="bk-sep"></span><span class="bk-act-label">${tr("Payment:")}</span>` +
+            payActions.map(a => `<button class="btn-mini" data-pay="${a}">${tr(PAY_ACTION_LABEL[a])}</button>`).join("") : "")
+        : `<span class="dash-note">${tr("Admin claim required")}</span>`;
+      modalActions.querySelectorAll("[data-act]").forEach(btn => {
+        const a = btn.dataset.act;
+        let patch = {};
+        if (a === "confirm") patch = { status: "Confirmed" };
+        else if (a === "cancel") patch = { status: "Cancelled" };
+        else if (a === "checkin") patch = { status: "Checked In" };
+        else if (a === "checkout") patch = { status: "Checked Out" };
+        btn.addEventListener("click", statusUpdate(b.id, patch, "Booking updated"));
+      });
+      modalActions.querySelectorAll("[data-pay]").forEach(btn => {
+        const a = btn.dataset.pay;
+        statusUpdate(b.id, { paymentStatus: PAY_TO_STATUS[a] }, "Booking updated")(btn);
+      });
+      modal.hidden = false;
+    }
+
+    // Filter bindings
+    $("#bkSearchInput", view).addEventListener("input", e => { state.q = e.target.value; load(); });
+    $("#bkStatusFilter", view).addEventListener("change", e => { state.status = e.target.value; load(); });
+    $("#bkPayFilter", view).addEventListener("change", e => { state.payment = e.target.value; load(); });
+    $("#bkCinFrom", view).addEventListener("change", e => { state.cinFrom = e.target.value; load(); });
+    $("#bkCoutTo", view).addEventListener("change", e => { state.coutTo = e.target.value; load(); });
+
+    // Row actions (event-delegated)
+    tbody.addEventListener("click", async (e) => {
+      const viewBtn = e.target.closest("[data-view]");
+      if (viewBtn) {
+        const id = viewBtn.dataset.view;
+        const b = (await Data.list("bookings")).find(x => x.id === id);
+        if (b) openDetails(b);
+        return;
+      }
+      const actBtn = e.target.closest("[data-act]");
+      if (actBtn) {
+        const id = actBtn.dataset.id, a = actBtn.dataset.act;
+        let patch = {};
+        if (a === "confirm") patch = { status: "Confirmed" };
+        else if (a === "cancel") patch = { status: "Cancelled" };
+        else if (a === "checkin") patch = { status: "Checked In" };
+        else if (a === "checkout") patch = { status: "Checked Out" };
+        await statusUpdate(id, patch, "Booked updated")();
+      }
+      const payBtn = e.target.closest("[data-pay]");
+      if (payBtn) {
+        const id = payBtn.dataset.id, a = payBtn.dataset.pay;
+        await statusUpdate(id, { paymentStatus: PAY_TO_STATUS[a] }, "Booked updated")();
+      }
+    });
+
+    $("#bkModalClose", view).addEventListener("click", () => modal.hidden = true);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
+
+    localizeView(view);
+    currentSection = "bookings";
+    await load();
+  }
+
   /* ---------------- Generic CRUD ---------------- */
   async function renderCrud(view, col, cfg) {
     const items = await Data.list(col);
@@ -465,8 +739,10 @@
           return `<td>${esc(v)}</td>`;
         }).join("")}
         <td class="dash-actions">
-          <button class="btn-mini" data-edit="${it.id}">${tr("Edit")}</button>
-          <button class="btn-mini danger" data-del="${it.id}">${tr("Delete")}</button>
+          ${adminOk
+            ? `<button class="btn-mini" data-edit="${it.id}">${tr("Edit")}</button>
+               <button class="btn-mini danger" data-del="${it.id}">${tr("Delete")}</button>`
+            : `<span class="dash-note">${tr("Admin claim required")}</span>`}
         </td>
       </tr>`).join("");
 
@@ -474,7 +750,7 @@
       <div class="dash-panel">
         <div class="dash-panel__head">
           <h3>${tr(col.charAt(0).toUpperCase() + col.slice(1))}</h3>
-          <button class="btn btn--gold btn--sm" id="addBtn">+ ${tr("Add")} ${tr(col.slice(0, -1))}</button>
+          ${adminOk ? `<button class="btn btn--gold btn--sm" id="addBtn">+ ${tr("Add")} ${tr(col.slice(0, -1))}</button>` : ""}
         </div>
         <div class="table-wrap">
           <table class="dash-table">
@@ -516,7 +792,7 @@
       modal.dataset.editId = item ? item.id : "";
       modal.hidden = false;
     };
-    $("#addBtn").addEventListener("click", () => openModal(null));
+    $("#addBtn").addEventListener("click", () => { if (!adminOk) return; openModal(null); });
     $("#cancelBtn").addEventListener("click", () => modal.hidden = true);
     modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
 
@@ -532,6 +808,7 @@
 
     $("#modalForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!adminOk) return; // admin-claim gated mutation
       const item = {};
       for (const f of cfg.fields) {
         const wrap = $(`[data-field="${f.k}"]`, modal);
@@ -587,6 +864,7 @@
       </div>`;
     $("#hotelForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!adminOk) return;
       const fd = new FormData(e.target); const obj = {}; fd.forEach((v, k) => obj[k] = v);
       await Data.set("hotel", obj); toast(tr("Hotel info saved"));
     });
@@ -607,12 +885,29 @@
           </label>
           <div class="dash-form__actions"><button type="submit" class="btn btn--gold btn--sm">${tr("Save")}</button></div>
         </form>
-        <div class="dash-note">${tr("Mode:")} <b id="modeNote"></b>. ${tr("Set your Firebase keys in")} <code>js/firebase.js</code> ${tr("to enable cloud sync, auth & image storage.")}</div>
+        <div class="dash-note">${tr("Mode:")} <b id="modeNote">${(Data.mode || "demo")}</b>. ${tr("Set your Firebase keys in")} <code>js/firebase-config.js</code> ${tr("to enable cloud sync, auth & image storage.")}</div>
+        <div class="dash-seed">
+          <button type="button" class="btn btn--outline btn--sm" id="seedCloudBtn">${tr("Seed cloud data")}</button>
+          <span class="dash-seed__hint" id="seedHint"></span>
+        </div>
       </div>`;
     $("#setForm").addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (!adminOk) return;
       const fd = new FormData(e.target); const obj = {}; fd.forEach((v, k) => obj[k] = v);
       await Data.set("settings", obj); toast(tr("Settings saved"));
+    });
+    const seedBtn = $("#seedCloudBtn");
+    if (seedBtn) seedBtn.addEventListener("click", async () => {
+      const hint = $("#seedHint");
+      if (!window.MGSeedCloud) { hint.textContent = "Seeder not loaded."; return; }
+      if (!window.MGFirebaseServices || !window.MGFirebaseServices.isLive()) {
+        hint.textContent = tr("Sign in with Firebase first (live mode).");
+        return;
+      }
+      hint.textContent = tr("Seeding…");
+      try { await window.MGSeedCloud(); hint.textContent = tr("Cloud data seeded ✓"); toast(tr("Cloud data seeded")); }
+      catch (err) { hint.textContent = err.message; }
     });
   }
 
@@ -658,6 +953,15 @@
   async function bootDashboard() {
     buildShell();
     const m = await ready(); Data.mode = m;
+    // Confirm admin claim at boot (defense-in-depth even if boot was
+    // reached via a stale session). Non-admin -> not-authorized.
+    let ok = true;
+    if (m === "firebase" && FB) {
+      try { await assertAdmin(); adminOk = true; }
+      catch (e) { ok = false; }
+    } else { adminOk = true; } // demo mode: no real auth
+    if (!ok) { renderNotAuthorized(); return; }
+
     const modeEl = $("#dashMode");
     if (modeEl) modeEl.textContent = m + (m === "demo" ? " (no keys)" : "");
     const authEl = $("#dashEmail");
@@ -670,7 +974,41 @@
 
   function initDash() {
     if (!document.getElementById("dash")) return;
-    if (sessionStorage.getItem("mg-auth")) { bootDashboard(); return; }
+    // Production error: config present but SDK failed. Do NOT fall back to
+    // demo; show a clear fatal message so it is never silently shipped.
+    if (window.MGFirebase && window.MGFirebase.fatal) {
+      const app = document.getElementById("dash");
+      app.className = "";
+      app.innerHTML = `<div class="dash-login"><div class="dash-login__card">
+        <div class="dash-brand">Marshal<span>Al-Gezira</span></div>
+        <p class="dash-login__sub" style="color:#f0a3a3">Configuration error</p>
+        <p class="dash-note">${esc(window.MGFirebase.message || "Firebase failed to initialize.")}</p>
+      </div></div>`;
+      return;
+    }
+    // Resumed session (sessionStorage) — still verify the admin claim
+    // before rendering any mutation UI. Non-admin -> not-authorized.
+    if (sessionStorage.getItem("mg-auth")) {
+      if (window.MGFirebase && window.MGFirebase.ready === true) {
+        // Ensure FB handle is bound (boot may have finished already).
+        if (!FB) FB = window.MGFirebase;
+        assertAdmin().then(() => bootDashboard()).catch(() => renderNotAuthorized());
+        return;
+      }
+      if (window.MGFirebase && window.MGFirebase.ready === false && !window.MGFirebase.fatal) {
+        // Firebase still booting in live mode — wait for readiness.
+        document.addEventListener("firebase:ready", () => {
+          if (window.MGFirebase.ready === true) {
+            FB = window.MGFirebase;
+            assertAdmin().then(() => bootDashboard()).catch(() => renderNotAuthorized());
+          } else { bootDashboard(); }
+        }, { once: true });
+        return;
+      }
+      // Demo mode resume (no real auth).
+      bootDashboard();
+      return;
+    }
     if (window.MGFirebase && window.MGFirebase.ready && window.MGFirebase.auth) {
       // Render login optimistically; Firebase auth state may take a moment.
       renderLogin();
@@ -678,7 +1016,10 @@
       const guard = setTimeout(() => { if (!resolved) bootDashboardIfAuthed(); }, 1500);
       window.MGFirebase.onAuth(u => {
         resolved = true; clearTimeout(guard);
-        if (u) bootDashboard(); /* else keep login form */
+        if (u) {
+          // Auto-boot only after confirming the admin claim.
+          assertAdmin().then(() => bootDashboard()).catch(() => renderNotAuthorized());
+        } /* else keep login form */
       });
     } else { renderLogin(); }
   }

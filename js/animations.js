@@ -204,21 +204,6 @@
   }
 
   /* =========================================================
-     STAT COUNTERS
-     ========================================================= */
-  function counters() {
-    gsap.utils.toArray("[data-count]").forEach((el) => {
-      const target = +el.getAttribute("data-count");
-      const obj = { v: 0 };
-      gsap.to(obj, {
-        v: target, duration: 1.8, ease: EASE_SOFT,
-        scrollTrigger: { trigger: el, start: "top 92%", once: true },
-        onUpdate: () => { el.textContent = Math.floor(obj.v) + (target >= 100 ? "%" : ""); }
-      });
-    });
-  }
-
-  /* =========================================================
      ROOM CARDS — entrance stagger
      ========================================================= */
   function roomCards() {
@@ -232,16 +217,13 @@
   }
 
   /* =========================================================
-     GUEST VOICES — staggered card reveal
+     GUEST VOICES — handled by the Swiper carousel (booking.js).
+     We deliberately do NOT run a gsap.from() on .voice-card here:
+     Swiper clones slides for loop:true, and animating the originals
+     would leave the clones invisible / break the carousel on scroll.
+     The section header already reveals via .reveal.
      ========================================================= */
-  function guestVoices() {
-    const cards = gsap.utils.toArray(".voice-card");
-    if (!cards.length) return;
-    gsap.from(cards, {
-      y: 40, autoAlpha: 0, duration: 0.9, ease: EASE, stagger: 0.12,
-      scrollTrigger: { trigger: ".voices", start: "top 85%", once: true }
-    });
-  }
+  function guestVoices() { /* no-op: Swiper owns these cards */ }
 
   /* =========================================================
      FOOTER reveal
@@ -314,7 +296,6 @@
   function init() {
     sectionReveals();
     parallax();
-    counters();
     roomCards();
     guestVoices();
     footerReveal();

@@ -53,39 +53,9 @@
           <p class="text-muted reveal">Twelve room types, one philosophy — space, light, and quiet.</p>
         </div>
         <div class="grid grid-3" id="roomGrid">
-          <!-- 9 cards (bilingual, re-renders on language change) -->
-          <script>
-            const ROOMS = [
-              { en:"Deluxe Garden Room", ar:"غرفة حديقة ديلوكس", price:"$420", en_d:"42m² · Garden view", ar_d:"42م² · إطلالة الحديقة", img:"https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=900&q=80", a:["King Bed","Rain Shower","Smart TV"] },
-              { en:"Deluxe City Room", ar:"غرفة مدينة ديلوكس", price:"$460", en_d:"44m² · City view", ar_d:"44م² · إطلالة المدينة", img:"https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=900&q=80", a:["King Bed","Workspace","Nespresso"] },
-              { en:"Executive Suite", ar:"جناح تنفيذي", price:"$680", en_d:"65m² · Lounge", ar_d:"65م² · صالة", img:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=900&q=80", a:["Lounge","Bath Tub","Butler"] },
-              { en:"Nile View Suite", ar:"جناح إطلالة النيل", price:"$780", en_d:"70m² · River view", ar_d:"70م² · إطلالة النيل", img:"https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=900&q=80", a:["River View","Lounge","Butler"] },
-              { en:"Corner Studio", ar:"استوديو ركني", price:"$540", en_d:"52m² · Corner", ar_d:"52م² · ركني", img:"https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=900&q=80", a:["Studio","Kitchenette","Balcony"] },
-              { en:"Garden Villa", ar:"فيلا حدائق", price:"$1,150", en_d:"110m² · Private garden", ar_d:"110م² · حديقة خاصة", img:"https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=900&q=80", a:["Garden","Plunge Pool","Outdoor"] },
-              { en:"Family Residence", ar:"إقامة عائلية", price:"$980", en_d:"95m² · Two bedrooms", ar_d:"95م² · غرفتا نوم", img:"https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=900&q=80", a:["2 Bedrooms","Kids Pool","Bunk"] },
-              { en:"Royal Suite", ar:"جناح ملكي", price:"$1,650", en_d:"140m² · Top floor", ar_d:"140م² · الطابق العلوي", img:"https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=900&q=80", a:["Piano","Dining","Terrace"] },
-              { en:"Presidential Villa", ar:"الفيلا الرئاسية", price:"$2,400", en_d:"240m² · Private rooftop", ar_d:"240م² · سطح خاص", img:"https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=900&q=80", a:["Private Pool","Chef","Rooftop"] }
-            ];
-            const grid = document.getElementById("roomGrid");
-            function renderRooms() {
-              const lang = (window.MGLang && window.MGLang.get()) || "en";
-              grid.innerHTML = "";
-              ROOMS.forEach(r => {
-                const el = document.createElement("article");
-                el.className = "card room-card reveal";
-                const view = lang === "ar" ? (window.MGLang ? window.MGLang.t("view") : "عرض التفاصيل") : "View Details";
-                el.innerHTML = `<div class="media-frame room-card__media"><img src="${r.img}" alt="${r[lang]}" loading="lazy"></div>
-                  <div class="room-card__body"><h3 class="fs-h4">${r[lang]}</h3><p class="text-muted">${lang === "ar" ? r.ar_d : r.en_d}</p>
-                  <div class="room-card__price">${r.price} <span>/ night</span></div>
-                  <div class="room-card__amen">${r.a.map(x=>`<span>${x}</span>`).join("")}</div>
-                  <a href="room-details.html" class="btn btn--outline btn--block mt-2">${view}</a></div>`;
-                grid.appendChild(el);
-              });
-              if (window.gsap && window.ScrollTrigger) ScrollTrigger.refresh();
-            }
-            renderRooms();
-            document.addEventListener("lang:change", renderRooms);
-          </script>
+          <!-- Rooms injected from Firestore (rooms collection); demo seed fallback. -->
+          <div class="dash-loading" id="roomGridLoading" style="grid-column:1/-1">Loading…</div>
+          <p class="text-center text-muted" id="roomGridEmpty" style="grid-column:1/-1;display:none">No residences available yet.</p>
         </div>
       </div>
     </section>
@@ -107,6 +77,12 @@
   <script src="../js/i18n/en.js"></script>
   <script src="../js/i18n/ar.js"></script>
   <script src="../js/i18n.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/firebase.js"></script>
+  <script src="../js/firebase-services.js"></script>
+  <script src="../js/seed-data.js"></script>
+  <script src="../js/site-data.js"></script>
+  <script src="../js/site-rooms.js"></script>
   <script src="../js/app.js"></script>
   <script src="../js/cursor.js"></script>
   <script src="../js/animations.js"></script>

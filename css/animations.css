@@ -37,7 +37,7 @@ html.is-loading, html.is-loading body { overflow: hidden; height: 100%; }
 /* ---------- Loader (cinematic) ---------- */
 .loader {
   position: fixed; inset: 0; z-index: var(--z-loader);
-  background: var(--primary); display: grid; place-items: center;
+  background: #0F172A; display: grid; place-items: center;
   will-change: transform, opacity;
 }
 .loader__inner { text-align: center; color: #fff; }
@@ -96,10 +96,11 @@ html.is-loading, html.is-loading body { overflow: hidden; height: 100%; }
 
 /* ---------- Marquee ---------- */
 .marquee { overflow: hidden; white-space: nowrap; border-block: 1px solid var(--border); padding-block: var(--sp-3); }
-.marquee__track { display: inline-flex; gap: var(--sp-6); animation: marquee 26s linear infinite; will-change: transform; }
+.marquee__track { display: flex; width: max-content; animation: marquee-scroll 26s linear infinite; will-change: transform; }
+.marquee__group { display: flex; flex-shrink: 0; gap: var(--sp-6); padding-right: var(--sp-6); }
 .marquee span { font-family: var(--font-head); font-size: 1.6rem; color: var(--primary); display: inline-flex; align-items: center; gap: var(--sp-6); }
 .marquee span::after { content: "✦"; color: var(--accent); }
-@keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* ---------- Parallax helper ---------- */
 .parallax { will-change: transform; }

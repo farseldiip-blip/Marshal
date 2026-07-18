@@ -327,6 +327,65 @@ html[data-theme="light"] .btn--ghost:active {
 }
 .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: rgba(198,161,91,0.28); }
 
+/* Restaurant / Menu grid (data-driven, js/site-menu.js) */
+.menu-card { padding: 1.75rem 1.6rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.menu-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.menu-card__name { margin: 0; }
+.menu-card__price { font-family: var(--font-serif); color: var(--accent); font-size: var(--fs-h5); white-space: nowrap; }
+.menu-card__cat { align-self: flex-start; }
+.menu-card__desc { margin: 0; }
+.menu-filters { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; margin-bottom: 1.75rem; }
+.menu-filter {
+  appearance: none; cursor: pointer; font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted);
+  background: transparent; border: 1px solid var(--border-soft); border-radius: 999px;
+  padding: 8px 18px; transition: color 0.4s var(--ease), background 0.4s var(--ease), border-color 0.4s var(--ease);
+}
+.menu-filter:hover { color: var(--accent); border-color: rgba(198,161,91,0.4); }
+.menu-filter.is-active { color: #fff; background: var(--accent); border-color: var(--accent); }
+
+/* Booking result / summary (Phase 1, js/booking-core.js) */
+.booking-result { margin-top: 1.75rem; max-width: 640px; margin-left: auto; margin-right: auto; text-align: left; }
+.booking-msg { padding: 0.9rem 1.1rem; border-radius: var(--radius-md); font-size: var(--fs-sm); margin-bottom: 1rem; }
+.booking-msg--ok { color: #1f6b3a; background: rgba(46,160,89,0.1); border: 1px solid rgba(46,160,89,0.3); }
+.booking-msg--error { color: #c0392b; background: rgba(192,57,43,0.08); border: 1px solid rgba(192,57,43,0.3); }
+.booking-summary { display: flex; flex-direction: column; gap: 0.6rem; padding: 1.1rem 1.2rem; border: 1px solid var(--border-soft); border-radius: var(--radius-md); background: var(--surface); margin-bottom: 1.1rem; }
+.booking-summary__row { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; color: var(--text-muted); font-size: var(--fs-sm); }
+.booking-summary__row strong { color: var(--text); }
+.booking-form { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem 1.1rem; align-items: end; }
+.booking-form .field { margin: 0; }
+ .booking-form #bkConfirm { grid-column: 1 / -1; }
+ .booking .input--error { border-color: #ef4444; background: #fff5f5; }
+ .bk-field-err { color: #ef4444; font-size: 12.5px; line-height: 1.35; margin-top: 4px; }
+ @media (max-width: 560px) { .booking-form { grid-template-columns: 1fr; } }
+
+/* My Booking lookup (js/site-booking-lookup.js) */
+.booking-lookup { margin-top: 3rem; padding-top: 2.5rem; border-top: 1px solid var(--border-soft); }
+.booking-lookup__head { text-align: center; max-width: 560px; margin: 0 auto 1.75rem; }
+.booking-lookup__head .eyebrow { display: inline-block; }
+.booking-lookup__head h3 { font-family: var(--font-head); margin: 0.4rem 0; }
+.booking-lookup__form { display: grid; grid-template-columns: 1.2fr 1fr 1fr auto; gap: 0.9rem 1.1rem; align-items: end; }
+.booking-lookup__form .field { margin: 0; }
+@media (max-width: 760px) { .booking-lookup__form { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 480px) { .booking-lookup__form { grid-template-columns: 1fr; } }
+
+/* Status / payment badges (shared palette with admin dashboard) */
+.tag { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; font-size: 0.72rem; font-weight: 500; }
+.tag-Confirmed, .tag-Published { background: rgba(34,197,94,0.14); color: #6ee7a0; }
+.tag-Pending { background: rgba(234,179,8,0.16); color: #f0d27a; }
+.tag-Cancelled, .tag-Hidden { background: rgba(220,38,38,0.15); color: #f0a3a3; }
+.tag-CheckedIn { background: rgba(96,165,250,0.16); color: #93c5fd; }
+.tag-CheckedOut { background: rgba(148,163,184,0.16); color: #cbd5e1; }
+.tag-Paid { background: rgba(34,197,94,0.14); color: #6ee7a0; }
+.tag-Unpaid { background: rgba(220,38,38,0.15); color: #f0a3a3; }
+.tag-Refunded { background: rgba(148,163,184,0.16); color: #cbd5e1; }
+.tag-Failed { background: rgba(220,38,38,0.15); color: #f0a3a3; }
+
+.booking-dl { display: grid; grid-template-columns: 160px 1fr; gap: 8px 16px; margin: 6px 0 14px; }
+.booking-dl dt { color: var(--text-muted); font-size: 0.8rem; }
+.booking-dl dd { margin: 0; font-size: 0.9rem; }
+.booking-note { font-size: 0.8rem; margin-top: 0.5rem; }
+
 /* Room card premium micro-interactions */
 .room-card { transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease), border-color 0.55s var(--ease); }
 .room-card:hover { transform: translateY(-12px); box-shadow: var(--shadow-lg); border-color: rgba(198,161,91,0.32); }
