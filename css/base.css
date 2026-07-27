@@ -80,6 +80,8 @@ html[dir="rtl"] .eyebrow::before { order: 2; }
   position: fixed; top: 0; left: 0; height: 3px; width: 0%;
   background: linear-gradient(90deg, var(--accent), var(--accent-soft));
   z-index: var(--z-progress); transition: width 0.1s linear;
+  transform-origin: left;
+  box-shadow: 0 0 12px rgba(198,161,91,0.6);
 }
 
 /* =========================================================

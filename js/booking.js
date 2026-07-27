@@ -7,6 +7,7 @@
   /* ---------- Date defaults ---------- */
   const ci = document.getElementById("bkCheckin");
   const co = document.getElementById("bkCheckout");
+  const bkRoom = document.getElementById("bkRoom");
   const fmt = (d) => d.toISOString().split("T")[0];
   if (ci && co) {
     const today = new Date();
@@ -20,18 +21,44 @@
     });
   }
 
+  /* ---------- Dynamically populate room select from live API ---------- */
+  async function populateRoomSelect() {
+    if (!bkRoom) return;
+    let rooms = [];
+    try {
+      if (window.MGSiteData && window.MGSiteData.getList) {
+        rooms = await window.MGSiteData.getList("rooms") || [];
+      } else if (window.MGApiClient && window.MGApiConfig && window.MGApiConfig.baseUrl) {
+        const res = await fetch(window.MGApiConfig.baseUrl + "/rooms", { headers: { Accept: "application/json" } });
+        const json = await res.json();
+        if (json.ok && Array.isArray(json.data)) rooms = json.data;
+      }
+    } catch (e) { /* fallback to existing options */ }
+    if (!rooms.length) return;
+    const lang = (window.MGLang && window.MGLang.get && window.MGLang.get()) || "en";
+    bkRoom.innerHTML = rooms.map(r => {
+      const label = lang === "ar" && r.name_ar ? r.name_ar : (r.name || r.type || "");
+      return "<option value=\"" + esc(r.id) + "\">" + esc(label) + " — " + esc(r.type || "") + "</option>";
+    }).join("");
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => { setTimeout(populateRoomSelect, 300); });
+  } else {
+    setTimeout(populateRoomSelect, 300);
+  }
+
   /* ---------- Booking flow (Phase 1: availability + Pending booking) ---------- */
   const search = document.getElementById("bkSearch");
   const result = document.getElementById("bkResult");
 
-  function t(key, en, ar) {
+  var t = (window.MGShared && MGShared.t) || function (key, en, ar) {
     const lang = window.MGLang && window.MGLang.get && window.MGLang.get();
     return lang === "ar" ? ar : en;
-  }
-  function esc(s) {
+  };
+  var esc = (window.MGShared && MGShared.esc) || function (s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  };
 
   /* ---------- Basic input validation (no OTP / no verification) ---------- */
   // Full name: >=3 chars, letters and spaces only, must look like a name
@@ -106,8 +133,8 @@
       const n = Math.round((new Date(co.value) - new Date(ci.value)) / 86400000);
       if (n <= 0) { alert(t("bk_err_range", "Check-out must be after check-in.", "يجب أن يكون الخروج بعد الدخول.")); return; }
 
-      const type = document.getElementById("bkRoom").value;
-      const room = window.MGBooking.resolveRoom(type);
+      const roomId = document.getElementById("bkRoom").value;
+      const room = window.MGBooking.resolveRoom(roomId);
       const guestsVal = document.getElementById("bkGuests").value;
       const adults = parseInt(guestsVal, 10) || 1;
 
@@ -129,7 +156,7 @@
           <div class="booking-summary">
             <div class="booking-summary__row"><span>${t("bk_dates", "Dates", "التواريخ")}</span><strong>${esc(ci.value)} → ${esc(co.value)} · ${n} ${t("bk_nights", "night(s)", "ليلة")}</strong></div>
             <div class="booking-summary__row"><span>${t("bk_guests_l", "Guests", "الضيوف")}</span><strong>${adults} ${t("bk_adults", "adult(s)", "بالغ")}</strong></div>
-            <div class="booking-summary__row"><span>${t("bk_total", "Estimated total", "الإجمالي التقديري")}</span><strong>$${price.toLocaleString()}</strong></div>
+            <div class="booking-summary__row"><span>${t("bk_total", "Estimated total", "الإجمالي التقديري")}</span><strong>${(window.MGSettings && MGSettings.formatMoney) ? MGSettings.formatMoney(price) : new Intl.NumberFormat("en-US", { style: "currency", currency: (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD", currencyDisplay: "symbol", minimumFractionDigits: 2 }).format(price)}</strong></div>
           </div>
           <div class="booking-form">
             <div class="field"><label>${t("bk_name", "Full name", "الاسم الكامل")}</label><input class="input" id="bkName" /></div>
@@ -175,8 +202,11 @@
             // NOT placed in the URL. Cleared on navigation away.
             window.__mgCurrentBooking = created;
             msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--ok";
-            msgEl.innerHTML = `${t("bk_done", "Booking confirmed! Reference: ", "تم تأكيد الحجز! المرجع: ")}<strong>${esc(created.id)}</strong><br>${t("bk_status", "Status: Pending · Payment: Unpaid", "الحالة: قيد الانتظار · الدفع: غير مدفوع")}`;
+            msgEl.innerHTML = `${t("bk_done", "Booking confirmed! Reference: ", "تم تأكيد الحجز! المرجع: ")}<strong>${esc(created.id)}</strong><br> ${t("bk_status", "Status: Pending · Payment: Unpaid", "الحالة: قيد الانتظار · الدفع: غير مدفوع")}`;
             confirmBtn.textContent = t("bk_confirmed", "Booked", "تم الحجز");
+            if (window.MGPayment && window.MGPayment.bindConfirmPanel) {
+              window.MGPayment.bindConfirmPanel();
+            }
           } catch (e) {
             msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--error";
             msgEl.textContent = t("bk_fail", "Could not complete booking: " + e.message, "تعذّر إتمام الحجز: " + e.message);
@@ -212,14 +242,33 @@
      Swiper is loaded via an async CDN <script>, so window.Swiper may not
      exist yet when this script runs. Retry briefly until it's available.
      Exposed as window.initTestiSwiper so the data layer can (re)init after
-     dynamically injecting review slides. */
+     dynamically injecting review slides.
+     BUG FIX: loop:true breaks with 1 slide. Handle 0/1/N slides. */
+  let _testiSwiper = null;
   function initTestimonials() {
     const el = document.getElementById("testiSwiper");
-    if (!el || !window.Swiper) return false;
+    const wrap = document.getElementById("testiWrap");
+    if (!el || !window.Swiper || !wrap) return false;
     // Destroy any prior instance so re-rendered slides start clean.
-    if (el.swiper) el.swiper.destroy(true, true);
-    new Swiper("#testiSwiper", {
-      slidesPerView: 1, spaceBetween: 24, grabCursor: true, loop: true,
+    if (_testiSwiper) { _testiSwiper.destroy(true, true); _testiSwiper = null; }
+    if (el.swiper) { el.swiper.destroy(true, true); }
+    const slideCount = wrap.querySelectorAll(".swiper-slide").length;
+    // Hide navigation + pagination for 0 or 1 slides
+    const prevBtn = document.getElementById("testiPrev");
+    const nextBtn = document.getElementById("testiNext");
+    const dots = el.querySelector(".swiper-pagination");
+    if (slideCount <= 1) {
+      if (prevBtn) prevBtn.style.display = "none";
+      if (nextBtn) nextBtn.style.display = "none";
+      if (dots) dots.style.display = "none";
+      return true;
+    }
+    if (prevBtn) prevBtn.style.display = "";
+    if (nextBtn) nextBtn.style.display = "";
+    if (dots) dots.style.display = "";
+    _testiSwiper = new Swiper("#testiSwiper", {
+      slidesPerView: 1, spaceBetween: 24, grabCursor: true,
+      loop: slideCount > 1,
       autoHeight: true,
       pagination: { el: ".voices__dots", clickable: true },
       navigation: { prevEl: "#testiPrev", nextEl: "#testiNext" },

@@ -1,0 +1,18 @@
+# Environment secrets (NEVER commit).
+.env
+.env.local
+.env.*.local
+
+# Local service-account credentials (NEVER commit).
+*-sa.json
+service-account*.json
+*serviceAccount*.json
+firebase-adminsdk*.json
+credentials.json
+*.key.json
+
+# Build / OS noise
+.DS_Store
+Thumbs.db
+*.log
+node_modules/

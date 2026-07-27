@@ -9,11 +9,7 @@
 (function () {
   "use strict";
 
-  function esc(s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  var esc = window.MGShared && MGShared.esc;
 
   function isActive(it) {
     if (it.active === false) return false;
@@ -74,7 +70,7 @@
     try {
       items = await (window.MGSiteData
         ? window.MGSiteData.getList("menu")
-        : (window.__mgSeed ? window.__mgSeed.menu : [])) || [];
+        : (window.__mgSeed ? window.__mgSeed().menu : [])) || [];
     } catch (e) {
       if (loading) loading.hidden = true;
       if (error) { error.hidden = false; error.textContent = "We couldn't load the menu. Please refresh."; }

@@ -1,81 +1,140 @@
 /* =========================================================
    booking-core.js — Booking architecture + room availability.
    ---------------------------------------------------------
-   PHASE 1 ONLY: architecture, availability logic, and
-   booking creation (status: Pending). No payment, no
-   WhatsApp/email, no external integrations.
-
-   Single source of truth: Firestore `bookings` (+ `rooms`).
-   In demo mode it falls back to window.__mgSeed and a
-   localStorage overlay so created bookings persist for the
-   session and actually block double-booking.
+   Phase 3: REST API (PostgreSQL) is the source of truth.
+   - Availability: GET /api/bookings/availability
+   - Creation:     POST /api/bookings
+   - Demo mode:    localStorage (mg-demo-db) fallback.
 
    Exposed as window.MGBooking.
    ========================================================= */
 (function () {
   "use strict";
 
-  /* ---- date helpers (dates are YYYY-MM-DD, treated as whole days) ---- */
+  /* ---- config ---- */
+  function apiBase() {
+    return (window.MGApiConfig && window.MGApiConfig.baseUrl) || "";
+  }
+  function isLive() {
+    return !!(window.MGApiClient && apiBase());
+  }
+
+  /* ---- date helpers (YYYY-MM-DD, whole days) ---- */
   function parse(d) { return d ? new Date(d + "T00:00:00") : null; }
   function nights(inStr, outStr) {
-    const a = parse(inStr), b = parse(outStr);
+    var a = parse(inStr), b = parse(outStr);
     if (!a || !b) return 0;
-    const n = Math.round((b - a) / 86400000);
+    var n = Math.round((b - a) / 86400000);
     return n > 0 ? n : 0;
   }
 
-  /* Half-open interval overlap.
-     A stay occupies [checkin, checkout). Check-out day is FREE.
-     Overlap exists iff requestIn < existingOut AND requestOut > existingIn.
-     This correctly handles: same check-in, same check-out, fully inside,
-     fully outside, and back-to-back (existingOut === requestIn => no overlap). */
+  /* Half-open interval overlap. */
   function isOverlap(reqIn, reqOut, exIn, exOut) {
-    const a = parse(reqIn), b = parse(reqOut), c = parse(exIn), d = parse(exOut);
+    var a = parse(reqIn), b = parse(reqOut), c = parse(exIn), d = parse(exOut);
     if (!a || !b || !c || !d) return false;
     return a.getTime() < d.getTime() && b.getTime() > c.getTime();
   }
 
-  /* ---- room resolution (selected option is a TYPE, map to a concrete room) ---- */
-  const TYPE_TO_ROOM = {
-    "Deluxe Room": "r1",
-    "Executive Suite": "r2",      // closest match: Nile View Suite
-    "Nile View Suite": "r2",
-    "Presidential Villa": "r3"
-  };
+  /* ---- room resolution (always from database/seed, never hardcoded) ---- */
 
-  async function getRooms() {
-    return (window.MGSiteData && await window.MGSiteData.getList("rooms")) || [];
+  function getRooms() {
+    return (window.MGSiteData && window.MGSiteData.getList("rooms")) || Promise.resolve([]);
   }
 
-  function roomById(rooms, id) { return rooms.find(r => r.id === id) || null; }
+  function roomById(rooms, id) {
+    for (var i = 0; i < rooms.length; i++) {
+      if (rooms[i] && rooms[i].id === id) return rooms[i];
+    }
+    return null;
+  }
 
   function resolveRoom(typeOrId) {
-    // Synchronous best-effort using the seed (used for price preview before async load).
-    const seed = (window.__mgSeed && typeof window.__mgSeed === "function") ? window.__mgSeed() : null;
-    const rooms = (seed && seed.rooms) || [];
+    // Synchronous best-effort using the seed (for price preview before async load).
+    // Never uses hardcoded room name maps — always matches against live data.
+    var seed = (window.__mgSeed && typeof window.__mgSeed === "function") ? window.__mgSeed() : null;
+    var rooms = (seed && seed.rooms) || [];
     if (!typeOrId) return rooms[0] || null;
-    let id = TYPE_TO_ROOM[typeOrId] || null;
-    if (!id && /^[a-z]\d+$/i.test(typeOrId)) id = typeOrId; // already an id
-    return roomById(rooms, id) || rooms.find(r => r.type === typeOrId) || rooms[0] || null;
+    // 1. Exact id match
+    var r = roomById(rooms, typeOrId);
+    if (r) return r;
+    // 2. Type match
+    r = rooms.filter(function (r) { return r.type === typeOrId; })[0];
+    if (r) return r;
+    // 3. Name match
+    r = rooms.filter(function (r) { return r.name === typeOrId; })[0];
+    if (r) return r;
+    // 4. Fallback to first room
+    return rooms[0] || null;
   }
 
-  /* ---- Demo booking source ----
-     SHARED with the Admin Dashboard Demo store. Both the public
-     booking flow and the admin Bookings section read/write the SAME
-     localStorage key (mg-demo-db) with the SAME shape:
-        { rooms:[...], bookings:[...], ... }   (see dashboard.js Demo)
-     so a public booking shows up in admin, and an admin status change
-     affects public availability — without duplicating data.
-     In live mode this is bypassed entirely (Firestore is the source). */
-  const DEMO_DB_KEY = "mg-demo-db";
+  /** Async room resolution — fetches real rooms from the API in live mode
+   *  so the actual PostgreSQL id is used (not seed IDs r1/r2/r3). */
+  function resolveRoomLive(typeOrId) {
+    if (!isLive()) return Promise.resolve(resolveRoom(typeOrId));
+    return getRooms().then(function (rooms) {
+      if (!rooms || !rooms.length) return resolveRoom(typeOrId);
+      // 1. Exact id match (already a real PostgreSQL id).
+      var r = roomById(rooms, typeOrId);
+      if (r) return r;
+      // 2. Type match.
+      for (var i = 0; i < rooms.length; i++) {
+        if (rooms[i].type === typeOrId) return rooms[i];
+      }
+      // 3. Name match.
+      for (var i = 0; i < rooms.length; i++) {
+        if (rooms[i].name === typeOrId) return rooms[i];
+      }
+      // 4. Fall back to first API room.
+      return rooms[0] || resolveRoom(typeOrId) || null;
+    }).catch(function () {
+      return resolveRoom(typeOrId);
+    });
+  }
+
+  /* ---- payload normalisation (ensures only backend-allowed field names) ---- */
+  var ALLOWED_BOOKING_FIELDS = ["guestName", "email", "phone", "roomId", "checkin", "checkout", "adults", "children", "rooms"];
+  var FIELD_ALIAS = { checkIn: "checkin", checkOut: "checkout" };
+
+  function normalizePayload(raw) {
+    var out = {};
+    var keys = Object.keys(raw || {});
+    for (var i = 0; i < keys.length; i++) {
+      var k = FIELD_ALIAS[keys[i]] || keys[i];
+      if (ALLOWED_BOOKING_FIELDS.indexOf(k) !== -1) out[k] = raw[keys[i]];
+    }
+    return out;
+  }
+
+  /* ---- normalisation: backend enums → frontend Title Case ---- */
+  var STATUS_MAP = (window.MGShared && MGShared.STATUS_MAP) || {
+    "PENDING": "Pending", "CONFIRMED": "Confirmed",
+    "CHECKED_IN": "Checked In", "CHECKED_OUT": "Checked Out",
+    "CANCELLED": "Cancelled"
+  };
+  var PAY_STATUS_MAP = (window.MGShared && MGShared.PAY_STATUS_MAP) || {
+    "UNPAID": "Unpaid", "PENDING": "Pending",
+    "PAID": "Paid", "FAILED": "Failed", "REFUNDED": "Refunded"
+  };
+
+  var normalizeBooking = (window.MGShared && MGShared.normalizeBooking) || function (b) {
+    if (!b) return b;
+    var out = Object.assign({}, b);
+    if (out.status && STATUS_MAP[out.status]) out.status = STATUS_MAP[out.status];
+    if (out.paymentStatus && PAY_STATUS_MAP[out.paymentStatus]) out.paymentStatus = PAY_STATUS_MAP[out.paymentStatus];
+    // Backend returns ISO createdAt; frontend expects `created` string.
+    if (out.createdAt && !out.created) out.created = out.createdAt;
+    return out;
+  };
+
+  /* ---- Demo booking source ---- */
+  var DEMO_DB_KEY = "mg-demo-db";
 
   function loadDemoDb() {
     try {
-      const raw = localStorage.getItem(DEMO_DB_KEY);
+      var raw = localStorage.getItem(DEMO_DB_KEY);
       if (raw) return JSON.parse(raw);
     } catch (e) {}
-    // First run: seed from canonical seed-data.js and persist it.
-    const db = (window.__mgSeed && typeof window.__mgSeed === "function") ? window.__mgSeed() : { bookings: [] };
+    var db = (window.__mgSeed && typeof window.__mgSeed === "function") ? window.__mgSeed() : { bookings: [] };
     try { localStorage.setItem(DEMO_DB_KEY, JSON.stringify(db)); } catch (e) {}
     return db;
   }
@@ -83,119 +142,196 @@
     try { localStorage.setItem(DEMO_DB_KEY, JSON.stringify(db)); } catch (e) {}
   }
   function allDemoBookings() {
-    const db = loadDemoDb();
+    var db = loadDemoDb();
     return (db.bookings || []).slice();
   }
 
-  async function getBookingsForRoom(roomId) {
-    // Live: read from Firestore via the shared data layer.
-    if (window.MGSiteData && window.MGFirebaseServices && window.MGFirebaseServices.isLive()) {
-      const all = await window.MGSiteData.getList("bookings") || [];
-      return all.filter(b => (b.roomId || "") === roomId);
+  /* ---- availability ---- */
+  // Returns { available, conflicting: [], reason }
+  function getAvailability(roomId, inStr, outStr) {
+    if (!roomId || !inStr || !outStr) return Promise.resolve({ available: false, conflicting: [], reason: "missing" });
+    if (nights(inStr, outStr) <= 0) return Promise.resolve({ available: false, conflicting: [], reason: "dates" });
+
+    // Live: resolve real room id from API, then check availability.
+    if (isLive()) {
+      return resolveRoomLive(roomId).then(function (room) {
+        var realId = room ? room.id : roomId;
+        var url = apiBase() + "/bookings/availability?roomId=" + encodeURIComponent(realId)
+          + "&checkIn=" + encodeURIComponent(inStr)
+          + "&checkOut=" + encodeURIComponent(outStr);
+        return fetch(url, { method: "GET", headers: { Accept: "application/json" } })
+          .then(function (res) {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.json();
+          })
+          .then(function (json) {
+            if (json.ok !== true || !json.data) throw new Error("Malformed response");
+            return { available: !!json.data.available, conflicting: [], reason: json.data.available ? null : "overlap" };
+          });
+      }).catch(function () {
+        return demoAvailability(roomId, inStr, outStr);
+      });
     }
-    // Demo: seed + any locally created bookings.
-    return allDemoBookings().filter(b => (b.roomId || "") === roomId);
+
+    // Demo: local overlap check.
+    return Promise.resolve(demoAvailability(roomId, inStr, outStr));
   }
 
-  /* ---- availability ---- */
-  // Returns { available, conflicting: [booking...], reason }
-  async function getAvailability(roomId, inStr, outStr) {
-    if (!roomId || !inStr || !outStr) return { available: false, conflicting: [], reason: "missing" };
-    if (nights(inStr, outStr) <= 0) return { available: false, conflicting: [], reason: "dates" };
-    const bookings = await getBookingsForRoom(roomId);
-    const conflicting = bookings.filter(b => {
-      const st = b.status || "Pending";
-      // Cancelled stays are void. Checked Out stays are complete -> the room
-      // is free now and must not block ANY requested dates (incl. historical
-      // overlaps). Only active/upcoming stays block availability.
+  function demoAvailability(roomId, inStr, outStr) {
+    var bookings = allDemoBookings().filter(function (b) { return (b.roomId || "") === roomId; });
+    var conflicting = bookings.filter(function (b) {
+      var st = b.status || "Pending";
       if (st === "Cancelled" || st === "Checked Out") return false;
       return isOverlap(inStr, outStr, b.checkin, b.checkout);
     });
-    return { available: conflicting.length === 0, conflicting, reason: conflicting.length ? "overlap" : null };
+    return { available: conflicting.length === 0, conflicting: conflicting, reason: conflicting.length ? "overlap" : null };
   }
 
   function priceFor(room, nightCount, roomsCount) {
-    const rate = Number(room && room.price) || 0;
-    const n = Math.max(0, nightCount | 0);
-    const rc = Math.max(1, roomsCount | 0);
+    var rate = Number(room && room.price) || 0;
+    var n = Math.max(0, nightCount | 0);
+    var rc = Math.max(1, roomsCount | 0);
     return rate * n * rc;
   }
 
-  /* ---- create booking (Pending) ---- */
-  // draft: { guestName, email, phone, roomId, checkin, checkout,
-  //           adults, children, rooms }
-  async function createBooking(draft) {
+  /* ---- create booking ---- */
+  function createBooking(draft) {
     draft = draft || {};
-    const room = resolveRoom(draft.roomId);
-    if (!room) throw new Error("Unknown room");
-    const n = nights(draft.checkin, draft.checkout);
-    if (n <= 0) throw new Error("Invalid dates");
+    var n = nights(draft.checkin, draft.checkout);
+    if (n <= 0) return Promise.reject(new Error("Invalid dates"));
 
-    // Final availability guard (prevent race / double booking).
-    const avail = await getAvailability(draft.roomId, draft.checkin, draft.checkout);
-    if (!avail.available) throw new Error("Selected dates are no longer available");
+    var adults = draft.adults || 1;
+    var children = draft.children || 0;
+    var roomsCount = draft.rooms || 1;
 
-    const total = priceFor(room, n, draft.rooms || 1);
-    const booking = {
-      guestName: draft.guestName || "Guest",
-      email: draft.email || "",
-      phone: draft.phone || "",
-      roomId: room.id,
-      roomName: room.name,
-      room: room.name,                 // dashboard compat
-      roomType: room.type || room.name,
-      checkin: draft.checkin,
-      checkout: draft.checkout,
-      adults: draft.adults || 1,
-      children: draft.children || 0,
-      rooms: draft.rooms || 1,
-      guests: (draft.adults || 1) + (draft.children || 0), // dashboard compat
-      nights: n,
-      total: total,
-      revenue: total,                 // dashboard compat
-      status: "Pending",
-      paymentStatus: "Unpaid",
-      created: new Date().toISOString()
-    };
+    // Resolve room — in live mode fetch real PostgreSQL id from API.
+    var roomPromise = isLive()
+      ? resolveRoomLive(draft.roomId)
+      : Promise.resolve(resolveRoom(draft.roomId));
 
-    // Live path: server-authoritative creation (Firestore transaction
-    // inside the createBooking Cloud Function — closes the live
-    // double-booking race). The function returns the new id; the
-    // onBookingCreate trigger stamps accessToken, which we re-read.
-    if (window.MGSiteData && window.MGFirebaseServices && window.MGFirebaseServices.isLive()) {
-      const FB = window.MGFirebase;
-      if (FB && FB.callFunction) {
-        const res = await FB.callFunction("createBooking", {
-          guestName: booking.guestName, email: booking.email, phone: booking.phone,
-          roomId: booking.roomId, checkin: booking.checkin, checkout: booking.checkout,
-          adults: booking.adults, children: booking.children, rooms: booking.rooms
-        });
-        if (res && res.id) {
-          // Re-read so the server-stamped accessToken is captured.
-          const full = await window.MGSiteData.getById("bookings", res.id);
-          if (full) return full;
-          return { ...booking, id: res.id };
-        }
+    return roomPromise.then(function (room) {
+      if (!room) throw new Error("Unknown room");
+
+      // Normalise + build payload — only backend-allowed fields.
+      var payload = normalizePayload({
+        guestName: draft.guestName || "Guest",
+        email: draft.email || "",
+        phone: draft.phone || "",
+        roomId: room.id,
+        checkin: draft.checkin,
+        checkout: draft.checkout,
+        adults: adults,
+        children: children,
+        rooms: roomsCount
+      });
+
+      // Live: POST /api/bookings
+      if (isLive()) {
+        var url = apiBase() + "/bookings";
+        return fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify(payload)
+        })
+          .then(function (res) {
+            return res.json().then(function (json) {
+              if (!res.ok || !json || !json.ok || !json.booking) {
+                var msg = (json && json.error && json.error.message) || "Booking failed";
+                throw new Error(msg);
+              }
+              return normalizeBooking(json.booking);
+            });
+          });
       }
-      return await window.MGSiteData.create("bookings", booking);
+
+      // Demo path: append to shared localStorage.
+      var total = priceFor(room, n, roomsCount);
+      var booking = Object.assign({}, payload, {
+        roomId: room.id,
+        roomName: room.name,
+        room: room.name,
+        roomType: room.type || room.name,
+        guests: adults + children,
+        nights: n,
+        total: total,
+        revenue: total,
+        status: "Pending",
+        paymentStatus: "Unpaid",
+        created: new Date().toISOString()
+      });
+      var db = loadDemoDb();
+      var id = "pb_" + Date.now();
+      var saved = Object.assign({}, booking, { id: id, accessToken: "demo_" + id });
+      db.bookings = db.bookings || [];
+      db.bookings.push(saved);
+      saveDemoDb(db);
+      return saved;
+    });
+  }
+
+  /* ---- lookup booking by reference + contact ---- */
+  function lookupBooking(reference, email, phone) {
+    // Live: POST /api/bookings/lookup
+    if (isLive()) {
+      var url = apiBase() + "/bookings/lookup";
+      var payload = { reference: reference };
+      if (email) payload.email = email;
+      if (phone) payload.phone = phone;
+      return fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(payload)
+      })
+        .then(function (res) {
+          return res.json().then(function (json) {
+            if (!res.ok || !json || !json.ok || !json.booking) return null;
+            return normalizeBooking(json.booking);
+          });
+        })
+        .catch(function () { return null; });
     }
 
-    // Demo path: append to the SHARED mg-demo-db.bookings so the admin
-    // dashboard sees it and it blocks re-booking on the public side.
-    const db = loadDemoDb();
-    const id = "pb_" + Date.now();
-    // Demo-only token (no real security in demo mode). In live mode the
-    // authoritative accessToken is stamped by the backend trigger and
-    // returned via MGSiteData.create -> getById.
-    const saved = { ...booking, id, accessToken: "demo_" + id };
-    db.bookings = db.bookings || [];
-    db.bookings.push(saved);
-    saveDemoDb(db);
-    return saved;
+    // Demo: search localStorage.
+    var all = allDemoBookings();
+    var b = null;
+    for (var i = 0; i < all.length; i++) {
+      if ((all[i].id || "") === reference) { b = all[i]; break; }
+    }
+    if (!b) return Promise.resolve(null);
+    var norm = function (v) { return String(v || "").trim().toLowerCase().replace(/\s+/g, ""); };
+    var ok = (email && norm(b.email) === norm(email)) || (phone && norm(b.phone) === norm(phone));
+    return Promise.resolve(ok ? normalizeBooking(b) : null);
+  }
+
+  /* ---- fetch booking by id (with accessToken) ---- */
+  function getBookingById(id, accessToken) {
+    if (isLive()) {
+      var url = apiBase() + "/bookings/" + encodeURIComponent(id) + "?accessToken=" + encodeURIComponent(accessToken || "");
+      return fetch(url, { method: "GET", headers: { Accept: "application/json" } })
+        .then(function (res) {
+          return res.json().then(function (json) {
+            if (!res.ok || !json || !json.ok || !json.booking) return null;
+            return normalizeBooking(json.booking);
+          });
+        })
+        .catch(function () { return null; });
+    }
+    var all = allDemoBookings();
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].id === id) return Promise.resolve(normalizeBooking(all[i]));
+    }
+    return Promise.resolve(null);
   }
 
   window.MGBooking = {
-    nights, isOverlap, getAvailability, priceFor,
-    resolveRoom, createBooking, getBookingsForRoom
+    nights: nights,
+    isOverlap: isOverlap,
+    getAvailability: getAvailability,
+    priceFor: priceFor,
+    resolveRoom: resolveRoom,
+    createBooking: createBooking,
+    lookupBooking: lookupBooking,
+    getBookingById: getBookingById,
+    normalizeBooking: normalizeBooking
   };
 })();

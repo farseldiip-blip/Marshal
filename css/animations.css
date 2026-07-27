@@ -19,48 +19,11 @@ html.has-anim .img-reveal  { clip-path: inset(0 0 100% 0); }
 /* ---------- Lock scroll while loading (no layout shift) ---------- */
 html.is-loading, html.is-loading body { overflow: hidden; height: 100%; }
 
-/* ---------- Scroll progress bar ---------- */
-.scroll-progress {
-  position: fixed; top: 0; left: 0; height: 3px; width: 0;
-  background: linear-gradient(90deg, var(--accent), #e6c98a);
-  z-index: var(--z-progress); transform-origin: left;
-  box-shadow: 0 0 12px rgba(198,161,91,0.6);
-}
-
 /* ---------- Page transition overlay ---------- */
 .page-transition {
   position: fixed; inset: 0; z-index: var(--z-transition);
   background: var(--primary); transform: translateY(100%);
   pointer-events: none; will-change: transform;
-}
-
-/* ---------- Loader (cinematic) ---------- */
-.loader {
-  position: fixed; inset: 0; z-index: var(--z-loader);
-  background: #0F172A; display: grid; place-items: center;
-  will-change: transform, opacity;
-}
-.loader__inner { text-align: center; color: #fff; }
-.loader__logo {
-  font-family: var(--font-head); font-size: clamp(2.2rem, 7vw, 3.4rem);
-  letter-spacing: 0.04em; overflow: hidden; line-height: 1.1;
-}
-.loader__logo span { color: var(--accent); }
-.loader__sub {
-  font-size: var(--fs-xs); letter-spacing: 0.4em; text-transform: uppercase;
-  color: var(--accent); margin-top: 12px; opacity: 0.85;
-}
-.loader__bar {
-  width: min(240px, 56vw); height: 2px; background: rgba(255,255,255,0.14);
-  margin: var(--sp-4) auto 0; overflow: hidden; border-radius: 2px;
-}
-.loader__bar span {
-  display: block; height: 100%; width: 0; background: var(--accent);
-  box-shadow: 0 0 10px rgba(198,161,91,0.7); border-radius: 2px;
-}
-.loader__count {
-  font-family: var(--font-head); font-size: clamp(2rem, 6vw, 3rem);
-  color: var(--accent); margin-top: var(--sp-3); font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Hero ---------- */
@@ -96,11 +59,36 @@ html.is-loading, html.is-loading body { overflow: hidden; height: 100%; }
 
 /* ---------- Marquee ---------- */
 .marquee { overflow: hidden; white-space: nowrap; border-block: 1px solid var(--border); padding-block: var(--sp-3); }
-.marquee__track { display: flex; width: max-content; animation: marquee-scroll 26s linear infinite; will-change: transform; }
+/* The track is forced LTR so the duplicated [Group][Group] layout — and
+   therefore the "one group width = 50% of track" math — is identical
+   regardless of the page direction. This makes the loop mathematically
+   seamless in BOTH LTR and RTL without relying on direction:rtl to
+   reverse the transform (which visually broke the RTL loop). */
+.marquee__track {
+  display: flex;
+  width: max-content;
+  direction: ltr;
+  animation: marquee-scroll-ltr 26s linear infinite;
+  will-change: transform;
+}
 .marquee__group { display: flex; flex-shrink: 0; gap: var(--sp-6); padding-right: var(--sp-6); }
 .marquee span { font-family: var(--font-head); font-size: 1.6rem; color: var(--primary); display: inline-flex; align-items: center; gap: var(--sp-6); }
 .marquee span::after { content: "✦"; color: var(--accent); }
-@keyframes marquee-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* LTR: scroll left by exactly one duplicated group (= -50% of track). */
+@keyframes marquee-scroll-ltr {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+/* RTL: scroll right by exactly one duplicated group (= +50% of track).
+   Same speed/duration as LTR; only the visual direction flips, and the
+   end of one cycle matches the start of the next with no blank gap. */
+@keyframes marquee-scroll-rtl {
+  from { transform: translateX(0); }
+  to   { transform: translateX(50%); }
+}
+html[dir="rtl"] .marquee__track { animation-name: marquee-scroll-rtl; }
+
 
 /* ---------- Parallax helper ---------- */
 .parallax { will-change: transform; }

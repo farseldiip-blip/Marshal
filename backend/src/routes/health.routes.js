@@ -1,0 +1,11 @@
+/* =========================================================
+   src/routes/health.routes.js
+   ========================================================= */
+const express = require("express");
+const router = express.Router();
+
+router.get("/", (req, res) => {
+  res.json({ ok: true, service: "marshal-backend" });
+});
+
+module.exports = router;

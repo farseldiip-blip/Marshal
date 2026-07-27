@@ -7,6 +7,11 @@
 (function () {
   "use strict";
 
+  var esc = (window.MGShared && MGShared.esc) || function (s) {
+    if (s == null) return "";
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  };
+
   function viewLabel(lang) {
     if (window.MGLang) return window.MGLang.t ? window.MGLang.t("view") : (lang === "ar" ? "عرض التفاصيل" : "View Details");
     return lang === "ar" ? "عرض التفاصيل" : "View Details";
@@ -15,17 +20,19 @@
   function cardHTML(r, lang) {
     const name = lang === "ar" && r.name_ar ? r.name_ar : (r.name || "");
     const desc = lang === "ar" && r.desc_ar ? r.desc_ar : (r.desc || "");
-    const price = typeof r.price === "number" ? "$" + r.price.toLocaleString() : (r.price || "");
-    const amenities = (r.amenities || []).map(x => `<span>${x}</span>`).join("");
+    const price = typeof r.price === "number" ? (window.MGSettings ? MGSettings.formatMoney(r.price) : new Intl.NumberFormat("en-US", { style: "currency", currency: (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD", currencyDisplay: "symbol", minimumFractionDigits: 2 }).format(r.price)) : (r.price || "");
+    const amenities = (r.amenities || []).map(x => `<span>${esc(x)}</span>`).join("");
+    const inPages = window.location.pathname.replace(/\\/g, "/").includes("/pages/");
+    const detailsBase = inPages ? "room-details.html" : "pages/room-details.html";
     return `<article class="card room-card reveal">
-      <div class="media-frame room-card__media"><img src="${r.image || ""}" alt="${name}" loading="lazy"></div>
+      <div class="media-frame room-card__media"><img src="${esc(r.image || "")}" alt="${esc(name)}" loading="lazy"></div>
       <div class="room-card__body">
-        <span class="badge">${r.type || ""}</span>
-        <h3 class="fs-h4">${name}</h3>
-        <p class="text-muted">${desc}</p>
+        <span class="badge">${esc(r.type || "")}</span>
+        <h3 class="fs-h4">${esc(name)}</h3>
+        <p class="text-muted">${esc(desc)}</p>
         <div class="room-card__price">${price} <span>/ night</span></div>
         <div class="room-card__amen">${amenities}</div>
-        <a href="pages/room-details.html" class="btn btn--outline btn--block mt-2">${viewLabel(lang)}</a>
+        <a href="${detailsBase}?id=${encodeURIComponent(r.id)}" class="btn btn--outline btn--block mt-2">${esc(viewLabel(lang))}</a>
       </div>
     </article>`;
   }
@@ -67,6 +74,8 @@
     if (!grid || !window.MGSiteData) return;
     renderRoomsGrid(grid, { limit: grid.dataset.limit ? +grid.dataset.limit : undefined });
     if (window.MGLang) document.addEventListener("lang:change", () => renderRoomsGrid(grid, { limit: grid.dataset.limit ? +grid.dataset.limit : undefined }));
+    // Re-render when settings load (currency may have changed).
+    document.addEventListener("settings:loaded", () => renderRoomsGrid(grid, { limit: grid.dataset.limit ? +grid.dataset.limit : undefined }));
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

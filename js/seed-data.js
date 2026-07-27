@@ -4,9 +4,7 @@
    Used by BOTH the admin dashboard (dashboard.js) and the
    public site data layer (site-data.js) so there is ONE
    mock dataset instead of three divergent copies.
-
-   Shape matches the Firestore collections. Once Firebase is
-   live and seeded, this is only the offline/demo fallback.
+   This is the offline/demo fallback.
    ========================================================= */
 (function () {
   "use strict";
@@ -36,7 +34,7 @@
     reviews: [
       { id: "v1", author: "Layla M.", rating: 5, text: "The most calm I've felt in a hotel. Light, linen, silence — perfect.", location: "Dubai", status: "Published" },
       { id: "v2", author: "James R.", rating: 5, text: "Service that anticipates without intruding. A masterclass in restraint.", location: "London", status: "Published" },
-      { id: "v3", author: "Sara K.", rating: 5, text: "The Nile Suite at sunrise is a memory I'll keep for years.", location: "Cairo", status: "Published" },
+      { id: "v3", author: "Sara K.", rating: 5, text: "The Nile Suite at sunrise is a memory I'll keep for years.", location: "Mansoura", status: "Published" },
       { id: "v4", author: "Omar T.", rating: 5, text: "Every detail intentional. This is what luxury should feel like.", location: "Paris", status: "Pending" }
     ],
     gallery: [
@@ -52,7 +50,7 @@
       { id: "a1", name: "Spa & Wellness", desc: "Hammam rituals and river-facing treatment suites." },
       { id: "a2", name: "Rooftop Pool", desc: "Infinity edge above the city skyline." }
     ],
-    hotel: { name: "Marshal Al-Gezira", tagline: "A Quiet Luxury on the Nile's Edge", email: "stay@marshalgezira.concept", phone: "+20 2 000 0000", address: "Al-Gezira, Cairo, Egypt", about: "A premium concept redesign." },
+    hotel: { name: "Marshal Al-Gezira", tagline: "A Quiet Luxury on the Nile's Edge", email: "stay@marshalgezira.concept", phone: "+20 2 000 0000", address: "Mansoura, Dakahlia, Egypt", about: "A premium concept redesign." },
     settings: { theme: "light", currency: "USD", lang: "en" }
   });
 

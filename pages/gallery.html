@@ -22,7 +22,7 @@
 
   <header class="navbar" id="navbar">
     <div class="navbar__pill">
-    <a href="../index.html" class="brand"><span class="brand__mark">Marshal<small class="brand__sub">Al-Gezira</small></span></a>
+    <a href="../index.html" class="brand"><span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub">Al-Gezira</small></span></a>
     <nav class="nav-links" aria-label="Primary">
       <a href="../index.html#experience">Experience</a><a href="../index.html#rooms">Rooms</a>
       <a href="../index.html#amenities">Amenities</a><a href="../index.html#gallery">Gallery</a>
@@ -57,10 +57,10 @@
   </main>
 
   <footer class="footer"><div class="container">
-    <div><div class="brand"><span class="brand__mark">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></div><p class="mt-2" style="max-width:320px" data-i18n="foot_p">A premium concept redesign — original content, not affiliated.</p></div>
+    <div><div class="brand"><span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></div><p class="mt-2" style="max-width:320px" data-i18n="foot_p">A premium concept redesign — original content, not affiliated.</p></div>
     <div><h4 data-i18n="f_explore">Explore</h4><a href="../index.html#rooms" data-i18n="nav_rooms">Rooms</a><a href="../index.html#amenities" data-i18n="nav_amenities">Amenities</a><a href="../index.html#dining" data-i18n="nav_dining">Dining</a><a href="gallery.html" data-i18n="nav_gallery">Gallery</a></div>
     <div><h4 data-i18n="f_pages">Pages</h4><a href="rooms.html" data-i18n="all_rooms">All Rooms</a><a href="room-details.html" data-i18n="room_details">Room Details</a><a href="about.html" data-i18n="nav_experience">About</a><a href="contact.html" data-i18n="nav_contact">Contact</a></div>
-    <div><h4 data-i18n="f_contact">Contact</h4><a href="#" data-i18n="con_e">stay@marshalgezira.concept</a><a href="#" data-i18n="con_t">+20 2 000 0000</a><a href="../index.html#location" data-i18n="loc_title">Al-Gezira, Cairo</a></div>
+    <div><h4 data-i18n="f_contact">Contact</h4><a href="#" data-setting="email" data-setting-href="email">stay@marshalgezira.concept</a><a href="#" data-setting="phone" data-setting-href="phone">+20 2 000 0000</a><a href="../index.html#location" data-setting="address">Mansoura, Dakahlia, Egypt</a></div>
   </div><div class="footer__bottom"><span>© <span id="year"></span> Marshal Al-Gezira — Concept.</span><span data-i18n="foot_note">Designed as a portfolio concept · Original content</span></div></footer>
 
   <button class="back-to-top" id="backTop" aria-label="Back to top"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
@@ -72,9 +72,11 @@
   <script src="../js/i18n/en.js"></script>
   <script src="../js/i18n/ar.js"></script>
   <script src="../js/i18n.js"></script>
-  <script src="../js/firebase-config.js"></script>
-  <script src="../js/firebase.js"></script>
-  <script src="../js/firebase-services.js"></script>
+  <script src="../js/sanitize.js"></script>
+  <script src="../js/shared.js"></script>
+  <script src="../js/api-config.js"></script>
+  <script src="../js/api-client.js"></script>
+  <script src="../js/site-settings.js"></script>
   <script src="../js/seed-data.js"></script>
   <script src="../js/site-data.js"></script>
   <script src="../js/site-gallery.js"></script>

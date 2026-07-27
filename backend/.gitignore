@@ -1,0 +1,23 @@
+# Local environment / runtime secrets (NEVER commit).
+.env
+.env.local
+*.local
+
+# Local service-account / key files (NEVER commit).
+*-sa.json
+service-account*.json
+*serviceAccount*.json
+firebase-adminsdk*.json
+credentials.json
+*.key.json
+
+# Dependencies
+node_modules/
+
+# Prisma generated client
+prisma/generated/
+
+# Logs / OS noise
+*.log
+.DS_Store
+Thumbs.db

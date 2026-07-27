@@ -1,0 +1,37 @@
+{
+  "name": "marshal-backend",
+  "version": "2.0.0",
+  "description": "Standalone Node.js + Express + PostgreSQL (Prisma) backend for Marshal Al-Gezira.",
+  "main": "src/server.js",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "check": "node --check src/server.js && node --check src/app.js && node --check src/config/env.js && node --check src/config/database.js && node --check src/config/cloudinary.js && node --check src/config/upload.js && node --check src/middleware/cors.js && node --check src/middleware/helmet.js && node --check src/middleware/rateLimit.js && node --check src/middleware/errorHandler.js && node --check src/middleware/requestLogger.js && node --check src/middleware/auth.js && node --check src/middleware/validate.js && node --check src/routes/health.routes.js && node --check src/routes/bookings.routes.js && node --check src/routes/payments.routes.js && node --check src/routes/auth.routes.js && node --check src/routes/admin.routes.js && node --check src/routes/content.routes.js && node --check src/controllers/bookingController.js && node --check src/controllers/paymentController.js && node --check src/controllers/authController.js && node --check src/controllers/adminController.js && node --check src/controllers/contentController.js && node --check src/services/bookingService.js && node --check src/services/paymentService.js && node --check src/services/authService.js && node --check src/services/adminService.js && node --check src/services/contentService.js && node --check src/lib/paymob.js && node --check src/utils/token.js && node --check src/utils/overlap.js && node --check src/utils/errors.js",
+    "prisma:validate": "prisma validate",
+    "prisma:format": "prisma format",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "seed": "node prisma/seed.js",
+    "db:reset:dev": "node backend/scripts/reset-dev-data.js"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.18.0",
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.10.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "prisma": "^5.18.0"
+  }
+}

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Demo Payment — Marshal Al-Gezira</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .checkout {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      max-width: 480px;
+      width: 100%;
+      padding: 2.5rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .checkout__badge {
+      display: inline-block;
+      background: rgba(198, 161, 91, 0.12);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid rgba(198, 161, 91, 0.25);
+      margin-bottom: 1.2rem;
+    }
+
+    .checkout__title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .checkout__subtitle {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin-bottom: 1.8rem;
+      line-height: 1.5;
+    }
+
+    .checkout__details {
+      background: var(--bg-2);
+      border: 1px solid var(--border-soft);
+      border-radius: 0.75rem;
+      padding: 1.2rem 1.4rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .checkout__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+    }
+
+    .checkout__row + .checkout__row {
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .checkout__label {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .checkout__value {
+      color: var(--primary);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .checkout__total {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+
+    .checkout__actions {
+      display: flex;
+      gap: 0.8rem;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 0.85rem 1.2rem;
+      border-radius: 0.5rem;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s, opacity 0.2s;
+      font-family: inherit;
+    }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn--primary {
+      background: var(--accent);
+      color: #0B0D12;
+    }
+    .btn--primary:hover:not(:disabled) { background: var(--accent-soft); }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn--ghost:hover:not(:disabled) { border-color: var(--accent-deep); color: var(--text); }
+
+    .checkout__status {
+      margin-top: 1.2rem;
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+      min-height: 1.2rem;
+    }
+    .checkout__status--error { color: #E57373; }
+    .checkout__status--ok { color: #81C784; }
+
+    .checkout__spinner {
+      display: none;
+      width: 1.1rem;
+      height: 1.1rem;
+      border: 2px solid transparent;
+      border-top-color: #0B0D12;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin: 0 auto;
+    }
+    .checkout__spinner.active { display: inline-block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .checkout__redirect {
+      display: none;
+      text-align: center;
+      padding: 2rem 0;
+    }
+
+    .checkout__redirect.active { display: block; }
+
+    .checkout__redirect h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+
+    .checkout__redirect p {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 1rem; }
+      .checkout { padding: 1.8rem 1.4rem; }
+      .checkout__title { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="checkout" id="checkout">
+    <!-- Loading state -->
+    <div id="state-loading" style="text-align:center; padding:2rem 0;">
+      <div class="checkout__spinner active"></div>
+      <p style="color:var(--muted); margin-top:0.8rem; font-size:0.85rem;">Loading booking details…</p>
+    </div>
+
+    <!-- Main state -->
+    <div id="state-main" style="display:none;">
+      <div class="checkout__badge">Demo Payment</div>
+      <h1 class="checkout__title">Confirm Payment</h1>
+      <p class="checkout__subtitle">
+        This is a simulated payment for development testing. No real money is charged.
+      </p>
+
+      <div class="checkout__details">
+        <div class="checkout__row">
+          <span class="checkout__label">Booking</span>
+          <span class="checkout__value" id="detail-id">—</span>
+        </div>
+        <div class="checkout__row">
+          <span class="checkout__label">Guest</span>
+          <span class="checkout__value" id="detail-guest">—</span>
+        </div>
+        <div class="checkout__row">
+          <span class="checkout__label">Check-in</span>
+          <span class="checkout__value" id="detail-checkin">—</span>
+        </div>
+        <div class="checkout__row">
+          <span class="checkout__label">Check-out</span>
+          <span class="checkout__value" id="detail-checkout">—</span>
+        </div>
+        <div class="checkout__row">
+          <span class="checkout__label">Total</span>
+          <span class="checkout__total" id="detail-total">—</span>
+        </div>
+      </div>
+
+      <div class="checkout__actions">
+        <button class="btn btn--ghost" id="btn-cancel">Cancel</button>
+        <button class="btn btn--primary" id="btn-confirm">
+          <span id="btn-confirm-text">Confirm Payment</span>
+          <span class="checkout__spinner" id="btn-confirm-spinner"></span>
+        </button>
+      </div>
+
+      <div class="checkout__status" id="status"></div>
+    </div>
+
+    <!-- Success redirect state -->
+    <div class="checkout__redirect" id="state-success">
+      <h2>Payment Confirmed</h2>
+      <p>Redirecting back to your booking…</p>
+    </div>
+
+    <!-- Error state -->
+    <div id="state-error" style="display:none; text-align:center; padding:2rem 0;">
+      <div class="checkout__badge" style="background:rgba(229,115,115,0.12); color:#E57373; border-color:rgba(229,115,115,0.25);">Error</div>
+      <h1 class="checkout__title" id="error-title">Payment Failed</h1>
+      <p class="checkout__subtitle" id="error-msg">Something went wrong.</p>
+      <button class="btn btn--ghost" id="btn-retry" style="margin-top:1rem;">Try Again</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var bookingId = params.get("bookingId");
+      var accessToken = params.get("accessToken");
+      var txnId = params.get("txnId");
+
+      var API = "http://localhost:8080/api";
+      var returnBase = (function () {
+        var ref = document.referrer;
+        if (ref) { try { return new URL(ref).origin; } catch(e) {} }
+        return location.origin;
+      })();
+
+      var $loading = document.getElementById("state-loading");
+      var $main = document.getElementById("state-main");
+      var $success = document.getElementById("state-success");
+      var $error = document.getElementById("state-error");
+      var $status = document.getElementById("status");
+
+      function showState(name) {
+        [$loading, $main, $success, $error].forEach(function(el) { el.style.display = "none"; });
+        if (name === "loading") $loading.style.display = "";
+        if (name === "main") $main.style.display = "";
+        if (name === "success") $success.style.display = "";
+        if (name === "error") $error.style.display = "";
+      }
+
+      function formatDate(d) {
+        if (!d) return "\u2014";
+        return new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+      }
+
+      if (!bookingId || !accessToken || !txnId) {
+        showState("error");
+        document.getElementById("error-msg").textContent = "Missing payment parameters. Please use the link from your booking confirmation.";
+        return;
+      }
+
+      function populate(booking, currency) {
+        var total = booking.total != null ? booking.total : 0;
+        document.getElementById("detail-id").textContent = booking.id || "\u2014";
+        document.getElementById("detail-guest").textContent = booking.guestName || "\u2014";
+        document.getElementById("detail-checkin").textContent = formatDate(booking.checkin);
+        document.getElementById("detail-checkout").textContent = formatDate(booking.checkout);
+        document.getElementById("detail-total").textContent = total.toFixed(2) + " " + currency;
+        showState("main");
+      }
+
+      function showError(msg) {
+        showState("error");
+        document.getElementById("error-msg").textContent = msg;
+      }
+
+      Promise.all([
+        fetch(API + "/bookings/" + bookingId + "?accessToken=" + encodeURIComponent(accessToken))
+          .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+          .then(function(res) { return res.booking || res.data || res; }),
+        fetch(API + "/settings")
+          .then(function(r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+          .then(function(res) {
+            var arr = res.data || res || [];
+            if (!Array.isArray(arr)) return "USD";
+            for (var i = 0; i < arr.length; i++) {
+              if (arr[i] && arr[i].key === "currency" && arr[i].value) {
+                return String(arr[i].value).trim().toUpperCase();
+              }
+            }
+            return "USD";
+          })
+          .catch(function() { return "USD"; })
+      ]).then(function (results) {
+        var booking = results[0];
+        var currency = results[1];
+        if (!booking || !booking.id) throw new Error("Booking not found");
+        populate(booking, currency);
+      }).catch(function (err) {
+        showError("Could not load payment details: " + (err.message || "Unknown error"));
+      });
+
+      // Confirm payment
+      document.getElementById("btn-confirm").addEventListener("click", function () {
+        var btn = this;
+        var spinner = document.getElementById("btn-confirm-spinner");
+        var text = document.getElementById("btn-confirm-text");
+        btn.disabled = true;
+        spinner.classList.add("active");
+        text.textContent = "Processing\u2026";
+        $status.textContent = "";
+        $status.className = "checkout__status";
+
+        fetch(API + "/payments/demo/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId: bookingId, txnId: txnId, accessToken: accessToken })
+        })
+        .then(function(r) { return r.json().then(function(body) { return { status: r.status, body: body }; }); })
+        .then(function(res) {
+          if (!res.body.ok) {
+            throw new Error(res.body.error || res.body.message || "Confirmation failed");
+          }
+          showState("success");
+          setTimeout(function () { window.location.href = returnBase + "/#booking=" + bookingId; }, 1800);
+        })
+        .catch(function(err) {
+          $status.textContent = err.message || "Payment confirmation failed.";
+          $status.className = "checkout__status checkout__status--error";
+          btn.disabled = false;
+          spinner.classList.remove("active");
+          text.textContent = "Confirm Payment";
+        });
+      });
+
+      // Cancel \u2192 return to site
+      document.getElementById("btn-cancel").addEventListener("click", function () {
+        window.location.href = returnBase + "/#booking=" + bookingId;
+      });
+
+      // Retry from error state
+      document.getElementById("btn-retry").addEventListener("click", function () {
+        window.location.reload();
+      });
+    })();
+  </script>
+</body>
+</html>

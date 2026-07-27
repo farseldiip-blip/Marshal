@@ -13,7 +13,7 @@
 window.MGPaymentConfig = {
   // Base URL of the backend that hosts the Cloud Functions.
   // e.g. "https://us-central1-marshal-gezira.cloudfunctions.net"
-  endpoint: "",
+  endpoint: "http://localhost:8080/api",
 
   // Where the provider should return the user after paying.
   returnUrl: location.href,

@@ -754,3 +754,229 @@ html[data-theme="dark"] .navbar--scrolled .navbar__pill {
 .scroll-indicator__line { width: 1px; height: 48px; background: rgba(255,255,255,0.4); position: relative; overflow: hidden; }
 .scroll-indicator__line span { position: absolute; top: -100%; left: 0; width: 100%; height: 100%; background: #fff; animation: scrollLine 2s var(--ease) infinite; }
 @keyframes scrollLine { 0% { top: -100%; } 60%,100% { top: 100%; } }
+
+/* ---------- Hotel map marker + popup ---------- */
+.hotel-marker {
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  transition: transform 0.3s var(--ease);
+}
+.hotel-marker:hover,
+.hotel-marker:focus-within {
+  transform: scale(1.12);
+}
+
+/* Popup wrapper (Leaflet) */
+.hotel-popup-wrapper .leaflet-popup-content-wrapper {
+  background: var(--surface, #14171F);
+  color: var(--text, #D7DBE2);
+  border: 1px solid var(--border, #262B36);
+  border-radius: var(--radius, 14px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(198,161,91,0.12);
+  padding: 0;
+  overflow: hidden;
+  animation: popupIn 0.35s var(--ease) both;
+}
+@keyframes popupIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.hotel-popup-wrapper .leaflet-popup-content {
+  margin: 0;
+  min-width: 220px;
+}
+.hotel-popup-wrapper .leaflet-popup-tip {
+  background: var(--surface, #14171F);
+  border: 1px solid var(--border, #262B36);
+  box-shadow: none;
+}
+.hotel-popup-wrapper .leaflet-popup-close-button {
+  color: var(--muted, #8A93A6);
+  font-size: 18px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+}
+.hotel-popup-wrapper .leaflet-popup-close-button:hover {
+  color: var(--accent, #C6A15B);
+}
+
+/* Popup inner content */
+.hotel-popup {
+  padding: 20px 22px 18px;
+}
+.hotel-popup__name {
+  font-family: var(--font-head, "Playfair Display", Georgia, serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--primary, #F4F1EA);
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.hotel-popup__address {
+  font-size: var(--fs-xs, 0.78rem);
+  color: var(--muted, #8A93A6);
+  margin-bottom: 14px;
+}
+.hotel-popup__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  background: var(--accent, #C6A15B);
+  color: var(--bg, #0B0D12);
+  font-family: var(--font-body, "Inter", sans-serif);
+  font-size: var(--fs-xs, 0.78rem);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  border-radius: var(--radius-pill, 999px);
+  transition: background 0.25s var(--ease), transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  cursor: pointer;
+}
+.hotel-popup__cta:hover,
+.hotel-popup__cta:focus-visible {
+  background: var(--accent-soft, #E7D8B8);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(198,161,91,0.3);
+  outline: none;
+}
+.hotel-popup__cta:focus-visible {
+  box-shadow: 0 0 0 2px var(--bg, #0B0D12), 0 0 0 4px var(--accent, #C6A15B);
+}
+.hotel-popup__cta svg {
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   Review Modal + Form
+   ========================================================= */
+.review-modal {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--sp-3);
+  animation: fadeIn 0.25s var(--ease) both;
+}
+.review-modal[hidden] { display: none; }
+.review-modal__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.72);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.review-modal__box {
+  position: relative; z-index: 1;
+  background: var(--surface, #14171F);
+  border: 1px solid var(--border, #262B36);
+  border-radius: var(--radius-lg, 18px);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(198,161,91,0.12);
+  padding: var(--sp-6) var(--sp-6) var(--sp-5);
+  max-width: 480px; width: 100%;
+  max-height: 90vh; overflow-y: auto;
+  animation: modalSlideIn 0.35s var(--ease) both;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalSlideIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.review-modal__close {
+  position: absolute; top: 14px; right: 14px; z-index: 2;
+  background: none; border: none; color: var(--muted, #8A93A6);
+  font-size: 26px; cursor: pointer; line-height: 1; padding: 4px 8px;
+  transition: color 0.25s var(--ease);
+}
+.review-modal__close:hover { color: var(--accent, #C6A15B); }
+.review-modal__title {
+  font-family: var(--font-head, "Playfair Display", Georgia, serif);
+  font-size: 1.35rem; font-weight: 600; color: var(--primary, #F4F1EA);
+  margin: 0 0 4px; letter-spacing: 0.01em;
+}
+.review-modal__sub {
+  font-size: var(--fs-sm, 0.85rem); color: var(--muted, #8A93A6);
+  margin: 0 0 var(--sp-4);
+}
+
+/* Review Form */
+.review-form__group { margin-bottom: var(--sp-3); }
+.review-form__group > label {
+  display: block; font-size: var(--fs-sm, 0.85rem); font-weight: 500;
+  color: var(--text, #D7DBE2); margin-bottom: 6px; letter-spacing: 0.02em;
+}
+.review-form__input {
+  width: 100%; padding: 12px 14px;
+  background: var(--bg, #0B0D12); border: 1px solid var(--border, #262B36);
+  border-radius: var(--radius, 14px); color: var(--text, #D7DBE2);
+  font-family: var(--font-body, "Inter", sans-serif); font-size: 0.92rem;
+  transition: border-color 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  box-sizing: border-box;
+}
+.review-form__input:focus {
+  outline: none; border-color: var(--accent, #C6A15B);
+  box-shadow: 0 0 0 3px rgba(198,161,91,0.15);
+}
+.review-form__input::placeholder { color: var(--muted, #8A93A6); opacity: 0.5; }
+.review-form__textarea { resize: vertical; min-height: 100px; }
+
+/* Star Rating */
+.review-form__stars {
+  display: inline-flex; gap: 4px;
+}
+.rv-star {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.5rem; color: var(--muted, #8A93A6);
+  transition: color 0.2s var(--ease), transform 0.15s var(--ease);
+  padding: 2px 4px; line-height: 1;
+}
+.rv-star:hover, .rv-star.hover { color: var(--accent, #C6A15B); transform: scale(1.15); }
+.rv-star.active { color: var(--accent, #C6A15B); }
+
+/* Errors / Success */
+.review-form__error {
+  color: #e74c3c; font-size: var(--fs-xs, 0.78rem); margin-top: 6px;
+}
+.review-form__error[hidden] { display: none; }
+.review-form__success {
+  background: rgba(198,161,91,0.08); border: 1px solid rgba(198,161,91,0.25);
+  border-radius: var(--radius, 14px); padding: var(--sp-3) var(--sp-4);
+  margin-bottom: var(--sp-3); text-align: center;
+}
+.review-form__success p {
+  margin: 0; font-size: 0.9rem; color: var(--accent, #C6A15B);
+}
+.review-form__success[hidden] { display: none; }
+.review-form__actions {
+  display: flex; gap: var(--sp-2); justify-content: flex-end; margin-top: var(--sp-4);
+}
+
+/* CTA button style */
+.tst-cta { margin-top: var(--sp-5); }
+.btn--outline {
+  background: transparent; border: 1px solid var(--border, #262B36);
+  color: var(--accent, #C6A15B); border-radius: var(--radius-pill, 999px);
+  padding: 10px 28px; font-size: 0.88rem; font-weight: 600;
+  letter-spacing: 0.04em; cursor: pointer;
+  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), transform 0.25s var(--ease);
+}
+.btn--outline:hover {
+  background: rgba(198,161,91,0.1); border-color: var(--accent, #C6A15B);
+  transform: translateY(-1px);
+}
+.btn--outline:focus-visible {
+  outline: none; box-shadow: 0 0 0 2px var(--bg, #0B0D12), 0 0 0 4px var(--accent, #C6A15B);
+}
+.btn--sm { padding: 8px 20px; font-size: 0.82rem; }
+
+/* Responsive */
+@media (max-width: 540px) {
+  .review-modal__box { padding: var(--sp-4) var(--sp-3) var(--sp-3); }
+  .review-form__actions { flex-direction: column; }
+  .review-form__actions .btn { width: 100%; text-align: center; }
+}

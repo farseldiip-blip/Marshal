@@ -3,13 +3,12 @@
    Sections: Login · Home/Analytics · Rooms · Bookings · Customers
    · Reviews · Gallery · Restaurant (menu) · Amenities · Hotel Info
    · Settings · Logout
-   Data layer: Firebase (Auth + Firestore + Storage) when configured,
-   otherwise a local demo store (localStorage) so the UI is fully usable.
+   Data layer: REST API (PostgreSQL) via api-client, or a local demo
+   store (localStorage) when no backend is configured.
    ========================================================= */
 (function () {
   "use strict";
 
-  // Surface runtime errors visibly (so they aren't hidden in console)
   function showError(msg) {
     let box = document.getElementById("dashError");
     if (!box) {
@@ -18,23 +17,15 @@
       box.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 14px;border-radius:10px;font:12px/1.5 monospace;white-space:pre-wrap;max-height:40vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.4)";
       document.body.appendChild(box);
     }
-    box.textContent = "Dashboard error:\n" + msg;
+    box.textContent = tr("Dashboard error:") + "\n" + msg;
   }
   window.addEventListener("error", (e) => showError((e.message || e.error) + (e.filename ? "\n@ " + e.filename + ":" + e.lineno : "")));
-  window.addEventListener("unhandledrejection", (e) => showError("Promise: " + (e.reason && e.reason.message ? e.reason.message : e.reason)));
+  window.addEventListener("unhandledrejection", (e) => showError(tr("Promise:") + " " + (e.reason && e.reason.message ? e.reason.message : e.reason)));
 
   const $ = (sel, ctx = document) => ctx.querySelector(sel);
   const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
 
-  /* ---------------- Demo store (localStorage) ----------------
-     SHARED key (mg-demo-db) is the single demo source. Both the
-     admin dashboard AND the public booking flow (js/booking-core.js)
-     read/write this same key/shape, so a public booking shows in
-     admin and admin status changes affect public availability.
-     The Demo object is stateless: it (re)loads from localStorage on
-     every op so external mutations (public site) are always visible. */
   const DEMO_KEY = "mg-demo-db";
-  // Canonical seed now lives in js/seed-data.js (window.__mgSeed).
   const seed = window.__mgSeed;
 
   function loadDemo() {
@@ -54,74 +45,97 @@
     async getDoc(col) { const db = loadDemo(); return db[col]; }
   };
 
-  /* ---------------- Data abstraction ---------------- */
-  let FB = null;
   async function ready() {
-    if (window.MGFirebase && window.MGFirebase.ready) { FB = window.MGFirebase; return "firebase"; }
+    if (window.MGApiClient && window.MGApiClient.isLive() && window.MGApiClient.getToken()) return "rest";
     return "demo";
   }
 
   const Data = {
     mode: "demo",
     async list(col) {
-      if (this.mode === "firebase" && FB) {
-        const { getDocs, collection, query, orderBy } = FB.fns;
-        try {
-          const snap = await getDocs(query(collection(FB.db, col), orderBy("__order", "desc")));
-          return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        } catch (e) { return Demo.list(col); }
+      if (this.mode === "rest" && window.MGApiClient) {
+        return window.MGApiClient.adminList(col);
       }
       return Demo.list(col);
     },
     async add(col, item) {
-      if (this.mode === "firebase" && FB) {
-        const { addDoc, collection, serverTimestamp } = FB.fns;
-        const { id } = await addDoc(collection(FB.db, col), { ...item, __order: Date.now(), updatedAt: serverTimestamp() });
-        return { ...item, id };
+      if (this.mode === "rest" && window.MGApiClient) {
+        return window.MGApiClient.adminCreate(col, item);
       }
       return Demo.add(col, item);
     },
     async update(col, id, patch) {
-      if (this.mode === "firebase" && FB) {
-        const { doc, updateDoc, serverTimestamp } = FB.fns;
-        await updateDoc(doc(FB.db, col, id), { ...patch, updatedAt: serverTimestamp() });
-        return;
+      if (this.mode === "rest" && window.MGApiClient) {
+        return window.MGApiClient.adminUpdate(col, id, patch);
       }
       return Demo.update(col, id, patch);
     },
     async remove(col, id) {
-      if (this.mode === "firebase" && FB) {
-        const { doc, deleteDoc } = FB.fns;
-        await deleteDoc(doc(FB.db, col, id));
-        return;
+      if (this.mode === "rest" && window.MGApiClient) {
+        return window.MGApiClient.adminDelete(col, id);
       }
       return Demo.remove(col, id);
     },
     async set(col, obj) {
-      if (this.mode === "firebase" && FB) {
-        const { doc, setDoc, serverTimestamp } = FB.fns;
-        await setDoc(doc(FB.db, col, "info"), { ...obj, updatedAt: serverTimestamp() });
+      if (this.mode === "rest" && window.MGApiClient) {
+        if (col === "settings") {
+          for (const [k, v] of Object.entries(obj)) {
+            await window.MGApiClient.adminCreate("settings", { key: k, value: String(v), label: k });
+          }
+          return;
+        }
+        if (col === "hotel") {
+          await window.MGApiClient.adminCreate("settings", { key: "hotel_info", value: JSON.stringify(obj), label: "Hotel Information" });
+          if (obj.name != null) await window.MGApiClient.adminCreate("settings", { key: "hotelName", value: String(obj.name), label: "Hotel Name" });
+          if (obj.email != null) await window.MGApiClient.adminCreate("settings", { key: "contactEmail", value: String(obj.email), label: "Contact Email" });
+          if (obj.phone != null) await window.MGApiClient.adminCreate("settings", { key: "contactPhone", value: String(obj.phone), label: "Contact Phone" });
+          if (obj.address != null) await window.MGApiClient.adminCreate("settings", { key: "address", value: String(obj.address), label: "Address" });
+          return;
+        }
         return;
       }
       return Demo.set(col, obj);
     },
     async getDoc(col) {
-      if (this.mode === "firebase" && FB) {
-        const { doc, getDoc } = FB.fns;
-        const snap = await getDoc(doc(FB.db, col, "info"));
-        return snap.exists() ? snap.data() : null;
+      if (this.mode === "rest" && window.MGApiClient) {
+        if (col === "settings") {
+          const items = await window.MGApiClient.adminList("settings");
+          const obj = {};
+          (items || []).forEach(s => { obj[s.key] = s.value; });
+          return obj;
+        }
+        if (col === "hotel") {
+          const items = await window.MGApiClient.adminList("settings");
+          const map = {};
+          (items || []).forEach(s => { map[s.key] = s.value; });
+          const fromKeys = {
+            name:    map.hotelName || "",
+            email:   map.contactEmail || "",
+            phone:   map.contactPhone || "",
+            address: map.address || "",
+            tagline: map.hotel_tagline || "",
+            about:   map.hotel_about || ""
+          };
+          const found = (items || []).find(s => s.key === "hotel_info");
+          if (found && found.value) {
+            try {
+              const hi = JSON.parse(found.value);
+              Object.keys(fromKeys).forEach(k => {
+                if (!fromKeys[k] && hi[k]) fromKeys[k] = hi[k];
+              });
+            } catch (e) { /* ignore */ }
+          }
+          return fromKeys;
+        }
+        return null;
       }
       return Demo.getDoc(col);
     },
-    // Firebase Storage upload (returns download URL)
     async uploadImage(file, path) {
-      if (this.mode === "firebase" && FB && FB.storage) {
-        const { ref, uploadBytes, getDownloadURL } = FB.storageFns;
-        const r = ref(FB.storage, path + "/" + Date.now() + "_" + file.name.replace(/\s+/g, "_"));
-        await uploadBytes(r, file);
-        return await getDownloadURL(r);
+      if (this.mode === "rest" && window.MGApiClient && window.MGApiClient.uploadImage) {
+        return await window.MGApiClient.uploadImage(file);
       }
-      return null; // demo: caller keeps existing URL
+      return null;
     }
   };
 
@@ -132,20 +146,62 @@
     if (html) n.innerHTML = html;
     return n;
   }
-  function toast(msg, type = "ok") {
+
+  function toast(msg, type) {
+    const icons = { ok: "&#10003;", err: "&#10007;", info: "&#9432;" };
+    const cls = type === "err" ? "error" : type === "info" ? "info" : "";
     let t = $("#toast");
     if (!t) { t = el("div", { id: "toast" }); document.body.appendChild(t); }
-    t.textContent = msg; t.className = "toast show " + type;
-    clearTimeout(t._t); t._t = setTimeout(() => t.className = "toast", 2200);
+    t.innerHTML = `<span class="toast__icon">${icons[type] || icons.ok}</span><span>${msg}</span>`;
+    t.className = "toast show " + cls;
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.className = "toast", 2600);
   }
-  function esc(s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  }
-  function money(n) { return "$" + Number(n || 0).toLocaleString(); }
 
-  /* ---------------- Dashboard i18n (EN/AR) ----------------
-     Map of English source -> Arabic. Used to localize the
-     dashboard independently of the public site dictionary. */
+  var esc = (window.MGShared && MGShared.esc) || function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  };
+  var money = (window.MGShared && MGShared.money) || function (n) {
+    if (window.MGSettings && MGSettings.formatMoney) return MGSettings.formatMoney(n);
+    if (n == null || n === "") return "\u2014";
+    var v = Number(n);
+    if (isNaN(v) || !isFinite(v)) return "\u2014";
+    var code = (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD";
+    return new Intl.NumberFormat("en-US", { style: "currency", currency: code, currencyDisplay: "symbol", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+  };
+  function moneyCode(n) {
+    if (window.MGSettings && MGSettings.formatMoneyCode) return MGSettings.formatMoneyCode(n);
+    var formatted = money(n);
+    if (formatted === "\u2014") return formatted;
+    var code = (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD";
+    if (formatted.indexOf(code) !== -1) return formatted;
+    return formatted + " " + code;
+  }
+  function moneyRefund(n) {
+    return "-" + money(n);
+  }
+  function timeAgo(dateStr) {
+    if (!dateStr) return "";
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return tr("just now");
+    if (mins < 60) return mins + tr("m ago");
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return hrs + tr("h ago");
+    const days = Math.floor(hrs / 24);
+    return days + tr("d ago");
+  }
+
+  function emptyState(icon, title, sub, actionHtml) {
+    return `<div class="dash-empty">
+      <div class="dash-empty__icon">${icon}</div>
+      <div class="dash-empty__title">${title}</div>
+      <div class="dash-empty__sub">${sub}</div>
+      ${actionHtml ? `<div class="dash-empty__action">${actionHtml}</div>` : ""}
+    </div>`;
+  }
+
+  /* ---------------- Dashboard i18n (EN/AR) ---------------- */
   const DI18N = {
     en: {},
     ar: {
@@ -167,14 +223,13 @@
       "Price": "السعر", "Hotel Information": "معلومات الفندق", "Tagline": "الشعار", "Address": "العنوان",
       "About": "نبذة", "Settings": "الإعدادات", "Default Theme": "السمة الافتراضية",
       "Currency": "العملة", "Default Language": "اللغة الافتراضية",
-      "Upload an image (Firebase Storage) or keep the current URL.": "ارفع صورة (تخزين Firebase) أو احتفظ بالرابط الحالي.",
-      "Mode:": "الوضع:", "Set your Firebase keys in": "أدخل مفاتيح Firebase في",
-      "to enable cloud sync, auth & image storage.": "لتفعيل المزامنة والدخول وتخزين الصور.",
+      "Mode:": "الوضع:",
       "Delete this record?": "حذف هذا السجل؟", "Updated": "تم التحديث", "Added": "تمت الإضافة",
       "Hotel info saved": "تم حفظ معلومات الفندق", "Settings saved": "تم حفظ الإعدادات", "Deleted": "تم الحذف",
       "Add Room": "إضافة غرفة", "Add Booking": "إضافة حجز", "Add Customer": "إضافة عميل",
       "Add Review": "إضافة تقييم", "Add Gallery": "إضافة صورة", "Add Menu": "إضافة عنصر",
-      "Add Amenity": "إضافة مرفق", "Login failed:": "فشل الدخول:",
+      "Add Amenity": "إضافة مرفق",
+      "Login failed:": "فشل الدخول:", "Dashboard reset": "تمت إعادة تعيين لوحة التحكم", "Reset failed": "فشلت إعادة التعيين",
       "Bookings Management": "إدارة الحجوزات", "Search bookings…": "بحث في الحجوزات…",
       "All Statuses": "كل الحالات", "All Payments": "كل المدفوعات",
       "Check-in from": "الوصول من", "Check-out to": "المغادرة إلى",
@@ -183,24 +238,67 @@
       "View": "عرض", "Confirm": "تأكيد", "Cancel Booking": "إلغاء الحجز",
       "Check In": "تسجيل الدخول", "Check Out": "تسجيل الخروج",
       "Booking Details": "تفاصيل الحجز", "No bookings found": "لا توجد حجوزات",
-      "Loading bookings…": "جارٍ تحميل الحجوزات…",       "Could not load bookings": "تعذّر تحميل الحجوزات",
+      "Loading bookings…": "جارٍ تحميل الحجوزات…",
+      "Could not load bookings": "تعذّر تحميل الحجوزات",
       "Not authorized": "غير مصرح", "Admin claim required": "يتطلب صلاحية المدير",
-      "Booked updated": "تم تحديث الحجز", "Already": "بالفعل", "Confirmed": "مؤكد",
+      "Booked updated": "تم تحديث الحجز", "Already": "بالفعل",
       "Checked In": "سجّل دخوله", "Checked Out": "سجّل خروجه", "Unpaid": "غير مدفوع",
       "Paid": "مدفوع", "Pending": "قيد الانتظار", "Failed": "فشل", "Refunded": "مُسترد",
       "Cancelled": "ملغى", "Email": "البريد", "Phone": "الهاتف", "Adults": "بالغون",
       "Children": "أطفال", "Rooms": "غرف", "Nights": "ليالٍ", "Created": "أُنشئ",
       "Mark Pending": "تحديد قيد الانتظار", "Mark Paid": "تحديد مدفوع",
-      "Mark Failed": "تحديد فشل", "Mark Refunded": "تحديد مُسترد", "Payment:": "الدفع:"
+      "Mark Failed": "تحديد فشل", "Mark Refunded": "تحديد مُسترد", "Payment:": "الدفع:",
+      "Reviews Management": "إدارة التقييمات", "Filter by status": "تصفية حسب الحالة",
+      "All": "الكل", "Rejected": "مرفوض", "Publish": "نشر", "Reject": "رفض",
+      "Delete this review?": "حذف هذا التقييم؟", "Review updated": "تم تحديث التقييم",
+      "Could not load reviews": "تعذّر تحميل التقييمات", "Loading reviews…": "جارٍ تحميل التقييمات…",
+      "No reviews found": "لا توجد تقييمات", "reviews": "تقييمات",
+      "Rating": "التقييم", "Author": "المؤلف",
+      "Today's Arrivals": "وصولات اليوم", "Today's Departures": "مغادرات اليوم",
+      "Pending Reviews": "تقييمات معلّقة", "Active Rooms": "غرف نشطة",
+      "Total Revenue": "إجمالي الإيراد",       "No notifications": "لا إشعارات",
+      "Mark all read": "تحديد الكل كمقروء", "Notifications": "الإشعارات",
+      "Scroll to see more content": "مرّر لعرض المزيد",
+      "Scroll left": "مرّر لليسار", "Scroll right": "مرّر لليمين",
+      "just now": "الآن", "m ago": "د مضت", "h ago": "س مضت", "d ago": "ي مضت",
+      "new": "جديد", "pending": "معلّق",
+      "Guest": "النزيل", "{guest} submitted a review": "{guest} أرسل تقييمًا",
+      "{guest} has a pending booking": "{guest} لديه حجز قيد الانتظار",
+      "{guest} has unpaid booking": "{guest} لديه حجز غير مدفوع",
+      "Booking updated": "تم تحديث الحجز", "Error": "خطأ",
+      "Occupancy": "نسبة الإشغال", "Active": "نشط", "Archived": "مؤرشف", "Archive": "أرشفة",
+      "Restore": "استعادة", "Qty": "الكمية", "Room Name": "اسم الغرفة", "Room Type": "نوع الغرفة",
+      "Number of Rooms": "عدد الغرف", "Type or select…": "اكتب أو اختر…",
+      "Connected to PostgreSQL backend via REST API.": "متصل بقاعدة البيانات عبر واجهة REST.",
+      "Running in demo mode.": "يعمل في الوضع التجريبي.",
+      " (no keys)": " (بدون مفاتيح)",
+      "Select an image (JPEG, PNG, WebP, max 5 MB).": "اختر صورة (JPEG, PNG, WebP, حد أقصى 5 ميجا).",
+      "Select an image file.": "اختر ملف صورة.",
+      "Check In": "تسجيل الوصول", "Check Out": "تسجيل المغادرة",
+      "Menu": "القائمة",
+      "Apr": "أبريل", "May": "مايو", "Jun": "يونيو", "Jul": "يوليو", "Aug": "أغسطس", "Sep": "سبتمبر",
+      "Not authorized — admin access required.": "غير مصرح — يتطلب صلاحية المدير.",
+      "Credentials required": "البيانات مطلوبة",
+      "Reset": "إعادة تعيين", "Login failed": "فشل تسجيل الدخول",
+      "Room archived successfully": "تم أرشفة الغرفة", "Room restored successfully": "تمت استعادة الغرفة",
+      "Archive failed:": "فشلت الأرشفة:", "Restore failed:": "فشلت الاستعادة:",
+      "Cannot delete: ": "لا يمكن الحذف: ",
+      "Name and Type are required": "الاسم والنوع مطلوبان",
+      "Uploading image…": "جارٍ رفع الصورة…", "Image uploaded.": "تم رفع الصورة.",
+      "Upload failed:": "فشل الرفع:",
+      "Delete": "حذف", "Delete this record?": "حذف هذا السجل؟",
+      "Dashboard error:": "خطأ في لوحة التحكم:",
+      "Promise:": "خطأ في الوعد:"
     }
   };
-  // Reverse lookup: English -> key for AR column headers built from field labels
-  function tr(str) {
+  function tr(str, params) {
     const l = (window.MGLang && window.MGLang.get && window.MGLang.get()) || "en";
-    if (l === "ar" && DI18N.ar[str] != null) return DI18N.ar[str];
-    return str;
+    let out = (l === "ar" && DI18N.ar[str] != null) ? DI18N.ar[str] : str;
+    if (params && typeof out === "string") {
+      Object.keys(params).forEach(k => { out = out.split("{" + k + "}").join(params[k]); });
+    }
+    return out;
   }
-  // Swap visible header/button text inside a freshly rendered view.
   function localizeView(view) {
     const l = (window.MGLang && window.MGLang.get && window.MGLang.get()) || "en";
     if (l !== "ar") return;
@@ -211,35 +309,30 @@
   }
 
   /* ---------------- Auth ---------------- */
-  // Verify the signed-in user holds the `admin` custom claim.
-  // Returns the claims object; throws "not_admin" otherwise.
   async function assertAdmin() {
-    if (!FB || !FB.idTokenClaims) throw new Error("not_authed");
-    const res = await FB.idTokenClaims(false);
-    if (!res || !res.claims || res.claims.admin !== true) throw new Error("not_admin");
-    return res.claims;
+    if (window.MGApiClient && window.MGApiClient.getToken()) {
+      const user = await window.MGApiClient.adminVerify();
+      return user;
+    }
+    throw new Error("not_authed");
   }
 
   async function attemptLogin(email, pass) {
     await ready();
-    if (Data.mode === "firebase" && FB) {
-      await FB.signIn(email, pass);              // throws on bad creds
-      // Authorization (defense-in-depth, NOT relying on rules alone):
-      // a signed-in user MUST hold the admin claim to use the dashboard.
+    if (window.MGApiClient && window.MGApiClient.isLive()) {
+      const result = await window.MGApiClient.adminLogin(email, pass);
       try { await assertAdmin(); }
       catch (e) {
-        await FB.signOut().catch(() => {});
-        sessionStorage.removeItem("mg-auth");
+        window.MGApiClient.clearToken();
         throw new Error("Not authorized — admin access required.");
       }
-      sessionStorage.setItem("mg-auth", "fb");
+      sessionStorage.setItem("mg-auth", "rest");
       return true;
     }
     if (email && pass) { sessionStorage.setItem("mg-auth", "demo"); return true; }
     throw new Error("Credentials required");
   }
 
-  // Render a clear "not authorized" state (authed but no admin claim).
   function renderNotAuthorized() {
     const app = document.getElementById("dash");
     if (!app) return;
@@ -256,8 +349,6 @@
 
   /* ---------------- Sections registry ---------------- */
   let currentSection = "home";
-  // Admin authorization flag, derived from the Firebase custom claim
-  // (claims.admin === true). Mutation UI is hidden unless true.
   let adminOk = false;
   const SECTIONS = [
     { id: "home", label: "Dashboard", icon: "▦", i18n: "d_dashboard" },
@@ -272,6 +363,133 @@
     { id: "settings", label: "Settings", icon: "⚙", i18n: "d_settings" }
   ];
 
+  /* ---------------- Notification System ---------------- */
+  let _notifData = { pendingReviews: 0, pendingBookings: 0, unpaidBookings: 0, items: [] };
+
+  async function refreshNotifications() {
+    try {
+      const [reviews, bookings] = await Promise.all([
+        Data.list("reviews"),
+        Data.list("bookings")
+      ]);
+      const pendingReviews = reviews.filter(r => r.status === "Pending").length;
+      const pendingBookings = bookings.filter(b => b.status === "Pending").length;
+      const unpaidBookings = bookings.filter(b => (b.paymentStatus || "Unpaid") === "Unpaid").length;
+      const total = pendingReviews + pendingBookings;
+
+      const items = [];
+      if (pendingReviews > 0) {
+        reviews.filter(r => r.status === "Pending").slice(0, 3).forEach(r => {
+          const guest = esc(r.author || "Guest");
+          items.push({ type: "review", icon: "★", text: tr("{guest} submitted a review", { guest: `<strong>${guest}</strong>` }), time: r.createdAt });
+        });
+      }
+      if (pendingBookings > 0) {
+        bookings.filter(b => b.status === "Pending").slice(0, 3).forEach(b => {
+          const guest = esc(b.guestName || b.guest || "Guest");
+          items.push({ type: "booking", icon: "📅", text: tr("{guest} has a pending booking", { guest: `<strong>${guest}</strong>` }), time: b.created });
+        });
+      }
+      if (unpaidBookings > 0) {
+        bookings.filter(b => (b.paymentStatus || "Unpaid") === "Unpaid" && b.status !== "Cancelled").slice(0, 2).forEach(b => {
+          const guest = esc(b.guestName || b.guest || "Guest");
+          items.push({ type: "payment", icon: "💳", text: tr("{guest} has unpaid booking", { guest: `<strong>${guest}</strong>` }), time: b.created });
+        });
+      }
+
+      _notifData = { pendingReviews, pendingBookings, unpaidBookings, items: items.slice(0, 8) };
+      _notifData.total = pendingReviews + pendingBookings;
+    } catch (e) {
+      _notifData = { pendingReviews: 0, pendingBookings: 0, unpaidBookings: 0, items: [], total: 0 };
+    }
+    updateNotifBadge();
+    updateSidebarBadges();
+  }
+
+  function updateNotifBadge() {
+    const badge = $("#notifBadge");
+    if (!badge) return;
+    const count = _notifData.total || 0;
+    badge.textContent = count > 99 ? "99+" : count;
+    badge.style.display = count > 0 ? "flex" : "none";
+    if (count > 0) {
+      badge.classList.remove("pulse");
+      void badge.offsetWidth;
+      badge.classList.add("pulse");
+    }
+  }
+
+  function renderNotifPanel() {
+    const panel = $("#notifPanel");
+    if (!panel) return;
+    const items = _notifData.items || [];
+    if (!items.length) {
+      panel.innerHTML = `<div class="dash-notif-panel__head">
+        <h4>${tr("Notifications")}</h4>
+      </div><div class="dash-notif-empty">${tr("No notifications")}</div>`;
+      return;
+    }
+    panel.innerHTML = `<div class="dash-notif-panel__head">
+      <h4>${tr("Notifications")}</h4>
+      <button id="notifMarkRead">${tr("Mark all read")}</button>
+    </div>
+    <div class="dash-notif-panel__list">
+      ${items.map(n => `
+        <div class="dash-notif-item" data-notif-type="${n.type}">
+          <div class="dash-notif-item__icon ${n.type}">${n.icon}</div>
+          <div class="dash-notif-item__body">
+            <div class="dash-notif-item__text">${n.text}</div>
+            <div class="dash-notif-item__time">${timeAgo(n.time)}</div>
+          </div>
+        </div>
+      `).join("")}
+    </div>`;
+
+    panel.querySelectorAll(".dash-notif-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const type = item.dataset.notifType;
+        if (type === "review") showSection("reviews");
+        else if (type === "booking" || type === "payment") showSection("bookings");
+        closeNotifPanel();
+      });
+    });
+
+    const markBtn = $("#notifMarkRead", panel);
+    if (markBtn) markBtn.addEventListener("click", () => {
+      _notifData = { ..._notifData, total: 0, items: [] };
+      updateNotifBadge();
+      renderNotifPanel();
+    });
+  }
+
+  function closeNotifPanel() {
+    const panel = $("#notifPanel");
+    if (panel) panel.classList.remove("open");
+  }
+
+  function updateSidebarBadges() {
+    SECTIONS.forEach(s => {
+      const link = $(`.dash-link[data-section="${s.id}"]`);
+      if (!link) return;
+      let existing = link.querySelector(".dash-link__badge");
+      let count = 0;
+
+      if (s.id === "reviews") count = _notifData.pendingReviews || 0;
+      else if (s.id === "bookings") count = _notifData.pendingBookings || 0;
+
+      if (count > 0) {
+        if (!existing) {
+          existing = el("span", { class: "dash-link__badge" });
+          link.appendChild(existing);
+        }
+        existing.textContent = count > 99 ? "99+" : count;
+      } else if (existing) {
+        existing.remove();
+      }
+    });
+  }
+
+  /* ---------------- Shell ---------------- */
   function buildShell() {
     const app = $("#dash");
     app.className = "dash";
@@ -289,6 +507,12 @@
           <button class="dash-menu-btn" id="dashMenuBtn" aria-label="Menu">&#9776;</button>
           <h1 id="dashTitle">Dashboard</h1>
           <div class="dash-user">
+            <div class="dash-notif" id="dashNotifBtn" title="${tr("Notifications")}">
+              🔔
+              <span class="dash-notif__badge" id="notifBadge" style="display:none">0</span>
+              <div class="dash-notif-panel" id="notifPanel"></div>
+            </div>
+            <button class="dash-reset" id="dashResetBtn" title="${tr("Reset")}">↺</button>
             <button class="dash-lang" id="dashLangToggle">ع / EN</button>
             <span id="dashMode" class="dash-pill">demo</span>
             <span id="dashEmail">admin</span>
@@ -296,16 +520,67 @@
         </header>
         <div id="dashView" class="dash-view"></div>
       </main>`;
+
     $$(".dash-link[data-section]").forEach(b => b.addEventListener("click", () => { showSection(b.dataset.section); closeSidebar(); }));
     $("#dashLogout").addEventListener("click", logout);
+
     const lt = $("#dashLangToggle");
-    if (lt && window.MGLang) lt.addEventListener("click", () => window.MGLang.apply(window.MGLang.get() === "ar" ? "en" : "ar"));
+    if (lt && window.MGLang) lt.addEventListener("click", () => {
+      const next = window.MGLang.get() === "ar" ? "en" : "ar";
+      window.MGLang.apply(next);
+      if (Data.mode === "rest" && window.MGApiClient) {
+        window.MGApiClient.adminCreate("settings", { key: "lang", value: next, label: "Default Language" }).catch(() => {});
+      }
+    });
+
     const mb = $("#dashMenuBtn"), scrim = $("#dashScrim");
     if (mb) mb.addEventListener("click", () => { $("#dashSide").classList.toggle("open"); if (scrim) scrim.classList.toggle("show", $("#dashSide").classList.contains("open")); });
     if (scrim) scrim.addEventListener("click", closeSidebar);
+
+    const rb = $("#dashResetBtn");
+    if (rb) rb.addEventListener("click", resetDashboard);
+
+    // Notification bell
+    const notifBtn = $("#dashNotifBtn");
+    if (notifBtn) {
+      notifBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const panel = $("#notifPanel");
+        if (!panel) return;
+        const isOpen = panel.classList.contains("open");
+        if (!isOpen) renderNotifPanel();
+        panel.classList.toggle("open", !isOpen);
+      });
+    }
+    document.addEventListener("click", (e) => {
+      const panel = $("#notifPanel");
+      const btn = $("#dashNotifBtn");
+      if (panel && btn && !panel.contains(e.target) && !btn.contains(e.target)) {
+        panel.classList.remove("open");
+      }
+    });
+
     if (window.MGLang) window.MGLang.retranslate();
   }
+
   function closeSidebar() { const s = $("#dashSide"); if (s) s.classList.remove("open"); const sc = $("#dashScrim"); if (sc) sc.classList.remove("show"); }
+
+  function resetDashboard() {
+    try {
+      $$(".dash-modal:not([hidden])").forEach(m => { m.hidden = true; });
+      $$("input[type='search'], input[placeholder*='Search'], input[placeholder*='search']").forEach(inp => { inp.value = ""; });
+      const rf = $("#roomFilter"); if (rf) rf.value = "all";
+      const bkSearch = $("#bkSearchInput"); if (bkSearch) bkSearch.value = "";
+      const bkStatus = $("#bkStatusFilter"); if (bkStatus) bkStatus.value = "all";
+      const bkPay = $("#bkPayFilter"); if (bkPay) bkPay.value = "all";
+      const bkCin = $("#bkCinFrom"); if (bkCin) bkCin.value = "";
+      const bkCout = $("#bkCoutTo"); if (bkCout) bkCout.value = "";
+      showSection("home");
+      toast(tr("Dashboard reset"));
+    } catch (e) {
+      toast(tr("Reset failed"), "err");
+    }
+  }
 
   async function showSection(id) {
     $$(".dash-link[data-section]").forEach(b => b.classList.toggle("active", b.dataset.section === id));
@@ -314,19 +589,7 @@
     if ($("#dashTitle")) $("#dashTitle").textContent = tr(titles[id] || "Dashboard");
     view.innerHTML = `<div class="dash-loading">${tr("Loading…")}</div>`;
     if (id === "home") return renderHome(view);
-    if (id === "rooms") return renderCrud(view, "rooms", {
-      cols: ["name", "type", "price", "size", "featured"], media: false,
-      fields: [
-        { k: "name", label: "Name", type: "text" },
-        { k: "type", label: "Type", type: "text" },
-        { k: "price", label: "Price / night", type: "number" },
-        { k: "size", label: "Size", type: "text" },
-        { k: "desc", label: "Description", type: "textarea" },
-        { k: "amenities", label: "Amenities (comma)", type: "text" },
-        { k: "image", label: "Image", type: "image" },
-        { k: "featured", label: "Featured", type: "checkbox" }
-      ]
-    });
+    if (id === "rooms") return renderRooms(view);
     if (id === "bookings") return renderBookings(view);
     if (id === "customers") return renderCrud(view, "customers", {
       cols: ["name", "email", "phone", "country", "visits"],
@@ -338,15 +601,7 @@
         { k: "visits", label: "Visits", type: "number" }
       ]
     });
-    if (id === "reviews") return renderCrud(view, "reviews", {
-      cols: ["author", "rating", "text", "status"],
-      fields: [
-        { k: "author", label: "Author", type: "text" },
-        { k: "rating", label: "Rating (1-5)", type: "number" },
-        { k: "text", label: "Review", type: "textarea" },
-        { k: "status", label: "Status", type: "select", options: ["Pending", "Published", "Hidden"] }
-      ]
-    });
+    if (id === "reviews") return renderReviews(view);
     if (id === "gallery") return renderCrud(view, "gallery", {
       cols: ["title", "url"], media: true,
       fields: [
@@ -360,7 +615,8 @@
         { k: "name", label: "Name", type: "text" },
         { k: "category", label: "Category", type: "text" },
         { k: "price", label: "Price", type: "text" },
-        { k: "desc", label: "Description", type: "textarea" }
+        { k: "desc", label: "Description", type: "textarea" },
+        { k: "image", label: "Image", type: "image" }
       ]
     });
     if (id === "amenities") return renderCrud(view, "amenities", {
@@ -381,58 +637,126 @@
     const [rooms, bookings, customers, reviews] = await Promise.all([
       Data.list("rooms"), Data.list("bookings"), Data.list("customers"), Data.list("reviews")
     ]);
-    const totalRev = bookings.reduce((s, b) => s + (Number(b.revenue) || 0), 0);
+
+    // Revenue: only from bookings with paymentStatus representing a successful payment.
+    // The canonical DB value is "PAID" (Prisma PaymentStatus enum).
+    // After api-client normalization it becomes "Paid" (Title Case).
+    // Use case-insensitive comparison so demo data with any casing is handled.
+    function isPaid(b) { return String(b.paymentStatus || "").toUpperCase() === "PAID"; }
+
+    let totalRev;
+    if (Data.mode === "rest" && window.MGApiClient && window.MGApiClient.adminDashboardStats) {
+      try {
+        const stats = await window.MGApiClient.adminDashboardStats();
+        totalRev = Number(stats.totalRevenue) || 0;
+      } catch (e) {
+        console.error("[REVENUE] Backend stats FAILED:", e.message, "— falling back to client-side filter");
+        totalRev = bookings.filter(isPaid).reduce((s, b) => s + (Number(b.total || b.revenue) || 0), 0);
+      }
+    } else {
+      totalRev = bookings.filter(isPaid).reduce((s, b) => s + (Number(b.total || b.revenue) || 0), 0);
+    }
+
     const confirmed = bookings.filter(b => b.status === "Confirmed").length;
     const pending = bookings.filter(b => b.status === "Pending").length;
-    const occupancy = rooms.length ? Math.round((confirmed / rooms.length) * 100) : 0;
+    const checkedIn = bookings.filter(b => b.status === "Checked In").length;
+    const activeRooms = rooms.filter(r => r.isActive !== false).length;
+    const pendingReviews = reviews.filter(r => r.status === "Pending").length;
+    const occupancy = activeRooms ? Math.round((confirmed / activeRooms) * 100) : 0;
 
-    // Status donut
     const statusCounts = { Confirmed: confirmed, Pending: pending, Cancelled: bookings.filter(b => b.status === "Cancelled").length };
     const donut = donutSVG(statusCounts);
 
-    // Revenue trend (last 6 months mock from bookings)
-    const months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep"];
+    const months = ["Apr", "May", "Jun", "Jul", "Aug", "Sep"].map(m => tr(m));
     const trend = months.map((_, i) => Math.round(totalRev / 6 * (0.7 + 0.12 * i)));
     const line = lineSVG(trend, months);
 
     view.innerHTML = `
       <div class="dash-cards">
-        ${statCard("Rooms", rooms.length)}
-        ${statCard("Bookings", bookings.length)}
-        ${statCard("Customers", customers.length)}
-        ${statCard("Reviews", reviews.length)}
+        <div class="dash-stat clickable" data-nav="bookings">
+          <div class="dash-stat__head">
+            <div class="dash-stat__icon blue">📅</div>
+            ${pending > 0 ? `<span class="dash-stat__trend up">${pending} ${tr("new")}</span>` : ""}
+          </div>
+          <div class="dash-stat__num">${bookings.length}</div>
+          <div class="dash-stat__label">${tr("Bookings")}</div>
+          <div class="dash-stat__sub">${checkedIn} ${tr("Checked In").toLowerCase()}</div>
+        </div>
+        <div class="dash-stat clickable" data-nav="rooms">
+          <div class="dash-stat__head">
+            <div class="dash-stat__icon gold">🛏</div>
+            <span class="dash-stat__trend ${occupancy > 70 ? 'up' : ''}">${occupancy}%</span>
+          </div>
+          <div class="dash-stat__num">${activeRooms}</div>
+          <div class="dash-stat__label">${tr("Active Rooms")}</div>
+          <div class="dash-stat__sub">${tr("Occupancy")}: ${occupancy}%</div>
+        </div>
+        <div class="dash-stat clickable" data-nav="reviews">
+          <div class="dash-stat__head">
+            <div class="dash-stat__icon warn">★</div>
+            ${pendingReviews > 0 ? `<span class="dash-stat__trend up">${pendingReviews} ${tr("pending")}</span>` : ""}
+          </div>
+          <div class="dash-stat__num">${reviews.length}</div>
+          <div class="dash-stat__label">${tr("Reviews")}</div>
+          <div class="dash-stat__sub">${pendingReviews} ${tr("Pending").toLowerCase()}</div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat__head">
+            <div class="dash-stat__icon green">💰</div>
+          </div>
+          <div class="dash-stat__num">${moneyCode(totalRev)}</div>
+          <div class="dash-stat__label">${tr("Total Revenue")}</div>
+          <div class="dash-stat__sub">${customers.length} ${tr("Customers").toLowerCase()}</div>
+        </div>
       </div>
-      <div class="dash-cards">
-        ${statCard("Confirmed", confirmed)}
-        ${statCard("Pending", pending)}
-        ${statCard("Occupancy", occupancy + "%")}
-        ${statCard("Revenue", money(totalRev))}
-      </div>
+
       <div class="dash-grid-2">
         <div class="dash-panel">
-          <h3>Revenue Trend</h3>
+          <h3>${tr("Revenue Trend")}</h3>
           ${line}
         </div>
         <div class="dash-panel">
-          <h3>Booking Status</h3>
+          <h3>${tr("Booking Status")}</h3>
           <div class="dash-donut">${donut}<div class="dash-donut__legend">
-            <span><i style="background:#22c55e"></i>Confirmed ${confirmed}</span>
-            <span><i style="background:#eab308"></i>Pending ${pending}</span>
-            <span><i style="background:#ef4444"></i>Cancelled ${statusCounts.Cancelled}</span>
+            <span><i style="background:#22c55e"></i>${tr("Confirmed")} ${confirmed}</span>
+            <span><i style="background:#eab308"></i>${tr("Pending")} ${pending}</span>
+            <span><i style="background:#ef4444"></i>${tr("Cancelled")} ${statusCounts.Cancelled}</span>
           </div></div>
         </div>
       </div>
+
       <div class="dash-panel">
-        <h3>Recent Bookings</h3>
-        <div class="table-wrap">
+        <div class="dash-panel__head">
+          <h3>${tr("Recent Bookings")}</h3>
+        </div>
+        ${bookings.length ? `<div class="table-wrap">
           <table class="dash-table">
-            <thead><tr><th>Guest</th><th>Room</th><th>Check-in</th><th>Revenue</th><th>Status</th></tr></thead>
+            <thead><tr><th>${tr("Guest")}</th><th>${tr("Room")}</th><th>${tr("Check-in")}</th><th>${tr("Total")}</th><th>${tr("Status")}</th></tr></thead>
             <tbody>
-              ${bookings.slice(0, 6).map(b => `<tr><td>${esc(b.guest)}</td><td>${esc(b.room)}</td><td>${esc(b.checkin)}</td><td>${money(b.revenue)}</td><td><span class="tag tag-${b.status}">${esc(b.status)}</span></td></tr>`).join("") || `<tr><td colspan="5">No bookings</td></tr>`}
+              ${bookings.slice(0, 6).map(b => {
+                const isAttention = b.status === "Pending";
+                const totalVal = b.total != null ? b.total : b.revenue;
+                const paymentStatus = b.paymentStatus || "Unpaid";
+                const payColor = paymentStatus === "Paid" ? "var(--dash-success)" : paymentStatus === "Refunded" ? "var(--dash-info)" : paymentStatus === "Failed" ? "var(--dash-danger)" : "var(--dash-warning)";
+                return `<tr ${isAttention ? 'data-attention="true"' : ""}>
+                  <td data-label="${tr("Guest")}"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${esc(b.guestName || b.guest || "")}</span></div></td>
+                  <td data-label="${tr("Room")}">${esc(b.roomName || b.room || "")}</td>
+                  <td data-label="${tr("Check-in")}">${esc(b.checkin || "")}</td>
+                  <td data-label="${tr("Total")}"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${money(totalVal)}</span><span class="dash-cell-guest__sub">${tr("Total")} · ${esc(paymentStatus)}</span></div></td>
+                  <td data-label="${tr("Status")}">${statusTag(b.status || "Pending")}</td>
+                </tr>`;
+              }).join("")}
             </tbody>
           </table>
-        </div>
+        </div>` : emptyState("📅", tr("No bookings"), tr("No bookings found"))}
       </div>`;
+
+    // KPI cards navigation
+    view.querySelectorAll("[data-nav]").forEach(card => {
+      card.addEventListener("click", () => showSection(card.dataset.nav));
+    });
+
+    refreshNotifications();
   }
 
   function statCard(label, val) {
@@ -470,10 +794,9 @@
   }
 
   /* ---------------- Bookings management (dedicated) ---------------- */
-  const BOOKING_STATUSES = ["Pending", "Confirmed", "Checked In", "Checked Out", "Cancelled"];
+  const BOOKING_STATUSES = ["Pending", "Confirmed", "Checked In", "Checked Out", "Cancelled", "No Show"];
   const PAYMENT_STATUSES = ["Unpaid", "Pending", "Paid", "Failed", "Refunded"];
 
-  // Allowed forward transitions. Cancelled / Checked Out are terminal.
   function nextActions(status) {
     switch (status) {
       case "Pending":    return ["confirm", "cancel"];
@@ -481,27 +804,21 @@
       case "Checked In": return ["checkout"];
       case "Checked Out":return [];
       case "Cancelled":  return [];
+      case "No Show":    return [];
       default:           return [];
     }
   }
   const ACTION_LABEL = { confirm: "Confirm", cancel: "Cancel Booking", checkin: "Check In", checkout: "Check Out" };
-  // Payment status transitions (INDEPENDENT of booking status).
-  // Unpaid -> Pending / Paid ; Pending -> Paid / Failed ; Paid -> Refunded.
-  // Cancelled bookings can be refunded (Unpaid/Pending -> Refunded).
-  // Failed & Refunded are terminal. Never auto-mark Paid without a real
-  // payment confirmation (enforced by design: admin does it manually).
   function nextPaymentActions(payment) {
     switch (payment || "Unpaid") {
       case "Unpaid":  return ["pay_pending", "pay_paid", "pay_refunded"];
       case "Pending": return ["pay_paid", "pay_failed", "pay_refunded"];
       case "Paid":    return ["pay_refunded"];
-      case "Cancelled":return [];   // booking-level; payment still refundable below
       case "Failed":  return [];
       case "Refunded":return [];
       default:        return [];
     }
   }
-  // Allow a refunded payment regardless of booking status (e.g. Cancelled/Refunded).
   function nextPaymentActionsForBooking(payment, bookingStatus) {
     const base = nextPaymentActions(payment);
     if ((bookingStatus === "Cancelled") && payment !== "Refunded" && !base.includes("pay_refunded")) {
@@ -518,28 +835,289 @@
     pay_failed: "Failed", pay_refunded: "Refunded"
   };
   function statusTag(s) {
-    const map = { "Checked In": "CheckedIn", "Checked Out": "CheckedOut" };
+    const map = { "Checked In": "CheckedIn", "Checked Out": "CheckedOut", "No Show": "NoShow" };
     const cls = "tag tag-" + (map[s] || s);
     return `<span class="${cls}">${esc(s)}</span>`;
   }
-  function payTag(p) {
-    const cls = "tag tag-" + (p === "Paid" ? "Paid" : p === "Unpaid" ? "Unpaid" : p);
-    return `<span class="${cls}">${esc(p || "Unpaid")}</span>`;
+  function payTag(p, provider) {
+    var cls = "tag tag-" + (p === "Paid" ? "Paid" : p === "Unpaid" ? "Unpaid" : p);
+    var prov = "";
+    if (provider === "demo") prov = ' <span class="tag tag-demo" title="Demo payment">demo</span>';
+    return `<span class="${cls}">${esc(p || "Unpaid")}</span>${prov}`;
   }
   const STATUS_KEY = {
     "Pending": "Pending", "Confirmed": "Confirmed", "Checked In": "Checked In",
-    "Checked Out": "Checked Out", "Cancelled": "Cancelled"
+    "Checked Out": "Checked Out", "Cancelled": "Cancelled", "No Show": "No Show"
   };
   const PAY_KEY = {
     "Unpaid": "Unpaid", "Pending": "Pending", "Paid": "Paid", "Failed": "Failed", "Refunded": "Refunded"
   };
 
+  /* ---- Custom Scroll Container ---- */
+  function createScrollWrap(tableWrapEl) {
+    if (!tableWrapEl || !tableWrapEl.classList.contains("table-wrap")) return;
+    const table = tableWrapEl.querySelector(".dash-table");
+    if (!table) return;
+
+    /* outer shell */
+    const wrap = document.createElement("div");
+    wrap.className = "dash-scroll-wrap";
+
+    /* top row: arrow + scrollable container + arrow */
+    const top = document.createElement("div");
+    top.className = "dash-scroll-top";
+
+    const arrowL = document.createElement("button");
+    arrowL.className = "dash-scroll-arrow dash-scroll-arrow--left";
+    arrowL.disabled = true;
+    arrowL.setAttribute("aria-label", tr("Scroll left"));
+    arrowL.innerHTML = "&#8249;";
+
+    const arrowR = document.createElement("button");
+    arrowR.className = "dash-scroll-arrow dash-scroll-arrow--right";
+    arrowR.disabled = false;
+    arrowR.setAttribute("aria-label", tr("Scroll right"));
+    arrowR.innerHTML = "&#8250;";
+
+    const scrollContainer = document.createElement("div");
+    scrollContainer.className = "dash-scroll-container";
+
+    const fadeL = document.createElement("div");
+    fadeL.className = "dash-scroll-fade dash-scroll-fade--left";
+    const fadeR = document.createElement("div");
+    fadeR.className = "dash-scroll-fade dash-scroll-fade--right";
+
+    scrollContainer.appendChild(fadeL);
+    scrollContainer.appendChild(fadeR);
+    scrollContainer.appendChild(tableWrapEl);
+
+    top.appendChild(arrowL);
+    top.appendChild(scrollContainer);
+    top.appendChild(arrowR);
+
+    /* custom scrollbar track */
+    const track = document.createElement("div");
+    track.className = "dash-scroll-track";
+    const thumb = document.createElement("div");
+    thumb.className = "dash-scroll-thumb";
+    track.appendChild(thumb);
+
+    /* hint */
+    const hint = document.createElement("div");
+    hint.className = "dash-scroll-hint";
+    hint.textContent = tr("Scroll to see more content");
+
+    wrap.appendChild(top);
+    wrap.appendChild(track);
+    wrap.appendChild(hint);
+
+    /* --- sync logic --- */
+    let scrollEl = tableWrapEl;
+    let interacting = false;
+    let hintTimer = null;
+    let hintDismissed = false;
+
+    function isRTL() {
+      return document.documentElement.dir === "rtl" || document.documentElement.getAttribute("dir") === "rtl";
+    }
+
+    function getMaxScroll() {
+      return Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
+    }
+
+    /* normalise scrollLeft so 0 = start, max = end (works in Firefox RTL where scrollLeft is negative) */
+    function normScroll() {
+      const max = getMaxScroll();
+      if (!isRTL()) return Math.max(0, Math.min(scrollEl.scrollLeft, max));
+      const raw = scrollEl.scrollLeft;
+      if (raw < 0) return max + raw;
+      return Math.max(0, max - raw);
+    }
+
+    function sync() {
+      const max = getMaxScroll();
+      if (max <= 0) {
+        track.classList.add("hidden");
+        fadeL.classList.remove("visible");
+        fadeR.classList.remove("visible");
+        return;
+      }
+      track.classList.remove("hidden");
+      const ratio = scrollEl.clientWidth / scrollEl.scrollWidth;
+      const thumbW = Math.max(32, Math.round(ratio * track.clientWidth));
+      const scrollRatio = normScroll() / max;
+      const trackRange = track.clientWidth - thumbW;
+      const thumbLeft = Math.round(scrollRatio * trackRange);
+
+      thumb.style.width = thumbW + "px";
+      if (isRTL()) {
+        thumb.style.left = "auto";
+        thumb.style.right = thumbLeft + "px";
+      } else {
+        thumb.style.left = thumbLeft + "px";
+        thumb.style.right = "auto";
+      }
+
+      /* arrows */
+      const pos = normScroll();
+      const atStart = pos <= 0;
+      const atEnd = pos >= max - 1;
+      arrowL.disabled = atStart;
+      arrowR.disabled = atEnd;
+
+      /* fades */
+      fadeL.classList.toggle("visible", !atStart);
+      fadeR.classList.toggle("visible", !atEnd);
+    }
+
+    function showHint() {
+      if (hintDismissed) return;
+      hint.classList.add("visible");
+      clearTimeout(hintTimer);
+      hintTimer = setTimeout(() => {
+        hint.classList.remove("visible");
+      }, 3000);
+    }
+
+    function dismissHint() {
+      hintDismissed = true;
+      hint.classList.remove("visible");
+      clearTimeout(hintTimer);
+    }
+
+    scrollEl.addEventListener("scroll", () => { if (!interacting) sync(); });
+    scrollEl.addEventListener("scroll", dismissHint, { once: true });
+
+    /* arrow click */
+    const ARROW_STEP = 180;
+    arrowL.addEventListener("click", () => {
+      dismissHint();
+      const dir = isRTL() ? 1 : -1;
+      scrollEl.scrollBy({ left: ARROW_STEP * dir, behavior: "smooth" });
+    });
+    arrowR.addEventListener("click", () => {
+      dismissHint();
+      const dir = isRTL() ? -1 : 1;
+      scrollEl.scrollBy({ left: ARROW_STEP * dir, behavior: "smooth" });
+    });
+
+    /* track click: jump to position */
+    track.addEventListener("click", e => {
+      dismissHint();
+      if (e.target === thumb) return;
+      const max = getMaxScroll();
+      if (max <= 0) return;
+      const rect = track.getBoundingClientRect();
+      const clickRatio = (e.clientX - rect.left) / rect.width;
+      const target = Math.round(clickRatio * max);
+      if (isRTL()) {
+        const raw = scrollEl.scrollLeft;
+        const current = raw < 0 ? max + raw : max - raw;
+        const delta = target - current;
+        scrollEl.scrollBy({ left: -delta, behavior: "smooth" });
+      } else {
+        scrollEl.scrollTo({ left: target, behavior: "smooth" });
+      }
+    });
+
+    /* drag thumb */
+    let dragStartX = 0;
+    let dragStartScroll = 0;
+    thumb.addEventListener("mousedown", e => {
+      e.preventDefault();
+      dismissHint();
+      interacting = true;
+      dragStartX = e.clientX;
+      dragStartScroll = normScroll();
+      thumb.classList.add("dragging");
+
+      function onMove(ev) {
+        const max = getMaxScroll();
+        if (max <= 0) return;
+        const trackPx = track.clientWidth - thumb.clientWidth;
+        const dx = ev.clientX - dragStartX;
+        const target = Math.max(0, Math.min(max, dragStartScroll + (dx / trackPx) * max));
+        if (isRTL()) {
+          const raw = scrollEl.scrollLeft;
+          const current = raw < 0 ? max + raw : max - raw;
+          scrollEl.scrollBy({ left: -(target - current), behavior: "instant" });
+        } else {
+          scrollEl.scrollLeft = target;
+        }
+        sync();
+      }
+      function onUp() {
+        interacting = false;
+        thumb.classList.remove("dragging");
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      }
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+
+    /* touch drag thumb */
+    thumb.addEventListener("touchstart", e => {
+      dismissHint();
+      interacting = true;
+      dragStartX = e.touches[0].clientX;
+      dragStartScroll = normScroll();
+      thumb.classList.add("dragging");
+
+      function onMove(ev) {
+        ev.preventDefault();
+        const max = getMaxScroll();
+        if (max <= 0) return;
+        const trackPx = track.clientWidth - thumb.clientWidth;
+        const dx = ev.touches[0].clientX - dragStartX;
+        const target = Math.max(0, Math.min(max, dragStartScroll + (dx / trackPx) * max));
+        if (isRTL()) {
+          const raw = scrollEl.scrollLeft;
+          const current = raw < 0 ? max + raw : max - raw;
+          scrollEl.scrollBy({ left: -(target - current), behavior: "instant" });
+        } else {
+          scrollEl.scrollLeft = target;
+        }
+        sync();
+      }
+      function onEnd() {
+        interacting = false;
+        thumb.classList.remove("dragging");
+        document.removeEventListener("touchmove", onMove);
+        document.removeEventListener("touchend", onEnd);
+      }
+      document.addEventListener("touchmove", onMove, { passive: false });
+      document.addEventListener("touchend", onEnd);
+    }, { passive: true });
+
+    /* keyboard nav */
+    scrollContainer.setAttribute("tabindex", "0");
+    scrollContainer.setAttribute("role", "region");
+    scrollContainer.setAttribute("aria-label", tr("Scroll to see more content"));
+    scrollContainer.addEventListener("keydown", e => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        e.preventDefault();
+        dismissHint();
+        const dir = (e.key === "ArrowRight") ? 1 : -1;
+        const effectiveDir = isRTL() ? -dir : dir;
+        scrollEl.scrollBy({ left: 120 * effectiveDir, behavior: "smooth" });
+      }
+    });
+
+    /* initial state + show hint */
+    requestAnimationFrame(() => {
+      sync();
+      const max = getMaxScroll();
+      if (max > 0) {
+        showHint();
+      }
+    });
+
+    return { el: wrap, refresh: sync };
+  }
+
   async function renderBookings(view) {
-    // Filter state (persists across re-renders within this view).
-    const state = {
-      q: "", status: "all", payment: "all",
-      cinFrom: "", coutTo: ""
-    };
+    const state = { q: "", status: "all", payment: "all", cinFrom: "", coutTo: "" };
 
     view.innerHTML = `
       <div class="dash-panel">
@@ -572,6 +1150,14 @@
     const modal = $("#bkModal", view);
     const modalBody = $("#bkModalBody", view);
     const modalActions = $("#bkModalActions", view);
+    const bkTableWrap = $(".table-wrap", view);
+    let bkScrollWrap = null;
+    if (bkTableWrap) {
+      const tableParent = bkTableWrap.parentNode;
+      const tableNext = bkTableWrap.nextSibling;
+      bkScrollWrap = createScrollWrap(bkTableWrap);
+      if (bkScrollWrap) tableParent.insertBefore(bkScrollWrap.el, tableNext);
+    }
 
     async function load() {
       states.innerHTML = `<div class="dash-loading">${tr("Loading bookings…")}</div>`;
@@ -599,33 +1185,37 @@
       });
 
       if (!filtered.length) {
-        states.innerHTML = `<div class="dash-loading">${tr("No bookings found")}</div>`;
+        tbody.innerHTML = `<tr><td colspan="10">${emptyState("📅", tr("No bookings found"), tr("No bookings"))}</td></tr>`;
         return;
       }
 
       tbody.innerHTML = filtered.map(b => {
         const actions = nextActions(b.status || "Pending");
         const payActions = nextPaymentActionsForBooking(b.paymentStatus, b.status || "Pending");
-        // Mutation controls are admin-claim gated (defense-in-depth).
-        // Non-admins see only the read-only "View" action.
-        const btns = `<button class="btn-mini" data-view="${b.id}">${tr("View")}</button>` +
+        const isAttention = b.status === "Pending";
+        const viewBtn = `<button class="btn-mini" data-view="${b.id}">${tr("View")}</button>`;
+        const btns = `<button class="btn-mini bk-view-mobile" data-view="${b.id}">${tr("View")}</button>` +
           (adminOk
             ? actions.map(a => `<button class="btn-mini ${a === "cancel" ? "danger" : "btn--gold"}" data-act="${a}" data-id="${b.id}">${tr(ACTION_LABEL[a])}</button>`).join("") +
               (payActions.length ? `<span class="bk-sep"></span>` + payActions.map(a => `<button class="btn-mini" data-pay="${a}" data-id="${b.id}">${tr(PAY_ACTION_LABEL[a])}</button>`).join("") : "")
             : "");
-        return `<tr>
-          <td>${esc(b.id)}</td>
-          <td>${esc(b.guestName || b.guest || "")}</td>
-          <td>${esc(b.roomName || b.room || "")}</td>
-          <td>${esc(b.checkin || "")}</td>
-          <td>${esc(b.checkout || "")}</td>
-          <td>${esc(b.guests != null ? b.guests : ((b.adults || 0) + (b.children || 0)))}</td>
-          <td>${money(b.total != null ? b.total : b.revenue)}</td>
-          <td>${statusTag(b.status || "Pending")}</td>
-          <td>${payTag(b.paymentStatus)}</td>
-          <td class="dash-actions">${btns}</td>
+        const totalVal = b.total != null ? b.total : b.revenue;
+        const paymentStatus = b.paymentStatus || "Unpaid";
+        const payProvider = (b.payments && b.payments[0] && b.payments[0].provider) || null;
+        return `<tr ${isAttention ? 'data-attention="true"' : ""}>
+          <td data-label="${tr("Reference")}" class="bk-card-header">${esc(b.id ? b.id.slice(0, 8) + "…" : "")}<span class="bk-card-header__actions">${viewBtn}</span></td>
+          <td data-label="${tr("Guest")}" class="bk-card-guest"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${esc(b.guestName || b.guest || "")}</span>${b.email ? `<span class="dash-cell-guest__sub">${esc(b.email)}</span>` : ""}</div></td>
+          <td data-label="${tr("Room")}" class="bk-card-room">${esc(b.roomName || b.room || "")}</td>
+          <td data-label="${tr("Check-in")}" class="bk-card-cin">${esc(b.checkin || "")}</td>
+          <td data-label="${tr("Check-out")}" class="bk-card-cout">${esc(b.checkout || "")}</td>
+          <td data-label="${tr("Guests")}" class="bk-card-guests">${esc(b.guests != null ? b.guests : ((b.adults || 0) + (b.children || 0)))}</td>
+          <td data-label="${tr("Total")}" class="bk-card-total"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${money(totalVal)}</span><span class="dash-cell-guest__sub">${tr("Total")} ${(window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD"}</span></div></td>
+          <td data-label="${tr("Status")}" class="bk-card-status" data-status="${b.status || "Pending"}">${statusTag(b.status || "Pending")}</td>
+          <td data-label="${tr("Payment")}" class="bk-card-payment" data-payment="${paymentStatus}"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${payTag(paymentStatus, payProvider)}</span></div></td>
+          <td data-label="${tr("Actions")}" class="dash-actions bk-card-actions">${btns}</td>
         </tr>`;
       }).join("");
+      if (bkScrollWrap) requestAnimationFrame(() => bkScrollWrap.refresh());
     }
 
     function statusUpdate(id, patch, okMsg) {
@@ -635,7 +1225,11 @@
           toast(tr(okMsg));
           modal.hidden = true;
           await load();
-        } catch (e) { toast("Error: " + e.message, "err"); }
+          refreshNotifications();
+        } catch (e) {
+          console.error("[PAYMENT UPDATE] FAILED:", e.message);
+          toast(tr("Error") + ": " + e.message, "err");
+        }
       };
     }
 
@@ -653,15 +1247,14 @@
         ${row("Children", b.children)}
         ${row("Rooms", b.rooms)}
         ${row("Nights", b.nights)}
-        ${row("Total", money(b.total != null ? b.total : b.revenue))}
+        ${row("Total", moneyCode(b.total != null ? b.total : b.revenue))}
         ${row("Status", b.status || "Pending")}
         ${row("Payment", b.paymentStatus || "Unpaid")}
+        ${b.cancelReason ? '<div class="bk-cancel-reason"><strong>' + tr("Reason") + ':</strong> ' + esc(b.cancelReason) + '</div>' : ""}
         ${row("Created", b.created)}
       </dl>`;
       const actions = nextActions(b.status || "Pending");
       const payActions = nextPaymentActionsForBooking(b.paymentStatus, b.status || "Pending");
-      // Mutation controls are admin-claim gated; non-admins get a
-      // read-only details view (no status/payment change buttons).
       modalActions.innerHTML = adminOk
         ? actions.map(a =>
             `<button class="btn-mini ${a === "cancel" ? "danger" : "btn--gold"}" data-act="${a}">${tr(ACTION_LABEL[a])}</button>`
@@ -685,14 +1278,12 @@
       modal.hidden = false;
     }
 
-    // Filter bindings
     $("#bkSearchInput", view).addEventListener("input", e => { state.q = e.target.value; load(); });
     $("#bkStatusFilter", view).addEventListener("change", e => { state.status = e.target.value; load(); });
     $("#bkPayFilter", view).addEventListener("change", e => { state.payment = e.target.value; load(); });
     $("#bkCinFrom", view).addEventListener("change", e => { state.cinFrom = e.target.value; load(); });
     $("#bkCoutTo", view).addEventListener("change", e => { state.coutTo = e.target.value; load(); });
 
-    // Row actions (event-delegated)
     tbody.addEventListener("click", async (e) => {
       const viewBtn = e.target.closest("[data-view]");
       if (viewBtn) {
@@ -709,12 +1300,12 @@
         else if (a === "cancel") patch = { status: "Cancelled" };
         else if (a === "checkin") patch = { status: "Checked In" };
         else if (a === "checkout") patch = { status: "Checked Out" };
-        await statusUpdate(id, patch, "Booked updated")();
+        await statusUpdate(id, patch, "Booking updated")();
       }
       const payBtn = e.target.closest("[data-pay]");
       if (payBtn) {
         const id = payBtn.dataset.id, a = payBtn.dataset.pay;
-        await statusUpdate(id, { paymentStatus: PAY_TO_STATUS[a] }, "Booked updated")();
+        await statusUpdate(id, { paymentStatus: PAY_TO_STATUS[a] }, "Booking updated")();
       }
     });
 
@@ -723,6 +1314,153 @@
 
     localizeView(view);
     currentSection = "bookings";
+    await load();
+  }
+
+  /* ---------------- Reviews (dedicated with tabs) ---------------- */
+  async function renderReviews(view) {
+    const REVIEW_STATUSES = ["Pending", "Published", "Rejected"];
+    const state = { filter: "ALL" };
+
+    async function getCounts() {
+      let items;
+      try { items = (await Data.list("reviews")) || []; }
+      catch (e) { return { ALL: 0, Pending: 0, Published: 0, Rejected: 0 }; }
+      return {
+        ALL: items.length,
+        Pending: items.filter(r => r.status === "Pending").length,
+        Published: items.filter(r => r.status === "Published").length,
+        Rejected: items.filter(r => r.status === "Rejected").length
+      };
+    }
+
+    const counts = await getCounts();
+
+    view.innerHTML = `
+      <div class="dash-panel">
+        <div class="dash-panel__head">
+          <h3>${tr("Reviews Management")}</h3>
+        </div>
+        <div class="dash-tabs" id="rvTabs">
+          <button class="dash-tab ${state.filter === "ALL" ? "active" : ""}" data-filter="ALL">${tr("All")} <span class="dash-tab__count">${counts.ALL}</span></button>
+          <button class="dash-tab ${state.filter === "Pending" ? "active" : ""}" data-filter="Pending">${tr("Pending")} <span class="dash-tab__count" ${counts.Pending > 0 ? 'style="background:var(--dash-warning-bg);color:var(--dash-warning)"' : ""}>${counts.Pending}</span></button>
+          <button class="dash-tab ${state.filter === "Published" ? "active" : ""}" data-filter="Published">${tr("Published")} <span class="dash-tab__count">${counts.Published}</span></button>
+          <button class="dash-tab ${state.filter === "Rejected" ? "active" : ""}" data-filter="Rejected">${tr("Rejected")} <span class="dash-tab__count">${counts.Rejected}</span></button>
+        </div>
+        <div id="rvStates"></div>
+        <div class="table-wrap">
+          <table class="dash-table">
+            <thead><tr>
+              <th>${tr("Name")}</th><th>${tr("Email")}</th><th>${tr("Rating")}</th>
+              <th>${tr("Review")}</th><th>${tr("Status")}</th><th>${tr("Created")}</th><th>${tr("Actions")}</th>
+            </tr></thead>
+            <tbody id="rvTbody"></tbody>
+          </table>
+        </div>
+      </div>`;
+
+    const tbody = $("#rvTbody", view);
+    const states = $("#rvStates", view);
+
+    function reviewStatusTag(s) {
+      const cls = "tag tag-" + (s || "Pending");
+      return `<span class="${cls}">${tr(s || "Pending")}</span>`;
+    }
+
+    async function load() {
+      states.innerHTML = `<div class="dash-loading">${tr("Loading reviews…")}</div>`;
+      tbody.innerHTML = "";
+      let items;
+      try {
+        items = (await Data.list("reviews")) || [];
+      } catch (e) {
+        states.innerHTML = `<div class="dash-loading" style="color:#f0a3a3">${tr("Could not load reviews")}</div>`;
+        return;
+      }
+      states.innerHTML = "";
+
+      const filtered = state.filter === "ALL" ? items : items.filter(r => r.status === state.filter);
+
+      if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7">${emptyState("★", tr("No reviews found"), tr("No reviews found"))}</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(r => {
+        const isAttention = r.status === "Pending";
+        const btns = adminOk
+          ? (r.status === "Pending"
+              ? `<button class="btn-mini btn--gold" data-status="Published" data-id="${r.id}">${tr("Publish")}</button>
+                 <button class="btn-mini" data-status="Rejected" data-id="${r.id}">${tr("Reject")}</button>`
+              : r.status === "Rejected"
+              ? `<button class="btn-mini btn--gold" data-status="Published" data-id="${r.id}">${tr("Publish")}</button>`
+              : r.status === "Published"
+              ? `<button class="btn-mini" data-status="Rejected" data-id="${r.id}">${tr("Reject")}</button>`
+              : "") +
+            `<button class="btn-mini danger" data-del="${r.id}">${tr("Delete")}</button>`
+          : "";
+        return `<tr ${isAttention ? 'data-attention="true"' : ""}>
+          <td data-label="${tr("Author")}"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${esc(r.author || "")}</span></div></td>
+          <td data-label="${tr("Email")}">${esc(r.email || "–")}</td>
+          <td data-label="${tr("Rating")}">${"★".repeat(r.rating || 0)}${"☆".repeat(5 - (r.rating || 0))}</td>
+          <td data-label="${tr("Review")}" style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(r.text || r.comment || "")}</td>
+          <td data-label="${tr("Status")}">${reviewStatusTag(r.status)}</td>
+          <td data-label="${tr("Created")}">${esc(r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "")}</td>
+          <td data-label="${tr("Actions")}" class="dash-actions">${btns}</td>
+        </tr>`;
+      }).join("");
+    }
+
+    view.querySelectorAll(".dash-tab").forEach(tab => {
+      tab.addEventListener("click", async () => {
+        state.filter = tab.dataset.filter;
+        view.querySelectorAll(".dash-tab").forEach(t => t.classList.toggle("active", t.dataset.filter === state.filter));
+        await load();
+      });
+    });
+
+    tbody.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-status]");
+      if (btn) {
+        const id = btn.dataset.id;
+        const status = btn.dataset.status;
+        const dbStatus = { "Published": "PUBLISHED", "Rejected": "REJECTED", "Pending": "PENDING" };
+        try {
+          await MGApiClient.adminUpdate("reviews", id, { status: dbStatus[status] || status });
+          toast(tr("Review updated"));
+          await load();
+          const newCounts = await getCounts();
+          Object.keys(newCounts).forEach(k => {
+            const countEl = view.querySelector(`.dash-tab[data-filter="${k}"] .dash-tab__count`);
+            if (countEl) {
+              countEl.textContent = newCounts[k];
+              if (k === "Pending" && newCounts[k] > 0) {
+                countEl.style.background = "var(--dash-warning-bg)";
+                countEl.style.color = "var(--dash-warning)";
+              } else {
+                countEl.style.background = "";
+                countEl.style.color = "";
+              }
+            }
+          });
+          refreshNotifications();
+        } catch (err) { toast(tr("Error") + ": " + err.message, "err"); }
+        return;
+      }
+      const delBtn = e.target.closest("[data-del]");
+      if (delBtn) {
+        if (!confirm(tr("Delete this review?"))) return;
+        try {
+          await Data.remove("reviews", delBtn.dataset.del);
+          toast(tr("Deleted"));
+          await load();
+          refreshNotifications();
+        } catch (err) { toast(tr("Error") + ": " + err.message, "err"); }
+      }
+    });
+
+    localizeView(view);
+    currentSection = "reviews";
     await load();
   }
 
@@ -735,10 +1473,10 @@
           let v = it[c];
           if (c === "featured") v = v ? "★" : "–";
           if (Array.isArray(v)) v = v.join(", ");
-          if (cfg.media && c === "url") return `<td><img src="${esc(v)}" class="dash-thumb" alt=""></td>`;
-          return `<td>${esc(v)}</td>`;
+          if (cfg.media && c === "url") return `<td data-label="${tr(c.charAt(0).toUpperCase() + c.slice(1))}"><img src="${esc(v)}" class="dash-thumb" alt=""></td>`;
+          return `<td data-label="${tr(c.charAt(0).toUpperCase() + c.slice(1))}">${esc(v)}</td>`;
         }).join("")}
-        <td class="dash-actions">
+        <td data-label="${tr("Actions")}" class="dash-actions">
           ${adminOk
             ? `<button class="btn-mini" data-edit="${it.id}">${tr("Edit")}</button>
                <button class="btn-mini danger" data-del="${it.id}">${tr("Delete")}</button>`
@@ -752,21 +1490,21 @@
           <h3>${tr(col.charAt(0).toUpperCase() + col.slice(1))}</h3>
           ${adminOk ? `<button class="btn btn--gold btn--sm" id="addBtn">+ ${tr("Add")} ${tr(col.slice(0, -1))}</button>` : ""}
         </div>
-        <div class="table-wrap">
+        ${items.length ? `<div class="table-wrap">
           <table class="dash-table">
             <thead><tr>${cfg.cols.map(c => `<th>${tr(c.charAt(0).toUpperCase() + c)}</th>`).join("")}<th>${tr("Actions")}</th></tr></thead>
-            <tbody>${rows || `<tr><td colspan="${cfg.cols.length + 1}">${tr("No records")}</td></tr>`}</tbody>
+            <tbody>${rows}</tbody>
           </table>
-        </div>
+        </div>` : emptyState("📋", tr("No records"), tr("No records"), adminOk ? `<button class="btn btn--gold btn--sm" id="addBtnEmpty">+ ${tr("Add")} ${tr(col.slice(0, -1))}</button>` : "")}
       </div>
       <div class="dash-modal" id="modal" hidden>
         <div class="dash-modal__box">
-          <h3 id="modalTitle">Add</h3>
+          <h3 id="modalTitle">${tr("Add")}</h3>
           <form id="modalForm" class="dash-form">
             ${cfg.fields.map(f => fieldHtml(f)).join("")}
             <div class="dash-form__actions">
-              <button type="button" class="btn-mini" id="cancelBtn">Cancel</button>
-              <button type="submit" class="btn btn--gold btn--sm">Save</button>
+              <button type="button" class="btn-mini" id="cancelBtn">${tr("Cancel")}</button>
+              <button type="submit" class="btn btn--gold btn--sm">${tr("Save")}</button>
             </div>
           </form>
         </div>
@@ -787,14 +1525,30 @@
         if (f.type === "image" && item && item[f.k]) {
           const pv = wrap.querySelector(".img-prev");
           if (pv) { pv.src = item[f.k]; pv.style.display = "block"; }
+          const existing = wrap.querySelector(".img-existing");
+          if (existing) existing.value = item[f.k];
         }
       });
       modal.dataset.editId = item ? item.id : "";
       modal.hidden = false;
     };
-    $("#addBtn").addEventListener("click", () => { if (!adminOk) return; openModal(null); });
+
+    const addBtn = $("#addBtn") || $("#addBtnEmpty");
+    if (addBtn) addBtn.addEventListener("click", () => { if (!adminOk) return; openModal(null); });
     $("#cancelBtn").addEventListener("click", () => modal.hidden = true);
     modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
+
+    modal.addEventListener("change", (e) => {
+      if (e.target.type === "file" && e.target.files && e.target.files[0]) {
+        const wrap = e.target.closest("[data-field]");
+        if (!wrap) return;
+        const pv = wrap.querySelector(".img-prev");
+        if (pv) {
+          pv.src = URL.createObjectURL(e.target.files[0]);
+          pv.style.display = "block";
+        }
+      }
+    });
 
     $$("[data-edit]", view).forEach(b => b.addEventListener("click", async () => {
       const item = (await Data.list(col)).find(x => x.id === b.dataset.edit);
@@ -808,7 +1562,7 @@
 
     $("#modalForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!adminOk) return; // admin-claim gated mutation
+      if (!adminOk) return;
       const item = {};
       for (const f of cfg.fields) {
         const wrap = $(`[data-field="${f.k}"]`, modal);
@@ -817,10 +1571,21 @@
         if (f.type === "checkbox") val = input.checked;
         else if (f.type === "number") val = Number(input.value);
         else if (f.type === "image") {
-          if (input.files && input.files[0]) {
-            const url = await Data.uploadImage(input.files[0], col);
-            val = url || (input.dataset.existing || "");
-          } else val = input.dataset.existing || "";
+          const fileInput = wrap.querySelector('input[type="file"]');
+          const existingInput = wrap.querySelector(".img-existing");
+          if (fileInput && fileInput.files && fileInput.files[0]) {
+            toast(tr("Uploading image…"), "info");
+            try {
+              const result = await Data.uploadImage(fileInput.files[0], col);
+              val = (result && result.url) ? result.url : (existingInput ? existingInput.value : "");
+              if (val) toast(tr("Image uploaded."), "ok");
+            } catch (err) {
+              val = existingInput ? existingInput.value : "";
+              toast(tr("Upload failed:") + " " + err.message, "err");
+            }
+          } else {
+            val = existingInput ? existingInput.value : "";
+          }
         }
         else if (f.k === "amenities") val = input.value.split(",").map(s => s.trim()).filter(Boolean);
         else val = input.value;
@@ -839,12 +1604,204 @@
     if (f.type === "select") return `<label ${attrs}>${lbl}<select name="${f.k}">${f.options.map(o => `<option>${tr(o)}</option>`).join("")}</select></label>`;
     if (f.type === "checkbox") return `<label class="dash-check" ${attrs}><input type="checkbox" name="${f.k}"> ${lbl}</label>`;
     if (f.type === "image") return `<label ${attrs}>${lbl}
-      <input type="file" name="${f.k}" accept="image/*">
+      <input type="file" name="${f.k}" accept="image/jpeg,image/png,image/webp">
       <img class="img-prev" alt="" style="display:none;max-width:120px;border-radius:8px;margin-top:8px">
-      <input type="hidden" class="img-existing" data-existing="">
-      <small class="dash-hint">${tr("Upload an image (Firebase Storage) or keep the current URL.")}</small>
+      <input type="hidden" class="img-existing" value="">
+      <small class="dash-hint">${Data.mode === "rest" ? tr("Select an image (JPEG, PNG, WebP, max 5 MB).") : tr("Select an image file.")}</small>
     </label>`;
     return `<label ${attrs}>${lbl}<input type="${f.type}" name="${f.k}" ${f.type === "number" ? 'step="any"' : ''}></label>`;
+  }
+
+  /* ---------------- Rooms (custom CRUD with quantity + dynamic type + archive) ---------------- */
+  async function renderRooms(view, filter) {
+    const allItems = await Data.list("rooms");
+    const roomTypes = (window.MGApiClient && window.MGApiClient.listRoomTypes)
+      ? await window.MGApiClient.listRoomTypes() : [];
+
+    filter = filter || "all";
+    const items = filter === "active" ? allItems.filter(r => r.isActive !== false)
+      : filter === "archived" ? allItems.filter(r => r.isActive === false)
+      : allItems;
+
+    const rows = items.map(it => {
+      const isActive = it.isActive !== false;
+      const statusLabel = isActive ? tr("Active") : tr("Archived");
+      const statusClass = isActive ? "status-active" : "status-archived";
+      return `
+      <tr>
+        <td>${esc(it.name || "")}</td>
+        <td>${esc(it.type || "")}</td>
+        <td>${esc(String(it.quantity != null ? it.quantity : 1))}</td>
+        <td>${esc(String(it.price || ""))}</td>
+        <td><span class="${statusClass}">${statusLabel}</span></td>
+        <td>${it.image ? '<img src="' + esc(it.image) + '" class="dash-thumb" alt="">' : ""}</td>
+        <td class="dash-actions">
+          ${adminOk
+            ? `<button class="btn-mini" data-edit="${it.id}">${tr("Edit")}</button>
+               ${isActive
+                 ? `<button class="btn-mini warn" data-archive="${it.id}">${tr("Archive")}</button>`
+                 : `<button class="btn-mini" data-restore="${it.id}">${tr("Restore")}</button>`}
+               <button class="btn-mini danger" data-del="${it.id}">${tr("Delete")}</button>`
+            : `<span class="dash-note">${tr("Admin claim required")}</span>`}
+        </td>
+      </tr>`;
+    }).join("");
+
+    view.innerHTML = `
+      <div class="dash-panel">
+        <div class="dash-panel__head">
+          <h3>${tr("Rooms")}</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="roomFilter" class="dash-filter">
+              <option value="all" ${filter === "all" ? "selected" : ""}>${tr("All")}</option>
+              <option value="active" ${filter === "active" ? "selected" : ""}>${tr("Active")}</option>
+              <option value="archived" ${filter === "archived" ? "selected" : ""}>${tr("Archived")}</option>
+            </select>
+            ${adminOk ? `<button class="btn btn--gold btn--sm" id="addBtn">+ ${tr("Add")} ${tr("Room")}</button>` : ""}
+          </div>
+        </div>
+        ${items.length ? `<div class="table-wrap">
+          <table class="dash-table">
+            <thead><tr>
+              <th>${tr("Name")}</th><th>${tr("Type")}</th><th>${tr("Qty")}</th>
+              <th>${tr("Price")}</th><th>${tr("Status")}</th><th>${tr("Image")}</th><th>${tr("Actions")}</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>` : emptyState("🛏", tr("No records"), tr("No records"), adminOk ? `<button class="btn btn--gold btn--sm" id="addBtn">+ ${tr("Add")} ${tr("Room")}</button>` : "")}
+      </div>
+      <div class="dash-modal" id="modal" hidden>
+        <div class="dash-modal__box">
+          <h3 id="modalTitle">${tr("Add")}</h3>
+          <form id="modalForm" class="dash-form">
+            <label data-field="name">${tr("Room Name")}<input name="name" required></label>
+            <label data-field="type">${tr("Room Type")}
+              <input name="type" id="roomTypeInput" list="roomTypeList" required autocomplete="off" placeholder="${tr("Type or select…")}">
+              <datalist id="roomTypeList">${roomTypes.map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+            </label>
+            <label data-field="quantity">${tr("Number of Rooms")}<input name="quantity" type="number" min="1" step="1" value="1" required></label>
+            <label data-field="price">${tr("Price / night")}<input name="price" type="number" step="any" required></label>
+            <label data-field="desc">${tr("Description")}<textarea name="desc" rows="3"></textarea></label>
+            <label data-field="amenities">${tr("Amenities (comma)")}<input name="amenities"></label>
+            <label data-field="image">${tr("Image")}
+              <input type="file" accept="image/*">
+              <input type="hidden" class="img-existing" name="imageExisting">
+              <img class="img-prev" style="display:none;max-width:200px;margin-top:6px" alt="">
+              <small class="dash-hint">${Data.mode === "rest" ? tr("Select an image (JPEG, PNG, WebP, max 5 MB).") : tr("Select an image file.")}</small>
+            </label>
+            <div class="dash-form__actions">
+              <button type="button" class="btn-mini" id="cancelBtn">${tr("Cancel")}</button>
+              <button type="submit" class="btn btn--gold btn--sm">${tr("Save")}</button>
+            </div>
+          </form>
+        </div>
+      </div>`;
+
+    const filterEl = $("#roomFilter");
+    if (filterEl) filterEl.addEventListener("change", () => renderRooms(view, filterEl.value));
+
+    const modal = $("#modal");
+    const openModal = (item) => {
+      $("#modalTitle").textContent = item ? tr("Edit") : tr("Add");
+      const fields = { name: "", type: "", quantity: 1, price: "", desc: "", amenities: "", image: "" };
+      Object.keys(fields).forEach(k => {
+        const wrap = $("[data-field='" + k + "']", modal);
+        if (!wrap) return;
+        const input = wrap.querySelector("input:not([type=file]):not(.img-existing), textarea");
+        if (!input) return;
+        let val = item ? (item[k] != null ? item[k] : fields[k]) : fields[k];
+        if (k === "amenities" && Array.isArray(val)) val = val.join(", ");
+        input.value = val;
+      });
+      if (item && item.image) {
+        const pv = $(".img-prev", modal);
+        if (pv) { pv.src = item.image; pv.style.display = "block"; }
+        const ex = $(".img-existing", modal);
+        if (ex) ex.value = item.image;
+      }
+      modal.dataset.editId = item ? item.id : "";
+      modal.hidden = false;
+    };
+
+    const addBtn = $("#addBtn");
+    if (addBtn) addBtn.addEventListener("click", () => { if (!adminOk) return; openModal(null); });
+    const cancelBtn = $("#cancelBtn");
+    if (cancelBtn) cancelBtn.addEventListener("click", () => modal.hidden = true);
+    modal.addEventListener("click", (e) => { if (e.target === modal) modal.hidden = true; });
+
+    $$("[data-edit]", view).forEach(b => b.addEventListener("click", async () => {
+      const item = (await Data.list("rooms")).find(x => x.id === b.dataset.edit);
+      openModal(item);
+    }));
+
+    $$("[data-archive]", view).forEach(b => b.addEventListener("click", async () => {
+      if (!adminOk) return;
+      try {
+        await Data.update("rooms", b.dataset.archive, { isActive: false });
+        toast(tr("Room archived successfully"));
+        showSection("rooms");
+      } catch (err) {
+        toast(tr("Archive failed:") + " " + (err.message || tr("Error")), "err");
+      }
+    }));
+
+    $$("[data-restore]", view).forEach(b => b.addEventListener("click", async () => {
+      if (!adminOk) return;
+      try {
+        await Data.update("rooms", b.dataset.restore, { isActive: true });
+        toast(tr("Room restored successfully"));
+        showSection("rooms");
+      } catch (err) {
+        toast(tr("Restore failed:") + " " + (err.message || tr("Error")), "err");
+      }
+    }));
+
+    $$("[data-del]", view).forEach(b => b.addEventListener("click", async () => {
+      if (!confirm(tr("Delete this record?"))) return;
+      try {
+        await Data.remove("rooms", b.dataset.del);
+        toast(tr("Deleted"));
+        showSection("rooms");
+      } catch (err) {
+        toast(tr("Cannot delete: ") + (err.message || tr("Error")), "err");
+      }
+    }));
+
+    $("#modalForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!adminOk) return;
+      const f = e.target;
+      const nameVal = f.querySelector("[name=name]").value.trim();
+      const typeVal = f.querySelector("[name=type]").value.trim();
+      const qtyVal = Math.max(1, parseInt(f.querySelector("[name=quantity]").value, 10) || 1);
+      const priceVal = Number(f.querySelector("[name=price]").value) || 0;
+      const descVal = f.querySelector("[name=desc]").value;
+      const amenVal = f.querySelector("[name=amenities]").value.split(",").map(s => s.trim()).filter(Boolean);
+      if (!nameVal || !typeVal) { toast(tr("Name and Type are required"), "err"); return; }
+
+      const item = { name: nameVal, type: typeVal, quantity: qtyVal, price: priceVal, desc: descVal, amenities: amenVal };
+
+      const fileInput = f.querySelector('input[type="file"]');
+      const existingInput = f.querySelector(".img-existing");
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        toast(tr("Uploading image…"), "info");
+        try {
+          const result = await Data.uploadImage(fileInput.files[0], "rooms");
+          item.image = (result && result.url) ? result.url : (existingInput ? existingInput.value : "");
+          if (item.image) toast(tr("Image uploaded."), "ok");
+        } catch (err) {
+          item.image = existingInput ? existingInput.value : "";
+          toast(tr("Upload failed:") + " " + err.message, "err");
+        }
+      } else {
+        item.image = existingInput ? existingInput.value : "";
+      }
+
+      const editingId = modal.dataset.editId;
+      if (editingId) { await Data.update("rooms", editingId, item); toast(tr("Updated")); }
+      else { await Data.add("rooms", item); toast(tr("Added")); }
+      modal.hidden = true; showSection("rooms");
+    });
   }
 
   async function renderHotel(view) {
@@ -866,7 +1823,9 @@
       e.preventDefault();
       if (!adminOk) return;
       const fd = new FormData(e.target); const obj = {}; fd.forEach((v, k) => obj[k] = v);
-      await Data.set("hotel", obj); toast(tr("Hotel info saved"));
+      await Data.set("hotel", obj);
+      toast(tr("Hotel info saved"));
+      await renderHotel(view);
     });
   }
 
@@ -885,29 +1844,23 @@
           </label>
           <div class="dash-form__actions"><button type="submit" class="btn btn--gold btn--sm">${tr("Save")}</button></div>
         </form>
-        <div class="dash-note">${tr("Mode:")} <b id="modeNote">${(Data.mode || "demo")}</b>. ${tr("Set your Firebase keys in")} <code>js/firebase-config.js</code> ${tr("to enable cloud sync, auth & image storage.")}</div>
-        <div class="dash-seed">
-          <button type="button" class="btn btn--outline btn--sm" id="seedCloudBtn">${tr("Seed cloud data")}</button>
-          <span class="dash-seed__hint" id="seedHint"></span>
-        </div>
+        <div class="dash-note">${tr("Mode:")} <b id="modeNote">${(Data.mode || "demo")}</b>. ${Data.mode === "rest" ? tr("Connected to PostgreSQL backend via REST API.") : tr("Running in demo mode.")}</div>
       </div>`;
     $("#setForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!adminOk) return;
       const fd = new FormData(e.target); const obj = {}; fd.forEach((v, k) => obj[k] = v);
-      await Data.set("settings", obj); toast(tr("Settings saved"));
-    });
-    const seedBtn = $("#seedCloudBtn");
-    if (seedBtn) seedBtn.addEventListener("click", async () => {
-      const hint = $("#seedHint");
-      if (!window.MGSeedCloud) { hint.textContent = "Seeder not loaded."; return; }
-      if (!window.MGFirebaseServices || !window.MGFirebaseServices.isLive()) {
-        hint.textContent = tr("Sign in with Firebase first (live mode).");
-        return;
+      await Data.set("settings", obj);
+      if (window.MGSettings && MGSettings.refresh) await MGSettings.refresh();
+      toast(tr("Settings saved"));
+      await renderSettings(view);
+      if (obj.lang && window.MGLang && window.MGLang.apply) {
+        window.MGLang.apply(obj.lang);
       }
-      hint.textContent = tr("Seeding…");
-      try { await window.MGSeedCloud(); hint.textContent = tr("Cloud data seeded ✓"); toast(tr("Cloud data seeded")); }
-      catch (err) { hint.textContent = err.message; }
+      if (obj.theme) {
+        document.documentElement.setAttribute("data-theme", obj.theme);
+        localStorage.setItem("mg-theme", obj.theme);
+      }
     });
   }
 
@@ -939,13 +1892,20 @@
         $("#dashMode") && ($("#dashMode").textContent = m);
         bootDashboard();
       } catch (err) {
-        $("#loginHint").textContent = tr("Login failed:") + " " + err.message;
+        console.error("[LOGIN] error:", err.message);
+        const hint = $("#loginHint");
+        if (hint) {
+          const msg = err.message || "";
+          if (msg.includes("Not authorized")) hint.textContent = tr("Not authorized — admin access required.");
+          else if (msg.includes("Credentials")) hint.textContent = tr("Credentials required");
+          else hint.textContent = tr("Login failed");
+        }
       }
     });
   }
 
   async function logout() {
-    if (Data.mode === "firebase" && FB) { try { await FB.signOut(); } catch (e) {} }
+    if (window.MGApiClient) window.MGApiClient.clearToken();
     sessionStorage.removeItem("mg-auth");
     renderLogin();
   }
@@ -953,78 +1913,61 @@
   async function bootDashboard() {
     buildShell();
     const m = await ready(); Data.mode = m;
-    // Confirm admin claim at boot (defense-in-depth even if boot was
-    // reached via a stale session). Non-admin -> not-authorized.
     let ok = true;
-    if (m === "firebase" && FB) {
+    if (m === "rest") {
       try { await assertAdmin(); adminOk = true; }
       catch (e) { ok = false; }
-    } else { adminOk = true; } // demo mode: no real auth
+    } else { adminOk = true; }
     if (!ok) { renderNotAuthorized(); return; }
 
-    const modeEl = $("#dashMode");
-    if (modeEl) modeEl.textContent = m + (m === "demo" ? " (no keys)" : "");
-    const authEl = $("#dashEmail");
-    if (authEl && window.MGFirebase && window.MGFirebase.ready && FB && FB.auth && FB.auth.currentUser) {
-      authEl.textContent = FB.auth.currentUser.email || "admin";
+    /* Ensure settings (including currency) are loaded before rendering */
+    if (window.MGSettings && MGSettings.load) {
+      try { await MGSettings.load(); } catch (e) { /* use defaults */ }
     }
+
+    const modeEl = $("#dashMode");
+    if (modeEl) modeEl.textContent = m + (m === "demo" ? tr(" (no keys)") : "");
+    const authEl = $("#dashEmail");
+    if (m === "rest" && window.MGApiClient) {
+      try {
+        const user = await window.MGApiClient.adminMe();
+        if (authEl) authEl.textContent = user.email || "admin";
+      } catch (e) { if (authEl) authEl.textContent = "admin"; }
+    }
+
+    refreshNotifications();
     showSection("home");
     if (window.MGLang) document.addEventListener("lang:change", () => { if (currentSection) showSection(currentSection); });
   }
 
   function initDash() {
     if (!document.getElementById("dash")) return;
-    // Production error: config present but SDK failed. Do NOT fall back to
-    // demo; show a clear fatal message so it is never silently shipped.
-    if (window.MGFirebase && window.MGFirebase.fatal) {
-      const app = document.getElementById("dash");
-      app.className = "";
-      app.innerHTML = `<div class="dash-login"><div class="dash-login__card">
-        <div class="dash-brand">Marshal<span>Al-Gezira</span></div>
-        <p class="dash-login__sub" style="color:#f0a3a3">Configuration error</p>
-        <p class="dash-note">${esc(window.MGFirebase.message || "Firebase failed to initialize.")}</p>
-      </div></div>`;
+    if (window.MGApiClient && window.MGApiClient.getToken()) {
+      assertAdmin().then(() => bootDashboard()).catch(() => {
+        window.MGApiClient.clearToken();
+        renderLogin();
+      });
       return;
     }
-    // Resumed session (sessionStorage) — still verify the admin claim
-    // before rendering any mutation UI. Non-admin -> not-authorized.
     if (sessionStorage.getItem("mg-auth")) {
-      if (window.MGFirebase && window.MGFirebase.ready === true) {
-        // Ensure FB handle is bound (boot may have finished already).
-        if (!FB) FB = window.MGFirebase;
-        assertAdmin().then(() => bootDashboard()).catch(() => renderNotAuthorized());
+      var savedAuth = sessionStorage.getItem("mg-auth");
+      if (savedAuth === "rest") {
+        if (window.MGApiClient && window.MGApiClient.getToken()) {
+          assertAdmin().then(() => bootDashboard()).catch(() => {
+            window.MGApiClient.clearToken();
+            sessionStorage.removeItem("mg-auth");
+            renderLogin();
+          });
+        } else {
+          sessionStorage.removeItem("mg-auth");
+          renderLogin();
+        }
         return;
       }
-      if (window.MGFirebase && window.MGFirebase.ready === false && !window.MGFirebase.fatal) {
-        // Firebase still booting in live mode — wait for readiness.
-        document.addEventListener("firebase:ready", () => {
-          if (window.MGFirebase.ready === true) {
-            FB = window.MGFirebase;
-            assertAdmin().then(() => bootDashboard()).catch(() => renderNotAuthorized());
-          } else { bootDashboard(); }
-        }, { once: true });
-        return;
-      }
-      // Demo mode resume (no real auth).
       bootDashboard();
       return;
     }
-    if (window.MGFirebase && window.MGFirebase.ready && window.MGFirebase.auth) {
-      // Render login optimistically; Firebase auth state may take a moment.
-      renderLogin();
-      let resolved = false;
-      const guard = setTimeout(() => { if (!resolved) bootDashboardIfAuthed(); }, 1500);
-      window.MGFirebase.onAuth(u => {
-        resolved = true; clearTimeout(guard);
-        if (u) {
-          // Auto-boot only after confirming the admin claim.
-          assertAdmin().then(() => bootDashboard()).catch(() => renderNotAuthorized());
-        } /* else keep login form */
-      });
-    } else { renderLogin(); }
-  }
-  function bootDashboardIfAuthed() {
-    if (window.MGFirebase && window.MGFirebase.auth && window.MGFirebase.auth.currentUser) bootDashboard();
+    renderLogin();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initDash);
   else initDash();

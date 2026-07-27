@@ -1,0 +1,79 @@
+{
+  "dir": "rtl",
+  "vpW": 390,
+  "pageOverflow": false,
+  "bodyScrollWidth": 390,
+  "rowW": 292,
+  "rowH": 488,
+  "rowBg": "rgba(196, 154, 42, 0.08)",
+  "mainW": 390,
+  "mainH": 7617,
+  "tableDisplay": "table",
+  "tbodyDisplay": "flex",
+  "tbodyGap": "10px",
+  "trDisplay": "grid",
+  "trPadding": "10px",
+  "totalRows": 16,
+  "cells": [
+    {
+      "classes": "bk-card-header",
+      "text": "cms2ankl…عرض",
+      "width": 270,
+      "height": 53
+    },
+    {
+      "classes": "bk-card-guest",
+      "text": "Layla Ibrahimlayla@test.com",
+      "width": 270,
+      "height": 32
+    },
+    {
+      "classes": "bk-card-room",
+      "text": "fares",
+      "width": 270,
+      "height": 28
+    },
+    {
+      "classes": "bk-card-cin",
+      "text": "2026-08-15",
+      "width": 135,
+      "height": 32
+    },
+    {
+      "classes": "bk-card-cout",
+      "text": "2026-08-20",
+      "width": 135,
+      "height": 32
+    },
+    {
+      "classes": "bk-card-guests",
+      "text": "5",
+      "width": 135,
+      "height": 47
+    },
+    {
+      "classes": "bk-card-total",
+      "text": "EGP 1,500.00الإجمالي EGP",
+      "width": 135,
+      "height": 47
+    },
+    {
+      "classes": "bk-card-status",
+      "text": "Pending",
+      "width": 270,
+      "height": 38
+    },
+    {
+      "classes": "bk-card-payment",
+      "text": "Unpaid",
+      "width": 270,
+      "height": 35
+    },
+    {
+      "classes": "dash-actions bk-card-actions",
+      "text": "عرضتأكيدإلغاء الحجزتحديد قيد الانتظارتحديد مدفوعتح",
+      "width": 270,
+      "height": 201
+    }
+  ]
+}

@@ -1,17 +1,14 @@
 /* site-reviews.js — Public "Guest Voices" carousel bound to the reviews collection.
-   Mirrors js/site-rooms.js / js/site-gallery.js: live Firestore via MGSiteData,
+   Mirrors js/site-rooms.js / js/site-gallery.js: live data via MGSiteData,
    demo fallback to window.__mgSeed, loading/empty/error states preserved.
 
-   Public only shows reviews with status === "Published" (so the admin can hold
-   Pending reviews without exposing them).
+   Public only shows reviews with status === "Published" (server-side filtered).
 
    Markup contract (existing index.html structure is preserved):
      <div class="swiper voices__swiper" id="testiSwiper">
        <div class="swiper-wrapper" id="testiWrap"></div>
        <div class="swiper-pagination voices__dots"></div>
      </div>
-   The hardcoded <swiper-slide> cards are replaced by #testiWrap; the admin's
-   Reviews CRUD (dashboard.js) reads/writes the same `reviews` collection.
 */
 (function () {
   "use strict";
@@ -28,17 +25,16 @@
     return "★".repeat(r) + "☆".repeat(5 - r);
   }
 
-  function escapeHTML(s) {
+  var esc = (window.MGShared && MGShared.esc) || function (s) {
     return String(s == null ? "" : s)
       .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  }
+  };
 
   function cardHTML(r) {
     const avatar = initials(r.author);
-    const name = escapeHTML(r.author || "");
-    const loc = escapeHTML(r.location || "");
-    const text = escapeHTML(r.text || "");
+    const name = esc(r.author || "");
+    const text = esc(r.text || r.comment || "");
     const rating = stars(r.rating);
     return `
       <div class="swiper-slide">
@@ -47,20 +43,34 @@
           <blockquote class="voice-card__text">${text}</blockquote>
           <figcaption class="voice-card__by">
             <span class="voice-card__avatar">${avatar}</span>
-            <span class="voice-card__meta"><span class="voice-card__name">${name}</span>${loc ? `<span class="voice-card__loc text-muted">${loc}</span>` : ""}</span>
+            <span class="voice-card__meta"><span class="voice-card__name">${name}</span></span>
           </figcaption>
         </figure>
       </div>`;
   }
 
+  function emptyStateHTML() {
+    const isAR = document.documentElement.lang === "ar";
+    return `
+      <div style="text-align:center;padding:3rem 1rem;color:var(--muted,var(--text-muted,#8A93A6))">
+        <div style="font-size:2.5rem;margin-bottom:1rem;opacity:0.5">★</div>
+        <p style="font-family:var(--font-head);font-size:1.1rem;margin-bottom:0.5rem;color:var(--text)">
+          ${isAR ? "لا توجد تقييمات بعد" : "No guest voices yet"}
+        </p>
+        <p style="font-size:0.85rem">
+          ${isAR ? "كن أول من يشارك تجربته" : "Be the first to share your experience"}
+        </p>
+      </div>`;
+  }
+
   async function render() {
-    const swiper = document.getElementById("testiSwiper");
     const wrap = document.getElementById("testiWrap");
     if (!wrap) return;
 
     const loading = document.getElementById("testiLoading");
     const empty = document.getElementById("testiEmpty");
     const error = document.getElementById("testiError");
+    const section = document.getElementById("testimonials");
 
     if (loading) loading.hidden = false;
     if (empty) empty.hidden = true;
@@ -69,16 +79,42 @@
     try {
       const all = await (window.MGSiteData
         ? window.MGSiteData.getList("reviews")
-        : (window.__mgSeed ? window.__mgSeed.reviews : []));
-      const published = (all || []).filter(r => (r.status || "Published") === "Published");
+        : (window.__mgSeed ? window.__mgSeed().reviews : []));
+      const published = (all || []).filter(r => {
+        const s = (r.status || "").toUpperCase();
+        return s === "PUBLISHED" || s === "Published" || (!r.status && r.approved === true);
+      });
 
       if (loading) loading.hidden = true;
 
       if (!published.length) {
         wrap.innerHTML = "";
-        if (empty) empty.hidden = false;
+        // Show premium empty state inside the swiper wrapper
+        if (section) {
+          const swiperEl = section.querySelector(".voices__swiper");
+          if (swiperEl) {
+            const existingEmpty = swiperEl.querySelector(".voices-empty-state");
+            if (!existingEmpty) {
+              const div = document.createElement("div");
+              div.className = "voices-empty-state";
+              div.innerHTML = emptyStateHTML();
+              swiperEl.appendChild(div);
+            }
+          }
+        }
+        // Hide nav arrows and dots for empty state
+        const prevBtn = document.getElementById("testiPrev");
+        const nextBtn = document.getElementById("testiNext");
+        if (prevBtn) prevBtn.style.display = "none";
+        if (nextBtn) nextBtn.style.display = "none";
         if (window.initTestiSwiper) window.initTestiSwiper();
         return;
+      }
+
+      // Remove any empty state placeholder
+      if (section) {
+        const emptyState = section.querySelector(".voices-empty-state");
+        if (emptyState) emptyState.remove();
       }
 
       wrap.innerHTML = published.map(cardHTML).join("");

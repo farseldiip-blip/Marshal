@@ -36,10 +36,6 @@ window.__I18N_EN = {
   bk_search: "Search",
   bk_searching: "Searching…",
   bk_booknow: "Book Now",
-  rt_deluxe: "Deluxe Room",
-  rt_suite: "Executive Suite",
-  rt_nile: "Nile View Suite",
-  rt_pres: "Presidential Villa",
 
   /* My Booking lookup */
   lk_kicker: "Your Stay",
@@ -102,12 +98,6 @@ window.__I18N_EN = {
   rooms_title: "Featured Residences",
   view: "View Details",
   all_rooms: "All Residences",
-  room1: "Deluxe Garden Room",
-  room1_d: "A serene 42m² retreat opening to private gardens.",
-  room2: "Nile View Suite",
-  room2_d: "Floor-to-ceiling glass framing the river's slow light.",
-  room3: "Presidential Villa",
-  room3_d: "A private two-bedroom sanctuary with rooftop plunge.",
   room_price_from: "from",
 
   /* Amenities */
@@ -155,6 +145,27 @@ window.__I18N_EN = {
   tst_q4: "Every detail intentional. This is what luxury should feel like.",
   tst_prev: "Previous",
   tst_next: "Next",
+  tst_write: "Write a Review",
+  tst_write_title: "Share Your Experience",
+  tst_write_sub: "Your review will appear after moderation.",
+  tst_name: "Your Name",
+  tst_email: "Email",
+  tst_optional: "(optional)",
+  tst_rating: "Rating",
+  tst_review: "Your Review",
+  tst_submit: "Submit Review",
+  tst_submitting: "Submitting…",
+  tst_cancel: "Cancel",
+  tst_success: "Thank you for sharing your experience. Your review has been submitted and is awaiting moderation.",
+  tst_error_name: "Please enter your name",
+  tst_error_rating: "Please select a rating",
+  tst_error_review_short: "Review must be at least 10 characters",
+  tst_error_email: "Please enter a valid email",
+  tst_error_rate: "Too many submissions. Please try again later.",
+  tst_error_generic: "Something went wrong. Please try again.",
+  tst_error_network: "Network error. Please check your connection.",
+  tst_empty: "No guest voices yet",
+  tst_empty_sub: "Be the first to share your experience",
 
   /* FAQ */
   faq_kicker: "Good to Know",
@@ -170,9 +181,9 @@ window.__I18N_EN = {
 
   /* Location */
   loc_kicker: "Where We Are",
-  loc_title: "Al-Gezira, Cairo",
-  loc1_n: "Cairo Opera House",
-  loc1_d: "8 min walk across the island",
+  loc_title: "Mansoura, Dakahlia, Egypt",
+  loc1_n: "Mansoura Corniche",
+  loc1_d: "Along the riverfront",
   loc2_n: "Museum District",
   loc2_d: "12 min by car",
   loc3_n: "Nile Promenade",
@@ -202,13 +213,8 @@ window.__I18N_EN = {
 
   /* Room details */
   rd_back: "All Residences",
-  rd_badge: "Nile View Suite",
-  rd_title: "Nile View Suite",
-  rd_desc: "A 70m² sanctuary where floor-to-ceiling glass frames the river's slow light. Wake to Cairo in gold, sleep to its quiet.",
   rd_residence: "The Residence",
   rd_composed: "Composed for stillness",
-  rd_composed_p: "Pale stone, brushed brass, and linen in natural tones. A deep soaking tub positioned for the sunset, a lounge for slow mornings, and a private butler on call.",
-  rd_reserve: "Reserve This Suite",
   rd_cancel: "Free cancellation up to 48h",
 
   /* About */
@@ -252,5 +258,10 @@ window.__I18N_EN = {
   d_pending: "Pending",
   d_cancelled: "Cancelled",
   d_published: "Published",
-  d_hidden: "Hidden"
+  d_hidden: "Hidden",
+  d_rejected: "Rejected",
+  d_all: "All",
+  d_scroll_hint: "Scroll to see more content",
+  d_scroll_left: "Scroll left",
+  d_scroll_right: "Scroll right",
 };

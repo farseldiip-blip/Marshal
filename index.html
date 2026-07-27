@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/animations.css?v=20260718" />
   <link rel="stylesheet" href="css/responsive.css" />
+  <!-- Leaflet CSS (interactive map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 </head>
 <body class="custom-cursor">
 
@@ -44,7 +46,7 @@
     <div class="navbar__pill">
       <a href="index.html" class="brand" aria-label="Marshal Al-Gezira Hotel home">
         <img src="assets/images/308674245_488260833312990_3605187729512632128_n.jpg" alt="Marshal Al-Gezira Hotel" onerror="this.style.display='none'" />
-        <span class="brand__mark">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span>
+        <span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span>
       </a>
       <nav class="nav-links" aria-label="Primary">
         <a href="#experience" data-i18n="nav_experience">Experience</a>
@@ -131,10 +133,7 @@
           <div class="field">
             <label data-i18n="bk_room">Room Type</label>
             <select class="select" id="bkRoom">
-              <option data-i18n="rt_deluxe">Deluxe Room</option>
-              <option data-i18n="rt_suite">Executive Suite</option>
-              <option data-i18n="rt_nile">Nile View Suite</option>
-              <option data-i18n="rt_pres">Presidential Villa</option>
+              <option value="">Loading rooms…</option>
             </select>
           </div>
           <button class="btn btn--primary" id="bkSearch" data-i18n="bk_search">Search</button>
@@ -156,11 +155,11 @@
               <input class="input" id="lkRef" placeholder="pb_…" autocomplete="off" />
             </div>
             <div class="field">
-              <label data-i18n="lk_email">Email</label>
+              <label data-i18n="lk_email">Email <span class="text-muted">(optional if phone provided)</span></label>
               <input class="input" id="lkEmail" type="email" placeholder="you@email.com" autocomplete="off" />
             </div>
             <div class="field">
-              <label data-i18n="lk_phone">Phone</label>
+              <label data-i18n="lk_phone">Phone <span class="text-muted">(optional if email provided)</span></label>
               <input class="input" id="lkPhone" type="tel" placeholder="+20 …" autocomplete="off" />
             </div>
             <button class="btn btn--primary" id="lkSearch" data-i18n="lk_search">Look up</button>
@@ -351,8 +350,56 @@
             <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
+        <!-- Write a Review CTA -->
+        <div class="tst-cta reveal" style="text-align:center;margin-top:var(--sp-5)">
+          <button class="btn btn--outline" id="openReviewModal" data-i18n="tst_write">Write a Review</button>
+        </div>
       </div>
     </section>
+
+    <!-- Write a Review Modal -->
+    <div class="review-modal" id="reviewModal" hidden>
+      <div class="review-modal__backdrop" data-review-close></div>
+      <div class="review-modal__box" role="dialog" aria-labelledby="reviewModalTitle">
+        <button class="review-modal__close" data-review-close aria-label="Close">&times;</button>
+        <h3 id="reviewModalTitle" class="review-modal__title" data-i18n="tst_write_title">Share Your Experience</h3>
+        <p class="review-modal__sub" data-i18n="tst_write_sub">Your review will appear after moderation.</p>
+        <form id="reviewForm" class="review-form" novalidate>
+          <div class="review-form__group">
+            <label for="rvName" data-i18n="tst_name">Your Name</label>
+            <input type="text" id="rvName" name="name" required maxlength="100" autocomplete="name" class="review-form__input" placeholder="">
+          </div>
+          <div class="review-form__group">
+            <label for="rvEmail" data-i18n="tst_email">Email <span data-i18n="tst_optional">(optional)</span></label>
+            <input type="email" id="rvEmail" name="email" maxlength="254" autocomplete="email" class="review-form__input" placeholder="">
+          </div>
+          <div class="review-form__group">
+            <label data-i18n="tst_rating">Rating</label>
+            <div class="review-form__stars" id="rvStars" role="radiogroup" aria-label="Rating">
+              <button type="button" class="rv-star" data-star="1" aria-label="1 star">★</button>
+              <button type="button" class="rv-star" data-star="2" aria-label="2 stars">★</button>
+              <button type="button" class="rv-star" data-star="3" aria-label="3 stars">★</button>
+              <button type="button" class="rv-star" data-star="4" aria-label="4 stars">★</button>
+              <button type="button" class="rv-star" data-star="5" aria-label="5 stars">★</button>
+            </div>
+            <input type="hidden" id="rvRating" name="rating" value="0">
+            <div class="review-form__error" id="rvRatingError" hidden data-i18n="tst_error_rating">Please select a rating</div>
+          </div>
+          <div class="review-form__group">
+            <label for="rvReview" data-i18n="tst_review">Your Review</label>
+            <textarea id="rvReview" name="review" required rows="4" minlength="10" maxlength="2000" class="review-form__input review-form__textarea" placeholder=""></textarea>
+          </div>
+          <div class="review-form__error" id="rvGeneralError" hidden></div>
+          <div class="review-form__success" id="rvSuccess" hidden>
+            <p data-i18n="tst_success">Thank you for sharing your experience. Your review has been submitted and is awaiting moderation.</p>
+          </div>
+          <div class="review-form__actions">
+            <button type="button" class="btn btn--outline btn--sm" data-review-close data-i18n="tst_cancel">Cancel</button>
+            <button type="submit" class="btn btn--gold btn--sm" id="rvSubmitBtn" data-i18n="tst_submit">Submit Review</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- ===== FAQ ===== -->
     <section class="section" id="faq" style="background:var(--surface)">
@@ -375,14 +422,13 @@
       <div class="container">
         <div class="section-head section-head--center">
           <span class="eyebrow reveal" data-i18n="loc_kicker">Where We Are</span>
-          <h2 class="reveal" data-i18n="loc_title">Al-Gezira, Cairo</h2>
+          <h2 class="reveal" data-i18n="loc_title">Mansoura, Dakahlia, Egypt</h2>
         </div>
         <div class="media-frame reveal" style="aspect-ratio:21/9">
-          <iframe title="Map" style="width:100%;height:100%;border:0;filter:grayscale(1) contrast(1.05)" loading="lazy"
-            src="https://www.openstreetmap.org/export/embed.html?bbox=31.21%2C30.04%2C31.24%2C30.06&layer=mapnik&marker=30.05%2C31.225"></iframe>
+          <div id="hotelMap" style="width:100%;height:100%" role="img" aria-label="Hotel location map showing Marshal Al-Gezira in Mansoura, Dakahlia, Egypt"></div>
         </div>
         <div class="grid grid-3 mt-4 reveal">
-          <div><h4 class="fs-h4" data-i18n="loc1_n">Cairo Opera House</h4><p class="text-muted" data-i18n="loc1_d">8 min walk across the island</p></div>
+          <div><h4 class="fs-h4" data-i18n="loc1_n">Mansoura Corniche</h4><p class="text-muted" data-i18n="loc1_d">Along the riverfront</p></div>
           <div><h4 class="fs-h4" data-i18n="loc2_n">Museum District</h4><p class="text-muted" data-i18n="loc2_d">12 min by car</p></div>
           <div><h4 class="fs-h4" data-i18n="loc3_n">Nile Promenade</h4><p class="text-muted" data-i18n="loc3_d">Steps from the door</p></div>
         </div>
@@ -398,8 +444,8 @@
             <h2 class="reveal" data-i18n="con_title">Begin your stay</h2>
             <p class="text-muted reveal" data-i18n="con_p">Our concierge replies within the hour. Tell us what you're imagining.</p>
             <div class="stack reveal mt-3">
-              <div><strong data-i18n="con_e">Email</strong><div class="text-muted">stay@marshalgezira.concept</div></div>
-              <div><strong data-i18n="con_t">Phone</strong><div class="text-muted">+20 2 000 0000</div></div>
+              <div><strong data-i18n="con_e">Email</strong><div class="text-muted" data-setting="email" data-setting-href="email">stay@marshalgezira.concept</div></div>
+              <div><strong data-i18n="con_t">Phone</strong><div class="text-muted" data-setting="phone" data-setting-href="phone">+20 2 000 0000</div></div>
             </div>
           </div>
           <form class="card reveal" style="padding:var(--sp-5)" id="contactForm">
@@ -419,7 +465,7 @@
   <footer class="footer">
     <div class="container">
       <div>
-        <div class="brand"><span class="brand__mark">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></div>
+        <div class="brand"><span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></div>
         <p class="mt-2" style="max-width:320px" data-i18n="foot_p">A premium concept redesign — original content inspired by the hotel, not affiliated.</p>
         <div class="footer__social">
           <a href="#" aria-label="Instagram">IG</a><a href="#" aria-label="X">X</a><a href="#" aria-label="LinkedIn">in</a>
@@ -441,9 +487,9 @@
       </div>
       <div>
         <h4 data-i18n="f_contact">Contact</h4>
-        <a href="#" data-i18n="con_e">stay@marshalgezira.concept</a>
-        <a href="#" data-i18n="con_t">+20 2 000 0000</a>
-        <a href="#location" data-i18n="loc_title">Al-Gezira, Cairo</a>
+        <a href="#" data-setting="email" data-setting-href="email">stay@marshalgezira.concept</a>
+        <a href="#" data-setting="phone" data-setting-href="phone">+20 2 000 0000</a>
+        <a href="#location" data-setting="address">Mansoura, Dakahlia, Egypt</a>
       </div>
     </div>
     <div class="footer__bottom">
@@ -462,10 +508,12 @@
   <div class="lightbox" id="lightbox"><button class="lightbox__close" aria-label="Close">×</button><img src="" alt="Enlarged" /></div>
 
   <!-- ===== Scripts ===== -->
-  <!-- Firebase (config-only until keys set; safe in demo mode) + public data layer -->
-  <script src="js/firebase-config.js"></script>
-  <script src="js/firebase.js"></script>
-  <script src="js/firebase-services.js"></script>
+  <!-- Public data layer -->
+  <script src="js/api-config.js"></script>
+  <script src="js/sanitize.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/api-client.js"></script>
+  <script src="js/site-settings.js"></script>
   <script src="js/seed-data.js"></script>
   <script src="js/site-data.js"></script>
   <script src="js/site-rooms.js"></script>
@@ -491,5 +539,9 @@
   <script src="js/cursor.js"></script>
   <script src="js/animations.js"></script>
   <script src="js/booking.js?v=20260718"></script>
+  <script src="js/site-review-form.js"></script>
+  <!-- Leaflet JS + interactive hotel map (defer: non-blocking, lazy-init via IntersectionObserver) -->
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script defer src="js/site-map.js"></script>
 </body>
 </html>
