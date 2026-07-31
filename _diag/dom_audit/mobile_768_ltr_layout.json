@@ -1,0 +1,103 @@
+{
+  "dash": {
+    "display": "grid",
+    "gridTemplateColumns": "768px",
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "w": 768,
+      "h": 1024
+    }
+  },
+  "side": {
+    "rect": {
+      "x": -273,
+      "y": 0,
+      "w": 260,
+      "h": 1024
+    },
+    "overflowY": "auto",
+    "overflowX": "auto",
+    "scrollH": 1024,
+    "clientH": 1024,
+    "hasInternalScroll": false,
+    "dir": "ltr",
+    "borderRight": "1px solid rgba(255, 255, 255, 0.06)",
+    "borderLeft": "0px none rgb(200, 194, 182)"
+  },
+  "main": {
+    "rect": {
+      "x": 0,
+      "y": 0,
+      "width": 768,
+      "height": 1024,
+      "top": 0,
+      "right": 768,
+      "bottom": 1024,
+      "left": 0
+    },
+    "gridColumn": "auto"
+  },
+  "top": {
+    "rect": {
+      "x": 14,
+      "y": 12,
+      "width": 740,
+      "height": 47.6875,
+      "top": 12,
+      "right": 754,
+      "bottom": 59.6875,
+      "left": 14
+    },
+    "flexWrap": "nowrap"
+  },
+  "title": {
+    "rect": {
+      "x": 672.234375,
+      "y": 23.25,
+      "width": 81.765625,
+      "height": 25.1875,
+      "top": 23.25,
+      "right": 754,
+      "bottom": 48.4375,
+      "left": 672.234375
+    },
+    "text": "Dashboard",
+    "excess": false
+  },
+  "cards": null,
+  "firstStat": null,
+  "hasHOverflow": false,
+  "bodyOverflowX": "hidden",
+  "tabs": null,
+  "panel": null,
+  "notifCount": 0,
+  "hasNotifPanel": true,
+  "table": null,
+  "tableWrap": null,
+  "scrollContainer": null,
+  "stickyTh": null,
+  "modal": null,
+  "filter": null,
+  "brand": {
+    "rect": {
+      "x": -259,
+      "y": 28,
+      "width": 231,
+      "height": 37.875,
+      "top": 28,
+      "right": -28,
+      "bottom": 65.875,
+      "left": -259
+    }
+  },
+  "breadcrumbs": null,
+  "htmlDir": "ltr",
+  "htmlLang": "en",
+  "viewport": {
+    "w": 768,
+    "h": 1024
+  },
+  "docH": 1024,
+  "docW": 768
+}

@@ -1,0 +1,21 @@
+{
+  "dash": null,
+  "side": null,
+  "main": null,
+  "top": null,
+  "cards": null,
+  "scrollWidth": 1440,
+  "clientWidth": 1440,
+  "scrollHeight": 900,
+  "clientHeight": 900,
+  "hasHOverflow": false,
+  "notifPanel": null,
+  "tabs": null,
+  "modal": null,
+  "scrollContainers": [],
+  "tableWraps": [],
+  "stickyTh": null,
+  "breadcrumbs": null,
+  "htmlDir": "ltr",
+  "htmlLang": "en"
+}

@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="../css/base.css" />
   <link rel="stylesheet" href="../css/layout.css" />
   <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/components.auth.css" />
   <link rel="stylesheet" href="../css/animations.css" />
   <link rel="stylesheet" href="../css/responsive.css" />
 </head>
@@ -31,13 +32,15 @@
     <div class="nav-actions">
       <button class="lang-toggle" id="langToggle">EN / ع</button>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></button>
+      <a href="account.html" class="nav-login" data-i18n="nav_login">Login</a>
       <a href="../index.html#booking" class="btn btn--primary">Book Stay</a>
       <button class="nav-burger" id="navBurger"><span></span><span></span><span></span></button>
     </div>
     </div>
   </header>
   <div class="mobile-menu" id="mobileMenu"><button class="nav-close" id="navClose">×</button>
-    <a href="../index.html#experience">Experience</a><a href="../index.html#rooms">Rooms</a><a href="../index.html#amenities">Amenities</a><a href="../index.html#gallery">Gallery</a><a href="../index.html#dining">Dining</a><a href="../index.html#contact">Contact</a>
+    <a href="../index.html#experience">Experience</a><a href="../index.html#rooms">Rooms</a><a href="../index.html#amenities">Amenities</a><a href="../index.html#gallery">Gallery</a><a href="../index.html#dining">Dining</a>    <a href="../index.html#contact">Contact</a>
+    <a href="account.html" data-i18n="nav_login">Login</a>
   </div>
 
   <main>
@@ -76,6 +79,7 @@
   <script src="../js/shared.js"></script>
   <script src="../js/api-config.js"></script>
   <script src="../js/api-client.js"></script>
+  <script src="../js/customer-api.js"></script>
   <script src="../js/site-settings.js"></script>
   <script src="../js/seed-data.js"></script>
   <script src="../js/site-data.js"></script>
@@ -84,5 +88,6 @@
   <script src="../js/cursor.js"></script>
   <script src="../js/animations.js"></script>
   <script src="../js/booking.js"></script>
+  <script src="../js/nav-auth.js"></script>
 </body>
 </html>

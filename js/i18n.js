@@ -58,7 +58,12 @@
     document.querySelectorAll("[data-i18n]").forEach(el => translateEl(el, l));
     document.querySelectorAll("option[data-i18n]").forEach(el => translateEl(el, l));
     const toggle = document.getElementById("langToggle");
-    if (toggle) toggle.textContent = l === "ar" ? "ع / EN" : "EN / ع";
+    if (toggle) {
+      const label = toggle.querySelector(".lang-toggle__label");
+      const text = l === "ar" ? "ع / EN" : "EN / ع";
+      if (label) label.textContent = text;
+      else toggle.textContent = text;
+    }
     const toggle2 = document.getElementById("dashLangToggle");
     if (toggle2) toggle2.textContent = l === "ar" ? "EN / ع" : "ع / EN";
     localStorage.setItem("mg-lang", l);

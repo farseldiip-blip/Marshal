@@ -6,9 +6,17 @@
 (function () {
   "use strict";
 
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const systemPrefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* Local development (localhost / 127.0.0.1) forces the animation engine
+     on for visual testing. Production domains still respect the user's
+     prefers-reduced-motion preference. */
+  const isLocalDevelopment = location.hostname === "127.0.0.1" || location.hostname === "localhost";
+  const reduce = systemPrefersReducedMotion && !isLocalDevelopment;
+
   const root = document.documentElement;
-  const hasGSAP = !!window.gsap;
+  const MQ_MOBILE = window.matchMedia("(max-width: 767px)");
+  const isMobile = () => MQ_MOBILE.matches;
 
   /* ---------- Dependency-free SplitType (lines + words) ---------- */
   function splitLines(el) {
@@ -42,28 +50,49 @@
   }
 
   /* ---------- Reduced motion: show everything, no JS animation ---------- */
-  if (reduce || !hasGSAP) {
+  if (reduce) {
     root.classList.remove("has-anim");
     window.__playHero = function () {};
     return; // app.js still handles loader fade (CSS) so content is visible
   }
 
-  root.classList.add("has-anim");
-  gsap.registerPlugin(ScrollTrigger);
+  /* ---------- GSAP + ScrollTrigger arrive via async CDN scripts, so this
+     script may execute before they finish downloading. initAnimationEngine()
+     is IDEMPOTENT and is re-invoked from every readiness path below; the
+     dependency polling keeps retrying until success or a displayed timeout
+     (never a silent give-up). If the engine still cannot start, failSafe()
+     makes every element visible so the page is never left broken. ---------- */
+  let engineInitialized = false;
+  let failSafeApplied = false;
 
-  /* ---------- Lenis smooth scroll (drives ScrollTrigger) ---------- */
+  function initAnimationEngine() {
+    if (engineInitialized) return true;
+    if (!window.gsap || !window.ScrollTrigger) return false;
+
+    try {
+      gsap.registerPlugin(ScrollTrigger);
+      root.classList.add("has-anim");
+      console.log("[MG Animations] animation system initialized");
+
+  /* ---------- Lenis smooth scroll (drives ScrollTrigger) ----------
+     Optional third-party dependency: if it fails to initialize it must
+     NOT take down the whole animation engine. */
   let lenis = null;
   if (window.Lenis) {
-    lenis = new Lenis({
-      duration: 1.15,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      touchMultiplier: 1.6
-    });
-    window.lenis = lenis;
-    lenis.on("scroll", ScrollTrigger.update);
-    const raf = (time) => { lenis.raf(time); requestAnimationFrame(raf); };
-    requestAnimationFrame(raf);
+    try {
+      lenis = new Lenis({
+        duration: 1.15,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        touchMultiplier: 1.6
+      });
+      window.lenis = lenis;
+      lenis.on("scroll", ScrollTrigger.update);
+      const raf = (time) => { lenis.raf(time); requestAnimationFrame(raf); };
+      requestAnimationFrame(raf);
+    } catch (lenisErr) {
+      /* non-fatal: engine continues without Lenis smooth scroll */
+    }
   }
 
   const EASE = "power3.out";
@@ -78,31 +107,40 @@
      HERO
      ========================================================= */
   window.__playHero = function () {
+    if (window.__heroPlayed) return;
+    window.__heroPlayed = true;
     const title = document.getElementById("heroTitle");
     if (!title) return;
     const lines = splitLines(title);
     gsap.set(title, { autoAlpha: 1 });
     const tl = gsap.timeline({ defaults: { ease: EASE } });
-    tl.from(".hero__bg", { scale: 1.25, duration: 1.8, ease: "power2.out" }, 0)
-      .from(".hero .eyebrow", { y: 22, autoAlpha: 0, duration: 0.7 }, 0.2)
-      .from(lines, { yPercent: 115, duration: 1.15, stagger: 0.12, ease: "power4.out" }, 0.3)
-      .from(".hero__sub", { y: 26, autoAlpha: 0, duration: 0.9 }, "-=0.7")
-      .from(".hero__cta > *", { y: 26, autoAlpha: 0, duration: 0.8, stagger: 0.12 }, "-=0.55")
-      .from(".scroll-indicator", { autoAlpha: 0, y: 16, duration: 0.7 }, "-=0.4")
-      .from(".float-deco", { autoAlpha: 0, scale: 0.6, duration: 1.0, stagger: 0.15 }, "-=0.8");
+    tl.fromTo(".hero__bg", { scale: 1.05 }, { scale: 1.12, duration: 2.2, ease: "power2.out" }, 0)
+      .fromTo(".navbar", { y: -24, autoAlpha: 0 }, {
+        y: 0, autoAlpha: 1, duration: 0.9,
+        onComplete: () => gsap.set(".navbar", { clearProps: "transform" })
+      }, 0.15)
+      .fromTo(".hero .eyebrow", { y: isMobile() ? 16 : 24, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7 }, 0.25)
+      .fromTo(lines, { yPercent: 115 }, { yPercent: 0, duration: 1.15, stagger: isMobile() ? 0.1 : 0.12, ease: "power4.out" }, 0.35)
+      .fromTo(".hero__sub", { y: isMobile() ? 18 : 28, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.9 }, "-=0.7")
+      .fromTo(".hero__cta > *", { y: isMobile() ? 18 : 28, autoAlpha: 0 }, {
+        y: 0, autoAlpha: 1, duration: 0.8, stagger: isMobile() ? 0.08 : 0.12,
+        onComplete: () => gsap.set(".hero__cta > *", { clearProps: "transform" })
+      }, "-=0.55")
+      .fromTo(".scroll-indicator", { y: isMobile() ? 12 : 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 0.7 }, "-=0.4")
+      .fromTo(".float-deco", { scale: 0.9, autoAlpha: 0 }, { scale: 1, autoAlpha: 1, duration: 1.0, stagger: 0.15 }, "-=0.8");
     gsap.delayedCall(0.25, navIntro);
   };
 
   function heroParallax() {
     const bg = document.getElementById("heroBg");
     const content = document.querySelector(".hero__content");
-    if (bg) {
+    if (bg && !isMobile()) {
       gsap.to(bg, {
-        yPercent: 16, ease: "none",
+        yPercent: 6, ease: "none",
         scrollTrigger: { trigger: "#hero", start: "top top", end: "bottom top", scrub: true }
       });
     }
-    if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    if (!isMobile() && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
       const hero = document.getElementById("hero");
       if (!hero) return;
       hero.addEventListener("mousemove", (e) => {
@@ -124,8 +162,8 @@
   function navIntro() {
     const links = gsap.utils.toArray(".nav-links a");
     if (links.length) {
-      gsap.from(links, {
-        y: -16, autoAlpha: 0, duration: 0.8, stagger: 0.07, ease: EASE,
+      gsap.fromTo(links, { y: -24, autoAlpha: 0 }, {
+        y: 0, autoAlpha: 1, duration: 0.8, stagger: 0.07, ease: EASE,
         delay: 0.2, onComplete: () => gsap.set(links, { clearProps: "transform" })
       });
     }
@@ -149,44 +187,129 @@
   }
 
   /* =========================================================
-     SCROLL REVEALS — data-driven, trigger once
+     SCROLL REVEALS — data-driven, trigger once.
+     bindReveals(scope) is idempotent: bound elements get a
+     data-revealed marker, so it is safe to re-run after async
+     content injection or language re-renders (room cards,
+     gallery, menu) — injected .reveal elements get bound too.
      ========================================================= */
-  function sectionReveals() {
-    gsap.utils.toArray(".reveal, .reveal-left, .reveal-right, .reveal-scale").forEach((el) => {
-      const delay = parseFloat(el.dataset.revealDelay || 0);
-      gsap.to(el, {
-        opacity: 1, x: 0, y: 0, scale: 1, duration: 1.0, ease: EASE, delay,
-        scrollTrigger: { trigger: el, start: "top 88%", once: true }
-      });
-    });
+  function markRevealed(el) {
+    el.setAttribute("data-revealed", "1");
+  }
+  function isRevealed(el) {
+    return el.hasAttribute("data-revealed");
+  }
 
-    gsap.utils.toArray(".mask-reveal").forEach((el) => {
-      gsap.to(el, {
-        clipPath: "inset(0 0 0% 0)", duration: 1.1, ease: EASE,
-        scrollTrigger: { trigger: el, start: "top 90%", once: true }
-      });
+  function bindReveal(el) {
+    const delay = parseFloat(el.dataset.revealDelay || 0);
+    gsap.to(el, {
+      opacity: 1, x: 0, y: 0, scale: 1, duration: 1.0, ease: EASE, delay,
+      scrollTrigger: { trigger: el, start: "top 88%", once: true }
     });
+  }
 
-    gsap.utils.toArray(".img-reveal").forEach((el) => {
-      gsap.to(el, {
-        clipPath: "inset(0 0 0% 0)", duration: 1.2, ease: EASE,
-        scrollTrigger: { trigger: el, start: "top 90%", once: true }
-      });
+  function bindClip(el, dur) {
+    gsap.to(el, {
+      clipPath: "inset(0 0 0% 0)", duration: dur, ease: EASE,
+      scrollTrigger: { trigger: el, start: "top 90%", once: true }
     });
+  }
 
-    gsap.utils.toArray("[data-stagger]").forEach((group) => {
-      const kids = group.querySelectorAll(".reveal, .reveal-left, .reveal-right, .reveal-scale, [data-stagger-item]");
+  function bindImage(img) {
+    const wrap = img.closest(".media-frame, .g-item");
+    if (!wrap) return;
+    gsap.fromTo(img, { scale: isMobile() ? 1.04 : 1.07 }, {
+      scale: 1, duration: isMobile() ? 1.0 : 1.4, ease: EASE_SOFT,
+      scrollTrigger: { trigger: wrap, start: "top 88%", once: true },
+      onComplete: () => gsap.set(img, { clearProps: "transform" })
+    });
+  }
+
+  const REVEAL_CLASSES = ".reveal:not([data-reveal]), .reveal-left:not([data-reveal]), .reveal-right:not([data-reveal]), .reveal-scale:not([data-reveal])";
+
+  function bindReveals(scope) {
+    const root = scope || document;
+    root.querySelectorAll(REVEAL_CLASSES).forEach((el) => {
+      if (isRevealed(el) || el.classList.contains("room-card") || el.closest("[data-stagger]")) return;
+      markRevealed(el);
+      bindReveal(el);
+    });
+    root.querySelectorAll("[data-reveal]").forEach((el) => {
+      if (isRevealed(el)) return;
+      markRevealed(el);
+      bindReveal(el);
+    });
+    root.querySelectorAll(".mask-reveal, .img-reveal").forEach((el) => {
+      if (isRevealed(el)) return;
+      markRevealed(el);
+      bindClip(el, el.classList.contains("img-reveal") ? 1.2 : 1.1);
+    });
+    root.querySelectorAll("[data-stagger]").forEach((group) => {
+      if (isRevealed(group)) return;
+      markRevealed(group);
+      const kids = group.querySelectorAll(REVEAL_CLASSES + ", [data-stagger-item]");
+      kids.forEach((k) => markRevealed(k));
       gsap.to(kids, {
         opacity: 1, x: 0, y: 0, scale: 1, duration: 0.9, ease: EASE,
-        stagger: 0.1, scrollTrigger: { trigger: group, start: "top 85%", once: true }
+        stagger: isMobile() ? 0.07 : 0.1, scrollTrigger: { trigger: group, start: "top 85%", once: true },
+        onComplete: () => kids.forEach((k) => {
+          k.classList.remove("reveal", "reveal-left", "reveal-right", "reveal-scale");
+          gsap.set(k, { clearProps: "all" });
+        })
       });
     });
+    root.querySelectorAll(".media-frame img, .g-item img").forEach((img) => {
+      if (isRevealed(img)) return;
+      markRevealed(img);
+      bindImage(img);
+    });
+  }
+
+  /* =========================================================
+     ROOM CARDS — entrance stagger (re-binds after re-render)
+     ========================================================= */
+  function bindRoomGrid() {
+    document.querySelectorAll("#roomGrid").forEach((grid) => {
+      const cards = Array.from(grid.querySelectorAll(".room-card")).filter((c) => !isRevealed(c));
+      if (!cards.length) return;
+      cards.forEach((c) => markRevealed(c));
+      gsap.fromTo(cards, { y: isMobile() ? 40 : 60, autoAlpha: 0 }, {
+        y: 0, autoAlpha: 1, duration: 1.0, ease: EASE, stagger: isMobile() ? 0.09 : 0.14,
+        scrollTrigger: { trigger: grid, start: "top 82%", once: true },
+        onComplete: () => {
+          cards.forEach((c) => c.classList.remove("reveal"));
+          gsap.set(cards, { clearProps: "all" });
+        }
+      });
+    });
+  }
+
+  /* =========================================================
+     INJECTED CONTENT — room/gallery/menu grids render async and
+     re-render on language change; bind reveals for new nodes.
+     ========================================================= */
+  function watchInjected() {
+    let pending = false;
+    const boundCount = () => document.querySelectorAll("[data-revealed]").length;
+    const mo = new MutationObserver(() => {
+      if (pending) return;
+      pending = true;
+      setTimeout(() => {
+        pending = false;
+        const before = boundCount();
+        bindReveals(document);
+        bindRoomGrid();
+        if (boundCount() > before) ScrollTrigger.refresh();
+      }, 180);
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
   }
 
   /* =========================================================
      PARALLAX (backgrounds / media) — scrubbed, gentle
      ========================================================= */
   function parallax() {
+    if (isMobile()) return;
     gsap.utils.toArray("[data-parallax]").forEach((el) => {
       const speed = parseFloat(el.dataset.parallax || 0.15);
       gsap.to(el, {
@@ -200,19 +323,6 @@
         y: off, ease: "none",
         scrollTrigger: { trigger: "#gallery", start: "top bottom", end: "bottom top", scrub: true }
       });
-    });
-  }
-
-  /* =========================================================
-     ROOM CARDS — entrance stagger
-     ========================================================= */
-  function roomCards() {
-    const grid = document.getElementById("roomGrid");
-    if (!grid) return;
-    const cards = grid.querySelectorAll(".room-card");
-    gsap.from(cards, {
-      y: 60, autoAlpha: 0, duration: 1.0, ease: EASE, stagger: 0.14,
-      scrollTrigger: { trigger: grid, start: "top 82%", once: true }
     });
   }
 
@@ -231,8 +341,8 @@
   function footerReveal() {
     const cols = gsap.utils.toArray(".footer > .container > div");
     if (!cols.length) return;
-    gsap.from(cols, {
-      y: 40, autoAlpha: 0, duration: 0.9, ease: EASE, stagger: 0.1,
+    gsap.fromTo(cols, { y: isMobile() ? 28 : 40, autoAlpha: 0 }, {
+      y: 0, autoAlpha: 1, duration: 0.9, ease: EASE, stagger: isMobile() ? 0.07 : 0.1,
       scrollTrigger: { trigger: ".footer", start: "top 90%", once: true }
     });
   }
@@ -258,14 +368,6 @@
      BOOKING widget entrance + success pulse
      ========================================================= */
   function booking() {
-    const b = document.getElementById("booking");
-    const inner = b && b.querySelector(".booking");
-    if (inner) {
-      gsap.from(inner, {
-        y: 50, autoAlpha: 0, duration: 1.1, ease: EASE,
-        scrollTrigger: { trigger: b, start: "top 90%", once: true }
-      });
-    }
     const search = document.getElementById("bkSearch");
     if (search) {
       search.addEventListener("click", () => {
@@ -294,9 +396,9 @@
      INIT
      ========================================================= */
   function init() {
-    sectionReveals();
+    bindReveals(document);
+    bindRoomGrid();
     parallax();
-    roomCards();
     guestVoices();
     footerReveal();
     booking();
@@ -304,9 +406,70 @@
     magnetic();
     progressBar();
     heroParallax();
+    watchInjected();
     ScrollTrigger.refresh();
+    heroBootstrap();
   }
 
+  /* DOM-ready hookup: readyState check means DOMContentLoaded is never
+     missed even if it already fired before this script ran. */
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
+
+  engineInitialized = true;   // guard set ONLY after full success
+  return true;
+    } catch (err) {
+      console.error("[MG Animations] engine init failed:", err);
+      failSafe();
+      return false;
+    }
+  }
+
+  /* ---------- fail-safe: engine could not start for any reason ----------
+     Force every element back to visible/untouched so the page is never
+     left in an animation start state (broken hero title, hidden content). */
+  function failSafe() {
+    if (failSafeApplied) return;
+    failSafeApplied = true;
+    root.classList.remove("has-anim");
+    root.classList.remove("is-loading");
+    const sel = "[data-reveal], .reveal, .reveal-left, .reveal-right, .reveal-scale, .mask-reveal, .img-reveal, .hero__cta > *, .hero .eyebrow, .hero__sub, .navbar, .scroll-indicator, .float-deco";
+    document.querySelectorAll(sel).forEach((el) => el.removeAttribute("style"));
+    document.querySelectorAll(".hero__title .line > span, .hero__title span").forEach((el) => {
+      el.style.transform = "none";
+      el.style.opacity = "1";
+    });
+    window.__playHero = function () {
+      if (window.__heroPlayed) return;
+      window.__heroPlayed = true;
+    };
+  }
+
+  /* ---------- hero bootstrap: play as soon as the loader has exited ---------- */
+  function heroBootstrap() {
+    if (window.__heroPlayed) return;
+    if (root.classList.contains("is-loading")) return; // app.js calls __playHero() when the loader exits
+    window.__playHero();
+  }
+
+  /* =========================================================
+     BOOTSTRAP — idempotent, invoked from every readiness path.
+       1) immediately, if dependencies + DOM are already available
+       2) DOMContentLoaded (never missed — readyState check above)
+       3) continuous dependency polling until success or displayed timeout
+     initAnimationEngine() is idempotent (engineInitialized), so any
+     number of redundant calls still result in EXACTLY ONE engine init.
+     ========================================================= */
+  if (!initAnimationEngine()) {
+    let tries = 0;
+    const MAX_TRIES = 200;   // 100ms x 200 = 20s of continuous polling
+    const poll = setInterval(() => {
+      if (initAnimationEngine()) { clearInterval(poll); return; }
+      tries += 1;
+      if (tries >= MAX_TRIES) {
+        clearInterval(poll);
+        failSafe();
+      }
+    }, 100);
+  }
 })();

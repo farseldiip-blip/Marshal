@@ -62,7 +62,7 @@ function validateDraft(d) {
   return { inStr, outStr };
 }
 
-async function createBooking(rawDraft) {
+async function createBooking(rawDraft, userId) {
   const d = rawDraft || {};
   validateBody(d);
   const { inStr, outStr } = validateDraft(d);
@@ -128,7 +128,8 @@ async function createBooking(rawDraft) {
         revenue: total,
         status: "PENDING",
         paymentStatus: "UNPAID",
-        accessToken
+        accessToken,
+        ...(userId ? { userId } : {})
       }
     });
   });
@@ -146,14 +147,22 @@ async function createBooking(rawDraft) {
   return booking;
 }
 
-// Lookup by id, gated by accessToken query param.
-async function getBookingById(id, accessToken) {
+// Lookup by id — gated by accessToken OR authenticated userId ownership.
+async function getBookingById(id, accessToken, userId) {
   const booking = await prisma.booking.findUnique({ where: { id } });
   if (!booking) throw new NotFoundError("booking_not_found");
-  if (booking.accessToken && accessToken !== booking.accessToken) {
-    throw new ValidationError("invalid_access_token");
+
+  // Guest access via valid accessToken (existing behavior).
+  if (accessToken && booking.accessToken === accessToken) {
+    return booking;
   }
-  return booking;
+
+  // Authenticated owner access via userId match.
+  if (userId && booking.userId === userId) {
+    return booking;
+  }
+
+  throw new ValidationError("invalid_access_token");
 }
 
 // Public availability check. Returns { available, availableUnits }.
@@ -212,4 +221,19 @@ async function lookupBooking({ reference, email, phone }) {
   return safe;
 }
 
-module.exports = { createBooking, getBookingById, checkAvailability, lookupBooking, validateBody };
+function toSafeBooking(booking) {
+  if (!booking) return booking;
+  const { accessToken, ...safe } = booking;
+  return safe;
+}
+
+async function getMyBookings(userId) {
+  if (!userId) throw new ValidationError("user_id_required");
+  const bookings = await prisma.booking.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" }
+  });
+  return bookings.map(toSafeBooking);
+}
+
+module.exports = { createBooking, getBookingById, checkAvailability, lookupBooking, getMyBookings, validateBody };

@@ -64,8 +64,8 @@ async function main() {
   // Gallery
   await prisma.galleryItem.upsert({
     where: { id: "seed-hero" },
-    update: { image: "https://example.com/hero.jpg", title: "Lobby" },
-    create: { id: "seed-hero", image: "https://example.com/hero.jpg", title: "Lobby", sortOrder: 1 }
+    update: { image: "assets/images/308674245_488260833312990_3605187729512632128_n.jpg", title: "Lobby" },
+    create: { id: "seed-hero", image: "assets/images/308674245_488260833312990_3605187729512632128_n.jpg", title: "Lobby", sortOrder: 1 }
   });
 
   // Amenities

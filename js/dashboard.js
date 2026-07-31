@@ -14,7 +14,7 @@
     if (!box) {
       box = document.createElement("div");
       box.id = "dashError";
-      box.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 14px;border-radius:10px;font:12px/1.5 monospace;white-space:pre-wrap;max-height:40vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.4)";
+      box.style.cssText = "position:fixed;inset-inline:12px;bottom:12px;z-index:9999;background:#7f1d1d;color:#fff;padding:12px 14px;border-radius:10px;font:12px/1.5 monospace;white-space:pre-wrap;max-height:40vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.4)";
       document.body.appendChild(box);
     }
     box.textContent = tr("Dashboard error:") + "\n" + msg;
@@ -258,8 +258,6 @@
       "Pending Reviews": "تقييمات معلّقة", "Active Rooms": "غرف نشطة",
       "Total Revenue": "إجمالي الإيراد",       "No notifications": "لا إشعارات",
       "Mark all read": "تحديد الكل كمقروء", "Notifications": "الإشعارات",
-      "Scroll to see more content": "مرّر لعرض المزيد",
-      "Scroll left": "مرّر لليسار", "Scroll right": "مرّر لليمين",
       "just now": "الآن", "m ago": "د مضت", "h ago": "س مضت", "d ago": "ي مضت",
       "new": "جديد", "pending": "معلّق",
       "Guest": "النزيل", "{guest} submitted a review": "{guest} أرسل تقييمًا",
@@ -317,39 +315,23 @@
     throw new Error("not_authed");
   }
 
-  async function attemptLogin(email, pass) {
-    await ready();
-    if (window.MGApiClient && window.MGApiClient.isLive()) {
-      const result = await window.MGApiClient.adminLogin(email, pass);
-      try { await assertAdmin(); }
-      catch (e) {
-        window.MGApiClient.clearToken();
-        throw new Error("Not authorized — admin access required.");
-      }
-      sessionStorage.setItem("mg-auth", "rest");
-      return true;
-    }
-    if (email && pass) { sessionStorage.setItem("mg-auth", "demo"); return true; }
-    throw new Error("Credentials required");
-  }
-
-  function renderNotAuthorized() {
-    const app = document.getElementById("dash");
-    if (!app) return;
-    app.className = "";
-    app.innerHTML = `<div class="dash-login"><div class="dash-login__card">
-      <div class="dash-brand">Marshal<span>Al-Gezira</span></div>
-      <p class="dash-login__sub" style="color:#f0a3a3">${tr("Not authorized")}</p>
-      <p class="dash-note">${tr("Admin claim required")}</p>
-      <button type="button" class="btn btn--outline btn--block" id="naLogout">${tr("Logout")}</button>
-    </div></div>`;
-    const b = document.getElementById("naLogout");
-    if (b) b.addEventListener("click", logout);
+  function redirectToAccount() {
+    localStorage.removeItem("mg-admin-jwt");
+    localStorage.removeItem("mg-user-jwt");
+    sessionStorage.removeItem("mg-auth");
+    window.location.replace("pages/account.html");
   }
 
   /* ---------------- Sections registry ---------------- */
   let currentSection = "home";
   let adminOk = false;
+  let bkCloseMenus = null;
+  document.addEventListener("click", (e) => {
+    if (bkCloseMenus && !e.target.closest(".bk-mpos")) bkCloseMenus();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && bkCloseMenus) bkCloseMenus();
+  });
   const SECTIONS = [
     { id: "home", label: "Dashboard", icon: "▦", i18n: "d_dashboard" },
     { id: "rooms", label: "Rooms", icon: "🛏", i18n: "d_rooms" },
@@ -495,11 +477,12 @@
     app.className = "dash";
     app.innerHTML = `
       <aside class="dash-side" id="dashSide">
-        <div class="dash-brand">Marshal<span>Al-Gezira</span></div>
+        <div class="dash-brand"><span>Marshal</span><span>Al-Gezira</span></div>
         <nav class="dash-nav">
           ${SECTIONS.map(s => `<button class="dash-link" data-section="${s.id}"><span>${s.icon}</span><span data-i18n="${s.i18n}">${s.label}</span></button>`).join("")}
         </nav>
         <button class="dash-link dash-logout" id="dashLogout"><span>⏻</span><span data-i18n="d_logout">Logout</span></button>
+        <button class="dash-toggle" id="dashToggle" title="${tr("Toggle sidebar")}"><span>◀</span><span data-i18n="d_collapse">Collapse</span></button>
       </aside>
       <div class="dash-scrim" id="dashScrim"></div>
       <main class="dash-main">
@@ -514,10 +497,12 @@
             </div>
             <button class="dash-reset" id="dashResetBtn" title="${tr("Reset")}">↺</button>
             <button class="dash-lang" id="dashLangToggle">ع / EN</button>
+            <button class="dash-theme" id="dashThemeToggle" title="${tr("Toggle theme")}">☀️</button>
             <span id="dashMode" class="dash-pill">demo</span>
             <span id="dashEmail">admin</span>
           </div>
         </header>
+        <nav class="dash-breadcrumbs" id="dashBreadcrumbs" aria-label="Breadcrumb"><span data-i18n="d_dashboard">Dashboard</span></nav>
         <div id="dashView" class="dash-view"></div>
       </main>`;
 
@@ -533,9 +518,35 @@
       }
     });
 
+    const tt = $("#dashThemeToggle");
+    if (tt) {
+      function syncThemeIcon() {
+        var t = localStorage.getItem("mg-theme") || document.documentElement.getAttribute("data-theme") || "dark";
+        tt.textContent = t === "dark" ? "☀️" : "🌙";
+      }
+      syncThemeIcon();
+      var themeObs = new MutationObserver(syncThemeIcon);
+      themeObs.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+      tt.addEventListener("click", function () {
+        var root = document.documentElement;
+        var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        root.setAttribute("data-theme", next);
+        localStorage.setItem("mg-theme", next);
+      });
+    }
+
     const mb = $("#dashMenuBtn"), scrim = $("#dashScrim");
     if (mb) mb.addEventListener("click", () => { $("#dashSide").classList.toggle("open"); if (scrim) scrim.classList.toggle("show", $("#dashSide").classList.contains("open")); });
     if (scrim) scrim.addEventListener("click", closeSidebar);
+
+    const toggle = $("#dashToggle");
+    if (toggle) toggle.addEventListener("click", () => {
+      const db = $("#dash");
+      if (!db) return;
+      db.classList.toggle("collapsed");
+      try { localStorage.setItem("dash-collapsed", db.classList.contains("collapsed") ? "1" : "0"); } catch (e) {}
+    });
+    try { if (localStorage.getItem("dash-collapsed") === "1") { const db = $("#dash"); if (db) db.classList.add("collapsed"); } } catch (e) {}
 
     const rb = $("#dashResetBtn");
     if (rb) rb.addEventListener("click", resetDashboard);
@@ -586,7 +597,16 @@
     $$(".dash-link[data-section]").forEach(b => b.classList.toggle("active", b.dataset.section === id));
     const view = $("#dashView");
     const titles = Object.fromEntries(SECTIONS.map(s => [s.id, s.label]));
-    if ($("#dashTitle")) $("#dashTitle").textContent = tr(titles[id] || "Dashboard");
+    const label = tr(titles[id] || "Dashboard");
+    if ($("#dashTitle")) $("#dashTitle").textContent = label;
+    const bc = $("#dashBreadcrumbs");
+    if (bc) {
+      if (id === "home") {
+        bc.innerHTML = `<span>${label}</span>`;
+      } else {
+        bc.innerHTML = `<span data-i18n="d_dashboard">${tr("Dashboard")}</span><span class="bc-sep">›</span><span>${label}</span>`;
+      }
+    }
     view.innerHTML = `<div class="dash-loading">${tr("Loading…")}</div>`;
     if (id === "home") return renderHome(view);
     if (id === "rooms") return renderRooms(view);
@@ -853,269 +873,6 @@
     "Unpaid": "Unpaid", "Pending": "Pending", "Paid": "Paid", "Failed": "Failed", "Refunded": "Refunded"
   };
 
-  /* ---- Custom Scroll Container ---- */
-  function createScrollWrap(tableWrapEl) {
-    if (!tableWrapEl || !tableWrapEl.classList.contains("table-wrap")) return;
-    const table = tableWrapEl.querySelector(".dash-table");
-    if (!table) return;
-
-    /* outer shell */
-    const wrap = document.createElement("div");
-    wrap.className = "dash-scroll-wrap";
-
-    /* top row: arrow + scrollable container + arrow */
-    const top = document.createElement("div");
-    top.className = "dash-scroll-top";
-
-    const arrowL = document.createElement("button");
-    arrowL.className = "dash-scroll-arrow dash-scroll-arrow--left";
-    arrowL.disabled = true;
-    arrowL.setAttribute("aria-label", tr("Scroll left"));
-    arrowL.innerHTML = "&#8249;";
-
-    const arrowR = document.createElement("button");
-    arrowR.className = "dash-scroll-arrow dash-scroll-arrow--right";
-    arrowR.disabled = false;
-    arrowR.setAttribute("aria-label", tr("Scroll right"));
-    arrowR.innerHTML = "&#8250;";
-
-    const scrollContainer = document.createElement("div");
-    scrollContainer.className = "dash-scroll-container";
-
-    const fadeL = document.createElement("div");
-    fadeL.className = "dash-scroll-fade dash-scroll-fade--left";
-    const fadeR = document.createElement("div");
-    fadeR.className = "dash-scroll-fade dash-scroll-fade--right";
-
-    scrollContainer.appendChild(fadeL);
-    scrollContainer.appendChild(fadeR);
-    scrollContainer.appendChild(tableWrapEl);
-
-    top.appendChild(arrowL);
-    top.appendChild(scrollContainer);
-    top.appendChild(arrowR);
-
-    /* custom scrollbar track */
-    const track = document.createElement("div");
-    track.className = "dash-scroll-track";
-    const thumb = document.createElement("div");
-    thumb.className = "dash-scroll-thumb";
-    track.appendChild(thumb);
-
-    /* hint */
-    const hint = document.createElement("div");
-    hint.className = "dash-scroll-hint";
-    hint.textContent = tr("Scroll to see more content");
-
-    wrap.appendChild(top);
-    wrap.appendChild(track);
-    wrap.appendChild(hint);
-
-    /* --- sync logic --- */
-    let scrollEl = tableWrapEl;
-    let interacting = false;
-    let hintTimer = null;
-    let hintDismissed = false;
-
-    function isRTL() {
-      return document.documentElement.dir === "rtl" || document.documentElement.getAttribute("dir") === "rtl";
-    }
-
-    function getMaxScroll() {
-      return Math.max(0, scrollEl.scrollWidth - scrollEl.clientWidth);
-    }
-
-    /* normalise scrollLeft so 0 = start, max = end (works in Firefox RTL where scrollLeft is negative) */
-    function normScroll() {
-      const max = getMaxScroll();
-      if (!isRTL()) return Math.max(0, Math.min(scrollEl.scrollLeft, max));
-      const raw = scrollEl.scrollLeft;
-      if (raw < 0) return max + raw;
-      return Math.max(0, max - raw);
-    }
-
-    function sync() {
-      const max = getMaxScroll();
-      if (max <= 0) {
-        track.classList.add("hidden");
-        fadeL.classList.remove("visible");
-        fadeR.classList.remove("visible");
-        return;
-      }
-      track.classList.remove("hidden");
-      const ratio = scrollEl.clientWidth / scrollEl.scrollWidth;
-      const thumbW = Math.max(32, Math.round(ratio * track.clientWidth));
-      const scrollRatio = normScroll() / max;
-      const trackRange = track.clientWidth - thumbW;
-      const thumbLeft = Math.round(scrollRatio * trackRange);
-
-      thumb.style.width = thumbW + "px";
-      if (isRTL()) {
-        thumb.style.left = "auto";
-        thumb.style.right = thumbLeft + "px";
-      } else {
-        thumb.style.left = thumbLeft + "px";
-        thumb.style.right = "auto";
-      }
-
-      /* arrows */
-      const pos = normScroll();
-      const atStart = pos <= 0;
-      const atEnd = pos >= max - 1;
-      arrowL.disabled = atStart;
-      arrowR.disabled = atEnd;
-
-      /* fades */
-      fadeL.classList.toggle("visible", !atStart);
-      fadeR.classList.toggle("visible", !atEnd);
-    }
-
-    function showHint() {
-      if (hintDismissed) return;
-      hint.classList.add("visible");
-      clearTimeout(hintTimer);
-      hintTimer = setTimeout(() => {
-        hint.classList.remove("visible");
-      }, 3000);
-    }
-
-    function dismissHint() {
-      hintDismissed = true;
-      hint.classList.remove("visible");
-      clearTimeout(hintTimer);
-    }
-
-    scrollEl.addEventListener("scroll", () => { if (!interacting) sync(); });
-    scrollEl.addEventListener("scroll", dismissHint, { once: true });
-
-    /* arrow click */
-    const ARROW_STEP = 180;
-    arrowL.addEventListener("click", () => {
-      dismissHint();
-      const dir = isRTL() ? 1 : -1;
-      scrollEl.scrollBy({ left: ARROW_STEP * dir, behavior: "smooth" });
-    });
-    arrowR.addEventListener("click", () => {
-      dismissHint();
-      const dir = isRTL() ? -1 : 1;
-      scrollEl.scrollBy({ left: ARROW_STEP * dir, behavior: "smooth" });
-    });
-
-    /* track click: jump to position */
-    track.addEventListener("click", e => {
-      dismissHint();
-      if (e.target === thumb) return;
-      const max = getMaxScroll();
-      if (max <= 0) return;
-      const rect = track.getBoundingClientRect();
-      const clickRatio = (e.clientX - rect.left) / rect.width;
-      const target = Math.round(clickRatio * max);
-      if (isRTL()) {
-        const raw = scrollEl.scrollLeft;
-        const current = raw < 0 ? max + raw : max - raw;
-        const delta = target - current;
-        scrollEl.scrollBy({ left: -delta, behavior: "smooth" });
-      } else {
-        scrollEl.scrollTo({ left: target, behavior: "smooth" });
-      }
-    });
-
-    /* drag thumb */
-    let dragStartX = 0;
-    let dragStartScroll = 0;
-    thumb.addEventListener("mousedown", e => {
-      e.preventDefault();
-      dismissHint();
-      interacting = true;
-      dragStartX = e.clientX;
-      dragStartScroll = normScroll();
-      thumb.classList.add("dragging");
-
-      function onMove(ev) {
-        const max = getMaxScroll();
-        if (max <= 0) return;
-        const trackPx = track.clientWidth - thumb.clientWidth;
-        const dx = ev.clientX - dragStartX;
-        const target = Math.max(0, Math.min(max, dragStartScroll + (dx / trackPx) * max));
-        if (isRTL()) {
-          const raw = scrollEl.scrollLeft;
-          const current = raw < 0 ? max + raw : max - raw;
-          scrollEl.scrollBy({ left: -(target - current), behavior: "instant" });
-        } else {
-          scrollEl.scrollLeft = target;
-        }
-        sync();
-      }
-      function onUp() {
-        interacting = false;
-        thumb.classList.remove("dragging");
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-      }
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    });
-
-    /* touch drag thumb */
-    thumb.addEventListener("touchstart", e => {
-      dismissHint();
-      interacting = true;
-      dragStartX = e.touches[0].clientX;
-      dragStartScroll = normScroll();
-      thumb.classList.add("dragging");
-
-      function onMove(ev) {
-        ev.preventDefault();
-        const max = getMaxScroll();
-        if (max <= 0) return;
-        const trackPx = track.clientWidth - thumb.clientWidth;
-        const dx = ev.touches[0].clientX - dragStartX;
-        const target = Math.max(0, Math.min(max, dragStartScroll + (dx / trackPx) * max));
-        if (isRTL()) {
-          const raw = scrollEl.scrollLeft;
-          const current = raw < 0 ? max + raw : max - raw;
-          scrollEl.scrollBy({ left: -(target - current), behavior: "instant" });
-        } else {
-          scrollEl.scrollLeft = target;
-        }
-        sync();
-      }
-      function onEnd() {
-        interacting = false;
-        thumb.classList.remove("dragging");
-        document.removeEventListener("touchmove", onMove);
-        document.removeEventListener("touchend", onEnd);
-      }
-      document.addEventListener("touchmove", onMove, { passive: false });
-      document.addEventListener("touchend", onEnd);
-    }, { passive: true });
-
-    /* keyboard nav */
-    scrollContainer.setAttribute("tabindex", "0");
-    scrollContainer.setAttribute("role", "region");
-    scrollContainer.setAttribute("aria-label", tr("Scroll to see more content"));
-    scrollContainer.addEventListener("keydown", e => {
-      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-        e.preventDefault();
-        dismissHint();
-        const dir = (e.key === "ArrowRight") ? 1 : -1;
-        const effectiveDir = isRTL() ? -dir : dir;
-        scrollEl.scrollBy({ left: 120 * effectiveDir, behavior: "smooth" });
-      }
-    });
-
-    /* initial state + show hint */
-    requestAnimationFrame(() => {
-      sync();
-      const max = getMaxScroll();
-      if (max > 0) {
-        showHint();
-      }
-    });
-
-    return { el: wrap, refresh: sync };
-  }
-
   async function renderBookings(view) {
     const state = { q: "", status: "all", payment: "all", cinFrom: "", coutTo: "" };
 
@@ -1130,10 +887,7 @@
           <div class="field"><label>${tr("Check-out to")}</label><input type="date" class="input" id="bkCoutTo"></div>
         </div>
         <div id="bkStates"></div>
-        <div class="table-wrap"><table class="dash-table">
-          <thead><tr><th>${tr("Reference")}</th><th>${tr("Guest")}</th><th>${tr("Room")}</th><th>${tr("Check-in")}</th><th>${tr("Check-out")}</th><th>${tr("Guests")}</th><th>${tr("Total")}</th><th>${tr("Status")}</th><th>${tr("Payment")}</th><th>${tr("Actions")}</th></tr></thead>
-          <tbody id="bkTbody"></tbody>
-        </table></div>
+        <div class="bk-list" id="bkList"></div>
       </div>
 
       <div class="dash-modal" id="bkModal" hidden>
@@ -1145,23 +899,23 @@
         </div>
       </div>`;
 
-    const tbody = $("#bkTbody", view);
+    const list = $("#bkList", view);
     const states = $("#bkStates", view);
     const modal = $("#bkModal", view);
     const modalBody = $("#bkModalBody", view);
     const modalActions = $("#bkModalActions", view);
-    const bkTableWrap = $(".table-wrap", view);
-    let bkScrollWrap = null;
-    if (bkTableWrap) {
-      const tableParent = bkTableWrap.parentNode;
-      const tableNext = bkTableWrap.nextSibling;
-      bkScrollWrap = createScrollWrap(bkTableWrap);
-      if (bkScrollWrap) tableParent.insertBefore(bkScrollWrap.el, tableNext);
-    }
+
+    bkCloseMenus = () => {
+      list.querySelectorAll(".bk-more-menu:not([hidden])").forEach(m => {
+        m.hidden = true;
+        const btn = m.parentElement.querySelector(".bk-more-btn");
+        if (btn) btn.setAttribute("aria-expanded", "false");
+      });
+    };
 
     async function load() {
       states.innerHTML = `<div class="dash-loading">${tr("Loading bookings…")}</div>`;
-      tbody.innerHTML = "";
+      list.innerHTML = "";
       let items;
       try {
         items = (await Data.list("bookings")) || [];
@@ -1185,37 +939,75 @@
       });
 
       if (!filtered.length) {
-        tbody.innerHTML = `<tr><td colspan="10">${emptyState("📅", tr("No bookings found"), tr("No bookings"))}</td></tr>`;
+        list.innerHTML = emptyState("📅", tr("No bookings found"), tr("No bookings"));
         return;
       }
 
-      tbody.innerHTML = filtered.map(b => {
+      list.innerHTML = filtered.map(b => {
         const actions = nextActions(b.status || "Pending");
         const payActions = nextPaymentActionsForBooking(b.paymentStatus, b.status || "Pending");
         const isAttention = b.status === "Pending";
-        const viewBtn = `<button class="btn-mini" data-view="${b.id}">${tr("View")}</button>`;
-        const btns = `<button class="btn-mini bk-view-mobile" data-view="${b.id}">${tr("View")}</button>` +
-          (adminOk
-            ? actions.map(a => `<button class="btn-mini ${a === "cancel" ? "danger" : "btn--gold"}" data-act="${a}" data-id="${b.id}">${tr(ACTION_LABEL[a])}</button>`).join("") +
-              (payActions.length ? `<span class="bk-sep"></span>` + payActions.map(a => `<button class="btn-mini" data-pay="${a}" data-id="${b.id}">${tr(PAY_ACTION_LABEL[a])}</button>`).join("") : "")
-            : "");
         const totalVal = b.total != null ? b.total : b.revenue;
         const paymentStatus = b.paymentStatus || "Unpaid";
         const payProvider = (b.payments && b.payments[0] && b.payments[0].provider) || null;
-        return `<tr ${isAttention ? 'data-attention="true"' : ""}>
-          <td data-label="${tr("Reference")}" class="bk-card-header">${esc(b.id ? b.id.slice(0, 8) + "…" : "")}<span class="bk-card-header__actions">${viewBtn}</span></td>
-          <td data-label="${tr("Guest")}" class="bk-card-guest"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${esc(b.guestName || b.guest || "")}</span>${b.email ? `<span class="dash-cell-guest__sub">${esc(b.email)}</span>` : ""}</div></td>
-          <td data-label="${tr("Room")}" class="bk-card-room">${esc(b.roomName || b.room || "")}</td>
-          <td data-label="${tr("Check-in")}" class="bk-card-cin">${esc(b.checkin || "")}</td>
-          <td data-label="${tr("Check-out")}" class="bk-card-cout">${esc(b.checkout || "")}</td>
-          <td data-label="${tr("Guests")}" class="bk-card-guests">${esc(b.guests != null ? b.guests : ((b.adults || 0) + (b.children || 0)))}</td>
-          <td data-label="${tr("Total")}" class="bk-card-total"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${money(totalVal)}</span><span class="dash-cell-guest__sub">${tr("Total")} ${(window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD"}</span></div></td>
-          <td data-label="${tr("Status")}" class="bk-card-status" data-status="${b.status || "Pending"}">${statusTag(b.status || "Pending")}</td>
-          <td data-label="${tr("Payment")}" class="bk-card-payment" data-payment="${paymentStatus}"><div class="dash-cell-guest"><span class="dash-cell-guest__name">${payTag(paymentStatus, payProvider)}</span></div></td>
-          <td data-label="${tr("Actions")}" class="dash-actions bk-card-actions">${btns}</td>
-        </tr>`;
+
+        // Primary action button
+        const firstAction = actions[0];
+        let primaryBtn;
+        if (firstAction) {
+          if (firstAction === "cancel") {
+            primaryBtn = `<button class="btn-mini bk-primary danger" data-act="${firstAction}" data-id="${b.id}">${tr(ACTION_LABEL[firstAction])}</button>`;
+          } else {
+            primaryBtn = `<button class="btn-mini bk-primary btn--gold" data-act="${firstAction}" data-id="${b.id}">${tr(ACTION_LABEL[firstAction])}</button>`;
+          }
+        } else {
+          primaryBtn = `<button class="btn-mini bk-primary" data-view="${b.id}">${tr("View")}</button>`;
+        }
+
+        // ⋯ menu items
+        const menuItems = [];
+        menuItems.push(`<button class="bk-more-item" data-view="${b.id}" role="menuitem">${tr("View details")}</button>`);
+        actions.forEach(a => {
+          const cls = a === "cancel" ? ' class="bk-more-item bk-more-item--danger"' : ' class="bk-more-item"';
+          menuItems.push(`<button${cls} data-act="${a}" data-id="${b.id}" role="menuitem">${tr(ACTION_LABEL[a])}</button>`);
+        });
+        payActions.forEach(a => {
+          menuItems.push(`<button class="bk-more-item" data-pay="${a}" data-id="${b.id}" role="menuitem">${tr(PAY_ACTION_LABEL[a])}</button>`);
+        });
+
+        const guestName = esc(b.guestName || b.guest || "");
+        const guestEmail = b.email ? esc(b.email) : "";
+        const roomName = esc(b.roomName || b.room || "");
+        const checkin = esc(b.checkin || "");
+        const checkout = esc(b.checkout || "");
+        const guests = b.guests != null ? b.guests : ((b.adults || 0) + (b.children || 0));
+
+        return `<div class="bk-row" ${isAttention ? 'data-attention="true"' : ""}>
+          <div class="bk-row__guest">
+            <span class="bk-row__guest-name">${guestName}</span>
+            ${guestEmail ? `<span class="bk-row__guest-email">${guestEmail}</span>` : ""}
+          </div>
+          <div class="bk-row__room">${roomName}</div>
+          <div class="bk-row__stay">
+            <span class="bk-row__stay-dates">${checkin}<span class="bk-row__stay-arrow">→</span>${checkout}</span>
+          </div>
+          <span class="bk-row__guests">${guests}</span>
+          <div class="bk-row__total">${money(totalVal)}</div>
+          <div class="bk-row__statuses">
+            ${statusTag(b.status || "Pending")}
+            ${payTag(paymentStatus, payProvider)}
+          </div>
+          <div class="bk-row__actions">
+            ${primaryBtn}
+            <span class="bk-mpos">
+              <button class="bk-more-btn" aria-haspopup="true" aria-expanded="false" title="${tr("More actions")}">⋯</button>
+              <div class="bk-more-menu" role="menu" hidden>
+                ${menuItems.join("")}
+              </div>
+            </span>
+          </div>
+        </div>`;
       }).join("");
-      if (bkScrollWrap) requestAnimationFrame(() => bkScrollWrap.refresh());
     }
 
     function statusUpdate(id, patch, okMsg) {
@@ -1284,16 +1076,38 @@
     $("#bkCinFrom", view).addEventListener("change", e => { state.cinFrom = e.target.value; load(); });
     $("#bkCoutTo", view).addEventListener("change", e => { state.coutTo = e.target.value; load(); });
 
-    tbody.addEventListener("click", async (e) => {
+    list.addEventListener("click", async (e) => {
+      // ⋯ menu toggle
+      const moreBtn = e.target.closest(".bk-more-btn");
+      if (moreBtn) {
+        e.stopPropagation();
+        const mpos = moreBtn.closest(".bk-mpos");
+        const menu = mpos ? mpos.querySelector(".bk-more-menu") : null;
+        if (menu) {
+          const isOpen = !menu.hidden;
+          bkCloseMenus();
+          if (!isOpen) {
+            menu.hidden = false;
+            moreBtn.setAttribute("aria-expanded", "true");
+          }
+        }
+        return;
+      }
+
+      // View details (from primary btn or menu item)
       const viewBtn = e.target.closest("[data-view]");
       if (viewBtn) {
+        bkCloseMenus();
         const id = viewBtn.dataset.view;
         const b = (await Data.list("bookings")).find(x => x.id === id);
         if (b) openDetails(b);
         return;
       }
+
+      // Status actions (from primary btn or menu item)
       const actBtn = e.target.closest("[data-act]");
       if (actBtn) {
+        bkCloseMenus();
         const id = actBtn.dataset.id, a = actBtn.dataset.act;
         let patch = {};
         if (a === "confirm") patch = { status: "Confirmed" };
@@ -1302,8 +1116,11 @@
         else if (a === "checkout") patch = { status: "Checked Out" };
         await statusUpdate(id, patch, "Booking updated")();
       }
+
+      // Payment actions (from menu items)
       const payBtn = e.target.closest("[data-pay]");
       if (payBtn) {
+        bkCloseMenus();
         const id = payBtn.dataset.id, a = payBtn.dataset.pay;
         await statusUpdate(id, { paymentStatus: PAY_TO_STATUS[a] }, "Booking updated")();
       }
@@ -1520,13 +1337,19 @@
         if (!input) return;
         let val = item ? item[f.k] : "";
         if (f.type === "checkbox") input.checked = !!val;
+        else if (f.type === "image") {
+          input.value = "";
+        }
         else if (Array.isArray(val)) input.value = val.join(", ");
         else input.value = val == null ? "" : val;
-        if (f.type === "image" && item && item[f.k]) {
+        if (f.type === "image") {
           const pv = wrap.querySelector(".img-prev");
-          if (pv) { pv.src = item[f.k]; pv.style.display = "block"; }
+          if (pv) {
+            if (item && item[f.k]) { pv.src = item[f.k]; pv.style.display = "block"; }
+            else { pv.src = ""; pv.style.display = "none"; }
+          }
           const existing = wrap.querySelector(".img-existing");
-          if (existing) existing.value = item[f.k];
+          if (existing) existing.value = item && item[f.k] ? item[f.k] : "";
         }
       });
       modal.dataset.editId = item ? item.id : "";
@@ -1864,50 +1687,12 @@
     });
   }
 
-  /* ---------------- Login + shell ---------------- */
-  function renderLogin() {
-    const app = $("#dash");
-    app.className = "";
-    app.innerHTML = `
-      <div class="dash-login">
-        <div class="dash-login__card">
-          <div class="dash-brand">Marshal<span>Al-Gezira</span></div>
-          <p class="dash-login__sub">${tr("Admin Console")}</p>
-          <form id="loginForm" class="dash-form">
-            <label>${tr("Email")}<input type="email" name="email" required placeholder="admin@hotel.com"></label>
-            <label>${tr("Password")}<input type="password" name="pass" required placeholder="••••••••"></label>
-            <button type="submit" class="btn btn--gold btn--block">${tr("Sign In")}</button>
-            <p class="dash-login__hint" id="loginHint"></p>
-          </form>
-        </div>
-      </div>`;
-    $("#loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const f = e.target;
-      const email = f.querySelector('[name="email"]').value;
-      const pass = f.querySelector('[name="pass"]').value;
-      try {
-        await attemptLogin(email, pass);
-        const m = await ready(); Data.mode = m;
-        $("#dashMode") && ($("#dashMode").textContent = m);
-        bootDashboard();
-      } catch (err) {
-        console.error("[LOGIN] error:", err.message);
-        const hint = $("#loginHint");
-        if (hint) {
-          const msg = err.message || "";
-          if (msg.includes("Not authorized")) hint.textContent = tr("Not authorized — admin access required.");
-          else if (msg.includes("Credentials")) hint.textContent = tr("Credentials required");
-          else hint.textContent = tr("Login failed");
-        }
-      }
-    });
-  }
-
+  /* ---------------- Logout ---------------- */
   async function logout() {
-    if (window.MGApiClient) window.MGApiClient.clearToken();
+    localStorage.removeItem("mg-admin-jwt");
+    localStorage.removeItem("mg-user-jwt");
     sessionStorage.removeItem("mg-auth");
-    renderLogin();
+    window.location.replace("pages/account.html");
   }
 
   async function bootDashboard() {
@@ -1918,7 +1703,7 @@
       try { await assertAdmin(); adminOk = true; }
       catch (e) { ok = false; }
     } else { adminOk = true; }
-    if (!ok) { renderNotAuthorized(); return; }
+    if (!ok) { redirectToAccount(); return; }
 
     /* Ensure settings (including currency) are loaded before rendering */
     if (window.MGSettings && MGSettings.load) {
@@ -1944,8 +1729,7 @@
     if (!document.getElementById("dash")) return;
     if (window.MGApiClient && window.MGApiClient.getToken()) {
       assertAdmin().then(() => bootDashboard()).catch(() => {
-        window.MGApiClient.clearToken();
-        renderLogin();
+        redirectToAccount();
       });
       return;
     }
@@ -1954,20 +1738,17 @@
       if (savedAuth === "rest") {
         if (window.MGApiClient && window.MGApiClient.getToken()) {
           assertAdmin().then(() => bootDashboard()).catch(() => {
-            window.MGApiClient.clearToken();
-            sessionStorage.removeItem("mg-auth");
-            renderLogin();
+            redirectToAccount();
           });
         } else {
-          sessionStorage.removeItem("mg-auth");
-          renderLogin();
+          redirectToAccount();
         }
         return;
       }
       bootDashboard();
       return;
     }
-    renderLogin();
+    redirectToAccount();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initDash);
   else initDash();

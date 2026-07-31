@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Account — Marshal Al-Gezira (Concept)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/components.auth.css" />
+  <link rel="stylesheet" href="../css/animations.css" />
+  <link rel="stylesheet" href="../css/responsive.css" />
+</head>
+<body class="custom-cursor">
+  <div class="scroll-progress" id="scrollProgress"></div>
+  <div class="page-transition" id="pageTransition"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+  <div class="cursor-dot" id="cursorDot"></div>
+
+  <header class="navbar" id="navbar">
+    <div class="navbar__pill">
+    <a href="../index.html" class="brand"><span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="../index.html#experience">Experience</a><a href="../index.html#rooms">Rooms</a>
+      <a href="../index.html#amenities">Amenities</a><a href="../index.html#gallery">Gallery</a>
+      <a href="../index.html#dining">Dining</a><a href="../index.html#contact">Contact</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="lang-toggle" id="langToggle">EN / ع</button>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg></button>
+      <a href="account.html" class="nav-login" data-i18n="nav_login">Login</a>
+      <a href="../index.html#booking" class="btn btn--primary">Book Stay</a>
+      <button class="nav-burger" id="navBurger"><span></span><span></span><span></span></button>
+    </div>
+    </div>
+  </header>
+  <div class="mobile-menu" id="mobileMenu"><button class="nav-close" id="navClose">×</button>
+    <a href="../index.html#experience">Experience</a><a href="../index.html#rooms">Rooms</a><a href="../index.html#amenities">Amenities</a><a href="../index.html#gallery">Gallery</a><a href="../index.html#dining">Dining</a><a href="../index.html#contact">Contact</a>
+    <a href="account.html" data-i18n="nav_login">Login</a>
+  </div>
+
+  <main>
+    <section class="auth-section" id="authSection">
+      <div class="auth-container">
+        <!-- Auth forms (login / register) -->
+        <div class="auth-view active" id="authView">
+          <div class="auth-box">
+            <div class="auth-box__head">
+              <span class="eyebrow" data-i18n="auth_login_title">Welcome Back</span>
+              <h1 data-i18n="auth_login_title">Welcome Back</h1>
+              <p data-i18n="auth_login_sub">Sign in to your account</p>
+            </div>
+
+            <div class="auth-error" id="authError"></div>
+            <div class="auth-success" id="authSuccess"></div>
+
+            <form class="auth-form" id="loginForm">
+              <div class="field">
+                <label for="loginEmail" data-i18n="auth_email">Email</label>
+                <input type="email" id="loginEmail" class="input" placeholder="you@example.com" autocomplete="email" required />
+              </div>
+              <div class="field">
+                <label for="loginPassword" data-i18n="auth_password">Password</label>
+                <input type="password" id="loginPassword" class="input" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" required />
+              </div>
+              <button type="submit" class="btn btn--primary btn--block" id="loginBtn" data-i18n="auth_signin">Sign In</button>
+            </form>
+
+            <div class="auth-toggle">
+              <span data-i18n="auth_no_account">Don't have an account?</span>
+              <a id="showRegister" data-i18n="auth_signup_link">Create one</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Register view -->
+        <div class="auth-view" id="registerView">
+          <div class="auth-box">
+            <div class="auth-box__head">
+              <span class="eyebrow" data-i18n="auth_register_title">Create Account</span>
+              <h1 data-i18n="auth_register_title">Create Account</h1>
+              <p data-i18n="auth_register_sub">Join us for a seamless booking experience</p>
+            </div>
+
+            <div class="auth-error" id="regError"></div>
+            <div class="auth-success" id="regSuccess"></div>
+
+            <form class="auth-form" id="registerForm">
+              <div class="field">
+                <label for="regName" data-i18n="auth_name">Full Name</label>
+                <input type="text" id="regName" class="input" placeholder="John Doe" autocomplete="name" required />
+              </div>
+              <div class="field">
+                <label for="regEmail" data-i18n="auth_email">Email</label>
+                <input type="email" id="regEmail" class="input" placeholder="you@example.com" autocomplete="email" required />
+              </div>
+              <div class="field">
+                <label for="regPhone" data-i18n="auth_phone">Phone</label>
+                <input type="tel" id="regPhone" class="input" placeholder="+20 100 000 0000" autocomplete="tel" />
+              </div>
+              <div class="field">
+                <label for="regPassword" data-i18n="auth_password">Password</label>
+                <input type="password" id="regPassword" class="input" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="new-password" required minlength="6" />
+              </div>
+              <button type="submit" class="btn btn--primary btn--block" id="registerBtn" data-i18n="auth_signup">Create Account</button>
+            </form>
+
+            <div class="auth-toggle">
+              <span data-i18n="auth_has_account">Already have an account?</span>
+              <a id="showLogin" data-i18n="auth_signin_link">Sign in</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account dashboard -->
+        <div class="account-view" id="accountView">
+          <div class="account-dash">
+            <div class="account-dash__head">
+              <div class="account-dash__user">
+                <div class="account-dash__avatar" id="acAvatar" aria-hidden="true"></div>
+                <div class="account-dash__greeting">
+                  <p class="account-dash__eyebrow" data-i18n="ac_welcome">Welcome back,</p>
+                  <h1 class="account-dash__name" id="acUserName"></h1>
+                </div>
+              </div>
+              <div class="account-dash__actions">
+                <button type="button" class="btn--logout" id="logoutBtn">
+                  <span data-i18n="ac_logout">Logout</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="account-dash__section">
+              <div class="account-dash__section-header">
+                <h2 data-i18n="ac_reservations_title">My Reservations</h2>
+                <p data-i18n="ac_reservations_sub">View and manage your upcoming and previous stays.</p>
+              </div>
+              <div id="accountBookings">
+                <div class="booking-loader" id="bookingLoader">
+                  <div class="spinner"></div>
+                  <p data-i18n="ac_loading">Loading your reservations&hellip;</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><div class="container">
+    <div><div class="brand"><span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></div><p class="mt-2" style="max-width:320px" data-i18n="foot_p">A premium concept redesign — original content, not affiliated.</p></div>
+    <div><h4 data-i18n="f_explore">Explore</h4><a href="../index.html#rooms" data-i18n="nav_rooms">Rooms</a><a href="../index.html#amenities" data-i18n="nav_amenities">Amenities</a><a href="../index.html#dining" data-i18n="nav_dining">Dining</a><a href="gallery.html" data-i18n="nav_gallery">Gallery</a></div>
+    <div><h4 data-i18n="f_pages">Pages</h4><a href="rooms.html" data-i18n="all_rooms">All Rooms</a><a href="room-details.html" data-i18n="room_details">Room Details</a><a href="about.html" data-i18n="nav_experience">About</a><a href="contact.html" data-i18n="nav_contact">Contact</a></div>
+    <div><h4 data-i18n="f_contact">Contact</h4><a href="#" data-setting="email" data-setting-href="email">stay@marshalgezira.concept</a><a href="#" data-setting="phone" data-setting-href="phone">+20 2 000 0000</a><a href="../index.html#location" data-setting="address">Mansoura, Dakahlia, Egypt</a></div>
+  </div><div class="footer__bottom"><span>&copy; <span id="year"></span> Marshal Al-Gezira &mdash; Concept.</span><span data-i18n="foot_note">Designed as a portfolio concept &middot; Original content</span></div></footer>
+
+  <button class="back-to-top" id="backTop" aria-label="Back to top"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+  <script src="../js/sanitize.js"></script>
+  <script src="../js/shared.js"></script>
+  <script src="../js/api-config.js"></script>
+  <script src="../js/api-client.js"></script>
+  <script src="../js/customer-api.js"></script>
+  <script src="../js/site-settings.js"></script>
+  <script src="../js/i18n/en.js"></script>
+  <script src="../js/i18n/ar.js"></script>
+  <script src="../js/i18n.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/cursor.js"></script>
+  <script src="../js/animations.js"></script>
+  <script src="../js/nav-auth.js"></script>
+  <script src="../js/account.js"></script>
+</body>
+</html>

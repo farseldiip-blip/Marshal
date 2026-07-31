@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  var esc = window.MGShared && MGShared.esc;
+  var esc = MGShared.esc;
 
   function isActive(it) {
     if (it.active === false) return false;

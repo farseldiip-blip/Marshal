@@ -106,25 +106,9 @@
   }
 
   /* ---- normalisation: backend enums → frontend Title Case ---- */
-  var STATUS_MAP = (window.MGShared && MGShared.STATUS_MAP) || {
-    "PENDING": "Pending", "CONFIRMED": "Confirmed",
-    "CHECKED_IN": "Checked In", "CHECKED_OUT": "Checked Out",
-    "CANCELLED": "Cancelled"
-  };
-  var PAY_STATUS_MAP = (window.MGShared && MGShared.PAY_STATUS_MAP) || {
-    "UNPAID": "Unpaid", "PENDING": "Pending",
-    "PAID": "Paid", "FAILED": "Failed", "REFUNDED": "Refunded"
-  };
-
-  var normalizeBooking = (window.MGShared && MGShared.normalizeBooking) || function (b) {
-    if (!b) return b;
-    var out = Object.assign({}, b);
-    if (out.status && STATUS_MAP[out.status]) out.status = STATUS_MAP[out.status];
-    if (out.paymentStatus && PAY_STATUS_MAP[out.paymentStatus]) out.paymentStatus = PAY_STATUS_MAP[out.paymentStatus];
-    // Backend returns ISO createdAt; frontend expects `created` string.
-    if (out.createdAt && !out.created) out.created = out.createdAt;
-    return out;
-  };
+  // shared.js is always loaded before this file (verified in all HTML pages).
+  // MGShared.normalizeBooking maps status/paymentStatus enums and createdAt→created.
+  var normalizeBooking = MGShared.normalizeBooking;
 
   /* ---- Demo booking source ---- */
   var DEMO_DB_KEY = "mg-demo-db";
@@ -228,9 +212,12 @@
       // Live: POST /api/bookings
       if (isLive()) {
         var url = apiBase() + "/bookings";
+        var headers = { "Content-Type": "application/json", Accept: "application/json" };
+        var userToken = localStorage.getItem("mg-user-jwt");
+        if (userToken) headers["Authorization"] = "Bearer " + userToken;
         return fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          headers: headers,
           body: JSON.stringify(payload)
         })
           .then(function (res) {

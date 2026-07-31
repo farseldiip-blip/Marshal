@@ -48,4 +48,19 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireAdmin, extractToken };
+// Optional auth — sets req.user if valid JWT present, continues silently otherwise.
+function requireOptionalAuth(req, res, next) {
+  const token = extractToken(req);
+  if (!token) return next();
+  try {
+    req.user = jwt.verify(token, ENV.JWT_SECRET, { issuer: "marshal-backend" });
+    next();
+  } catch (e) {
+    if (e.name === "TokenExpiredError") {
+      return next(new UnauthorizedError("token_expired"));
+    }
+    return next(new UnauthorizedError("invalid_token"));
+  }
+}
+
+module.exports = { requireAuth, requireAdmin, requireOptionalAuth, extractToken };

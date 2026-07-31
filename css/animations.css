@@ -16,6 +16,37 @@ html.has-anim .reveal-scale{ opacity: 0; transform: scale(0.92); }
 html.has-anim .mask-reveal { clip-path: inset(0 0 100% 0); }
 html.has-anim .img-reveal  { clip-path: inset(0 0 100% 0); }
 
+/* ---------- Universal [data-reveal] hooks ----------
+   Any element can opt in via data-reveal="up|left|right|scale".
+   Directions mirror in RTL so entrances always come from the
+   inline end (no hardcoded physical left/right). */
+html.has-anim [data-reveal],
+html.has-anim [data-reveal="up"]    { opacity: 0; transform: translateY(40px); }
+html.has-anim [data-reveal="left"]  { opacity: 0; transform: translateX(-40px); }
+html.has-anim [data-reveal="right"] { opacity: 0; transform: translateX(40px); }
+html.has-anim [data-reveal="scale"] { opacity: 0; transform: scale(0.97); }
+html.has-anim[dir="rtl"] [data-reveal="left"]  { transform: translateX(40px); }
+html.has-anim[dir="rtl"] [data-reveal="right"] { transform: translateX(-40px); }
+html.has-anim[dir="rtl"] .reveal-left  { transform: translateX(60px); }
+html.has-anim[dir="rtl"] .reveal-right { transform: translateX(-60px); }
+
+/* Mobile: entrance distances reduced 30-50% for a tighter, calmer
+   reveal, and scroll parallax is disabled by JS below 768px. */
+@media (max-width: 767px) {
+  html.has-anim .reveal { transform: translateY(28px); }
+  html.has-anim .reveal-left  { transform: translateX(-32px); }
+  html.has-anim .reveal-right { transform: translateX(32px); }
+  html.has-anim [data-reveal],
+  html.has-anim [data-reveal="up"]    { transform: translateY(24px); }
+  html.has-anim [data-reveal="left"]  { transform: translateX(-24px); }
+  html.has-anim [data-reveal="right"] { transform: translateX(24px); }
+  html.has-anim [data-reveal="scale"] { transform: scale(0.98); }
+  html.has-anim[dir="rtl"] [data-reveal="left"]  { transform: translateX(24px); }
+  html.has-anim[dir="rtl"] [data-reveal="right"] { transform: translateX(-24px); }
+  html.has-anim[dir="rtl"] .reveal-left  { transform: translateX(32px); }
+  html.has-anim[dir="rtl"] .reveal-right { transform: translateX(-32px); }
+}
+
 /* ---------- Lock scroll while loading (no layout shift) ---------- */
 html.is-loading, html.is-loading body { overflow: hidden; height: 100%; }
 

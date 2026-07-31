@@ -7,10 +7,8 @@
 (function () {
   "use strict";
 
-  var esc = (window.MGShared && MGShared.esc) || function (s) {
-    if (s == null) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  };
+  // shared.js is always loaded before this file (verified in all HTML pages).
+  var esc = MGShared.esc;
 
   function viewLabel(lang) {
     if (window.MGLang) return window.MGLang.t ? window.MGLang.t("view") : (lang === "ar" ? "عرض التفاصيل" : "View Details");

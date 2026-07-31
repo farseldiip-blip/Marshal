@@ -141,6 +141,23 @@ const bookingLookup = z.object({
   { message: "email or phone required" }
 );
 
+// ── Auth ──────────────────────────────────────────────────
+const authRegister = z.object({
+  name: z.string().trim().min(2, "name min 2 characters").max(100, "name max 100 characters"),
+  email: z.string().email("invalid_email").max(254),
+  password: z.string().min(8, "password min 8 characters").max(128),
+  phone: z.preprocess(
+    (v) => (typeof v === "string" && v.trim() === "") ? undefined : v,
+    z.string().trim().max(50).optional()
+  ),
+  preferredLang: z.enum(["en", "ar"]).default("en")
+});
+
+const authLogin = z.object({
+  email: z.string().email("invalid_email").max(254),
+  password: z.string().min(1, "password required").max(128)
+});
+
 module.exports = {
   roomCreate, roomUpdate,
   bookingUpdate, bookingCreate, bookingLookup,
@@ -148,5 +165,6 @@ module.exports = {
   galleryCreate, galleryUpdate,
   reviewCreateAdmin, reviewUpdateAdmin, reviewSubmit, reviewStatusUpdate,
   amenityCreate, amenityUpdate,
-  settingSet
+  settingSet,
+  authRegister, authLogin
 };

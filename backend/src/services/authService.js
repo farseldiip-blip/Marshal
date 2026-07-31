@@ -15,7 +15,7 @@ const { ConflictError, UnauthorizedError } = require("../utils/errors");
 
 const BCRYPT_ROUNDS = 12;
 
-async function register({ email, password }) {
+async function register({ name, email, password, phone, preferredLang }) {
   const normalized = String(email || "").trim().toLowerCase();
   if (!normalized || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
     throw new UnauthorizedError("invalid_credentials");
@@ -28,8 +28,19 @@ async function register({ email, password }) {
   if (existing) throw new ConflictError("email_already_registered");
 
   const passwordHash = await bcrypt.hash(String(password), BCRYPT_ROUNDS);
+  const safeName = name && String(name).trim().length >= 2 ? String(name).trim() : null;
+  const safePhone = phone && String(phone).trim() ? String(phone).trim() : null;
+  const lang = preferredLang === "ar" ? "ar" : "en";
+
   const user = await prisma.user.create({
-    data: { email: normalized, passwordHash, role: "USER" }
+    data: {
+      email: normalized,
+      passwordHash,
+      role: "USER",
+      name: safeName,
+      phone: safePhone,
+      preferredLang: lang
+    }
   });
 
   console.log(JSON.stringify({ type: "security", event: "user_registered", email: normalized }));
@@ -56,8 +67,18 @@ async function login({ email, password }) {
     throw new UnauthorizedError(generic);
   }
 
-  console.log(JSON.stringify({ type: "security", event: "login_success", email: normalized, role: user.role }));
-  return signToken(user);
+  if (user.isActive === false) {
+    console.log(JSON.stringify({ type: "security", event: "login_failed", reason: "account_inactive", email: normalized }));
+    throw new UnauthorizedError("Account is inactive");
+  }
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() }
+  });
+
+  console.log(JSON.stringify({ type: "security", event: "login_success", email: normalized, role: updatedUser.role }));
+  return signToken(updatedUser);
 }
 
 function signToken(user) {
@@ -70,11 +91,36 @@ function signToken(user) {
     token,
     user: {
       id: user.id,
+      name: user.name || null,
       email: user.email,
+      phone: user.phone || null,
+      preferredLang: user.preferredLang || "en",
       role: user.role,
-      createdAt: user.createdAt
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt || null
     }
   };
 }
 
-module.exports = { register, login, signToken };
+async function getUserById(id) {
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      preferredLang: true,
+      role: true,
+      createdAt: true,
+      lastLoginAt: true,
+      isActive: true
+    }
+  });
+
+  if (!user) throw new UnauthorizedError("User not found");
+
+  return user;
+}
+
+module.exports = { register, login, signToken, getUserById };

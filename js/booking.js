@@ -21,6 +21,9 @@
     });
   }
 
+  /* ---------- Room list cache (populated from live API) ---------- */
+  var _roomList = [];
+
   /* ---------- Dynamically populate room select from live API ---------- */
   async function populateRoomSelect() {
     if (!bkRoom) return;
@@ -35,6 +38,7 @@
       }
     } catch (e) { /* fallback to existing options */ }
     if (!rooms.length) return;
+    _roomList = rooms;
     const lang = (window.MGLang && window.MGLang.get && window.MGLang.get()) || "en";
     bkRoom.innerHTML = rooms.map(r => {
       const label = lang === "ar" && r.name_ar ? r.name_ar : (r.name || r.type || "");
@@ -51,14 +55,9 @@
   const search = document.getElementById("bkSearch");
   const result = document.getElementById("bkResult");
 
-  var t = (window.MGShared && MGShared.t) || function (key, en, ar) {
-    const lang = window.MGLang && window.MGLang.get && window.MGLang.get();
-    return lang === "ar" ? ar : en;
-  };
-  var esc = (window.MGShared && MGShared.esc) || function (s) {
-    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  };
+  // shared.js is always loaded before this file (verified in all HTML pages).
+  var t = MGShared.t;
+  var esc = MGShared.esc;
 
   /* ---------- Basic input validation (no OTP / no verification) ---------- */
   // Full name: >=3 chars, letters and spaces only, must look like a name
@@ -134,7 +133,9 @@
       if (n <= 0) { alert(t("bk_err_range", "Check-out must be after check-in.", "يجب أن يكون الخروج بعد الدخول.")); return; }
 
       const roomId = document.getElementById("bkRoom").value;
-      const room = window.MGBooking.resolveRoom(roomId);
+      // Look up the selected room from the cached live list (not from seed data).
+      // This guarantees the room name in the error message matches the user's selection.
+      const room = _roomList.find(function (r) { return r.id === roomId; }) || window.MGBooking.resolveRoom(roomId);
       const guestsVal = document.getElementById("bkGuests").value;
       const adults = parseInt(guestsVal, 10) || 1;
 

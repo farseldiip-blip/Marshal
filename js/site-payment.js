@@ -25,15 +25,9 @@
   function cfg() {
     return window.MGPaymentConfig || { endpoint: "", returnUrl: location.href, provider: "paymob" };
   }
-  var t = (window.MGShared && MGShared.t) || function (key, en, ar) {
-    var lang = window.MGLang && window.MGLang.get && window.MGLang.get();
-    return lang === "ar" ? (ar || en) : en;
-  };
-  var esc = (window.MGShared && MGShared.esc) || function (s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]);
-    });
-  };
+  // shared.js is always loaded before this file (verified in all HTML pages).
+  var t = MGShared.t;
+  var esc = MGShared.esc;
 
   function setArea(el, kind, msg) {
     if (!el) return;

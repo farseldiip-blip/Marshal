@@ -1,0 +1,42 @@
+{
+  "dash": "MISSING",
+  "side": "MISSING",
+  "main": "MISSING",
+  "top": null,
+  "title": null,
+  "cards": null,
+  "firstStat": null,
+  "hasHOverflow": false,
+  "bodyOverflowX": "hidden",
+  "tabs": null,
+  "panel": null,
+  "notifCount": 0,
+  "hasNotifPanel": false,
+  "table": null,
+  "tableWrap": null,
+  "scrollContainer": null,
+  "stickyTh": null,
+  "modal": null,
+  "filter": null,
+  "brand": {
+    "rect": {
+      "x": 477,
+      "y": 227.109375,
+      "width": 326,
+      "height": 37.875,
+      "top": 227.109375,
+      "right": 803,
+      "bottom": 264.984375,
+      "left": 477
+    }
+  },
+  "breadcrumbs": null,
+  "htmlDir": "ltr",
+  "htmlLang": "en",
+  "viewport": {
+    "w": 1280,
+    "h": 800
+  },
+  "docH": 800,
+  "docW": 1280
+}

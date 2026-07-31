@@ -1,0 +1,867 @@
+.auth-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 140px var(--gutter) var(--sp-6);
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.auth-box {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-md);
+}
+
+.auth-box__head {
+  text-align: center;
+  margin-bottom: var(--sp-5);
+}
+
+.auth-box__head .eyebrow {
+  display: inline-block;
+  margin-bottom: var(--sp-1);
+}
+
+.auth-box__head h1 {
+  font-family: var(--font-head);
+  font-size: var(--fs-h3);
+  color: var(--primary);
+  margin: 0;
+}
+
+.auth-box__head p {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin-top: var(--sp-1);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.auth-form .field {
+  margin: 0;
+}
+
+.auth-form .input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  caret-color: var(--accent);
+}
+
+.auth-form .input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(198, 161, 91, 0.12);
+}
+
+.auth-form .input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.auth-form .input:-webkit-autofill,
+.auth-form .input:-webkit-autofill:hover,
+.auth-form .input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--surface) inset;
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: background-color 999999s ease-in-out 0s;
+}
+
+.auth-form .btn {
+  margin-top: var(--sp-1);
+}
+
+.auth-toggle {
+  text-align: center;
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--border-soft);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.auth-toggle a {
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.3s var(--ease);
+}
+
+.auth-toggle a:hover {
+  color: var(--accent-soft);
+}
+
+.auth-error {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: var(--fs-sm);
+  color: #f0a3a3;
+  display: none;
+}
+
+.auth-error.show {
+  display: block;
+}
+
+.auth-success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: var(--fs-sm);
+  color: #6ee7a0;
+  display: none;
+}
+
+.auth-success.show {
+  display: block;
+}
+
+/* =========================================================
+   Account Dashboard — Premium Customer Portal
+   Overrides the narrow auth-box with a full-width luxury
+   dashboard when the user is authenticated.
+   ========================================================= */
+
+.account-view,
+.auth-view {
+  display: none;
+}
+.account-view.active,
+.auth-view.active {
+  display: block;
+}
+
+/* Dashboard container — wider than auth-box */
+.account-view.active {
+  padding: 0;
+}
+
+.account-dash {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ---- Account Header ---- */
+.account-dash__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+  flex-wrap: wrap;
+}
+
+.account-dash__user {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.account-dash__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0B0D12;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+  box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.account-dash__greeting .account-dash__eyebrow {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 3px;
+}
+
+html[dir="rtl"] .account-dash__greeting .account-dash__eyebrow {
+  letter-spacing: 0;
+}
+
+.account-dash__greeting .account-dash__name {
+  font-family: var(--font-head);
+  font-size: clamp(1.35rem, 3vw, 1.75rem);
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+.account-dash__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.account-dash__actions .btn--logout {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  padding: 9px 18px;
+  min-height: 40px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: border-color 0.25s var(--ease), color 0.25s var(--ease), background 0.25s var(--ease);
+}
+
+html[dir="rtl"] .account-dash__actions .btn--logout {
+  letter-spacing: 0;
+}
+
+.account-dash__actions .btn--logout svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.25s var(--ease);
+}
+
+.account-dash__actions .btn--logout:hover {
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #f3b0b0;
+  background: rgba(239, 68, 68, 0.09);
+}
+
+.account-dash__actions .btn--logout:hover svg {
+  transform: translateX(2px);
+}
+
+html[dir="rtl"] .account-dash__actions .btn--logout svg {
+  transform: scaleX(-1);
+}
+
+html[dir="rtl"] .account-dash__actions .btn--logout:hover svg {
+  transform: scaleX(-1) translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-dash__actions .btn--logout svg {
+    transition: none;
+  }
+  .account-dash__actions .btn--logout:hover svg {
+    transform: none;
+  }
+  html[dir="rtl"] .account-dash__actions .btn--logout svg,
+  html[dir="rtl"] .account-dash__actions .btn--logout:hover svg {
+    transform: scaleX(-1);
+  }
+}
+
+/* ---- Reservations Section ---- */
+.account-dash__section {
+  margin-bottom: var(--sp-5);
+}
+
+.account-dash__section-header {
+  margin-bottom: var(--sp-4);
+  padding-bottom: var(--sp-3);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.account-dash__section-header h2 {
+  font-family: var(--font-head);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  color: var(--primary);
+  margin: 0 0 4px;
+}
+
+.account-dash__section-header p {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+
+/* ---- Booking Category ---- */
+.account-dash__category {
+  margin-bottom: var(--sp-4);
+}
+
+.account-dash__category:last-child {
+  margin-bottom: 0;
+}
+
+.account-dash__category-label {
+  font-family: var(--font-head);
+  font-size: var(--fs-sm);
+  color: var(--accent);
+  margin-bottom: var(--sp-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+
+.account-dash__category-label--muted {
+  color: var(--muted);
+}
+
+.category-count {
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 1px 9px;
+  line-height: 1.5;
+}
+
+.account-dash__category-label--muted .category-count {
+  color: var(--muted);
+}
+
+.account-dash__category-label::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border-soft);
+}
+
+/* ---- Booking Card ---- */
+.booking-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.3s var(--ease), box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+  margin-bottom: var(--sp-2);
+}
+
+.booking-card:last-child {
+  margin-bottom: 0;
+}
+
+.booking-card:hover {
+  border-color: rgba(198, 161, 91, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(198, 161, 91, 0.06);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-card {
+    transition: none;
+  }
+  .booking-card:hover {
+    transform: none;
+  }
+}
+
+.booking-card__inner {
+  display: grid;
+  grid-template-columns: 120px 1fr auto;
+  gap: 0;
+  align-items: stretch;
+}
+
+.booking-card__image {
+  position: relative;
+  width: 120px;
+  min-height: 140px;
+  background: linear-gradient(160deg, #161A24 0%, #0E1118 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.booking-card__image::before {
+  content: "";
+  position: absolute;
+  inset: 9px;
+  border: 1px solid rgba(198, 161, 91, 0.2);
+  border-radius: 4px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+
+.booking-card__image.is-placeholder,
+.booking-card__image.is-fallback {
+  background:
+    radial-gradient(120% 100% at 35% 5%, rgba(198, 161, 91, 0.09), transparent 55%),
+    linear-gradient(160deg, #161A24 0%, #0E1118 100%);
+}
+
+.booking-card__image.is-placeholder::before,
+.booking-card__image.is-fallback::before {
+  opacity: 1;
+}
+
+.booking-card__image.is-placeholder svg,
+.booking-card__image.is-fallback svg {
+  width: 34px;
+  height: 34px;
+  color: var(--accent);
+  opacity: 0.5;
+}
+
+.booking-card__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.booking-card__body {
+  padding: var(--sp-2) var(--sp-3);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.booking-card__room-name {
+  font-family: var(--font-head);
+  font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+  color: var(--primary);
+  font-weight: 500;
+  margin: 0;
+}
+
+.booking-card__ref {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
+.booking-card__ref span {
+  color: var(--accent);
+}
+
+.booking-card__details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 18px;
+  font-size: var(--fs-xs);
+  color: var(--secondary);
+}
+
+.booking-card__details svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.booking-card__detail-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.booking-card__right {
+  padding: var(--sp-2) var(--sp-3) var(--sp-2) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  text-align: right;
+}
+
+.booking-card__price {
+  font-family: var(--font-head);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  color: var(--primary);
+  line-height: 1;
+}
+
+.booking-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.booking-card__actions .btn--view {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  padding: 6px 16px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.25s var(--ease), color 0.25s var(--ease), background 0.25s var(--ease);
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.booking-card__actions .btn--view:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(198, 161, 91, 0.06);
+}
+
+.booking-card__actions .btn--view svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  transition: transform 0.25s var(--ease);
+}
+
+.booking-card__actions .btn--view:hover svg {
+  transform: translateX(2px);
+}
+
+html[dir="rtl"] .booking-card__actions .btn--view svg {
+  transform: scaleX(-1);
+}
+
+html[dir="rtl"] .booking-card__actions .btn--view:hover svg {
+  transform: scaleX(-1) translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-card__actions .btn--view svg {
+    transition: none;
+  }
+  .booking-card__actions .btn--view:hover svg {
+    transform: none;
+  }
+  html[dir="rtl"] .booking-card__actions .btn--view svg,
+  html[dir="rtl"] .booking-card__actions .btn--view:hover svg {
+    transform: scaleX(-1);
+  }
+}
+
+/* ---- Status Badges ---- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  line-height: 1.4;
+}
+
+.status-badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.status-badge--confirmed {
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+}
+.status-badge--confirmed::before {
+  background: #4ade80;
+}
+
+.status-badge--pending {
+  background: rgba(234, 179, 8, 0.1);
+  color: #eab308;
+}
+.status-badge--pending::before {
+  background: #eab308;
+}
+
+.status-badge--cancelled {
+  background: rgba(239, 68, 68, 0.1);
+  color: #f87171;
+}
+.status-badge--cancelled::before {
+  background: #f87171;
+}
+
+.status-badge--checkedin,
+.status-badge--checked_out,
+.status-badge--checkedout {
+  background: rgba(96, 165, 250, 0.1);
+  color: #60a5fa;
+}
+.status-badge--checkedin::before,
+.status-badge--checked_out::before,
+.status-badge--checkedout::before {
+  background: #60a5fa;
+}
+
+.status-badge--no_show {
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
+}
+.status-badge--no_show::before {
+  background: #94a3b8;
+}
+
+/* ---- Empty State ---- */
+.account-empty {
+  text-align: center;
+  padding: var(--sp-6) var(--sp-4);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  max-width: 480px;
+  margin: 0 auto;
+  animation: acFadeIn 0.5s var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-empty {
+    animation: none;
+  }
+}
+
+@keyframes acFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.account-empty__icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto var(--sp-3);
+  color: var(--accent);
+  opacity: 0.5;
+}
+
+.account-empty h3 {
+  font-family: var(--font-head);
+  font-size: clamp(1.1rem, 1.8vw, 1.3rem);
+  color: var(--primary);
+  margin: 0 0 var(--sp-1);
+}
+
+.account-empty p {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin: 0 auto var(--sp-4);
+  max-width: 300px;
+}
+
+.account-empty .btn {
+  min-width: 180px;
+}
+
+/* ---- Loading State ---- */
+.booking-loader {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-4);
+  color: var(--muted);
+}
+
+.booking-loader .spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: acSpin 0.7s linear infinite;
+  margin-bottom: var(--sp-2);
+}
+
+@keyframes acSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---- Error State ---- */
+.account-error {
+  text-align: center;
+  padding: var(--sp-5) var(--sp-4);
+  color: var(--muted);
+}
+
+.account-error p {
+  margin-bottom: var(--sp-3);
+}
+
+/* ---- RTL ---- */
+html[dir="rtl"] .booking-card__inner {
+  direction: rtl;
+}
+
+html[dir="rtl"] .booking-card__right {
+  align-items: flex-start;
+  text-align: left;
+  padding: var(--sp-2) 0 var(--sp-2) var(--sp-3);
+}
+
+html[dir="rtl"] .booking-card__actions {
+  align-items: flex-start;
+}
+
+html[dir="rtl"] .account-dash__head {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .account-dash__user {
+  flex-direction: row-reverse;
+}
+
+html[dir="rtl"] .account-dash__category-label::after {
+  flex: 1;
+}
+
+/* ---- Tablet ---- */
+@media (max-width: 768px) {
+  .booking-card__inner {
+    grid-template-columns: 100px 1fr auto;
+  }
+
+  .booking-card__image {
+    width: 100px;
+  }
+
+  .booking-card__body {
+    padding: var(--sp-2);
+  }
+
+  .booking-card__right {
+    padding: var(--sp-2) var(--sp-2) var(--sp-2) 0;
+  }
+
+  .booking-card__details {
+    gap: 3px 12px;
+  }
+}
+
+/* ---- Mobile ---- */
+@media (max-width: 600px) {
+  .auth-section {
+    padding-top: 120px;
+    padding-bottom: var(--sp-4);
+  }
+
+  .auth-box {
+    padding: var(--sp-4);
+  }
+
+  .account-dash {
+    padding: 0;
+  }
+
+  .booking-card__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-card__image {
+    width: 100%;
+    min-height: 100px;
+    height: 120px;
+  }
+
+  .booking-card__image.is-placeholder svg,
+  .booking-card__image.is-fallback svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .booking-card__body {
+    padding: var(--sp-2) var(--sp-3);
+  }
+
+  .booking-card__right {
+    padding: 0 var(--sp-3) var(--sp-3);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .booking-card__actions {
+    flex-direction: row;
+  }
+
+  .booking-card__actions .btn--view {
+    padding: 10px 18px;
+    min-height: 44px;
+  }
+
+  .account-empty {
+    padding: var(--sp-5) var(--sp-3);
+  }
+
+  .account-dash__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-dash__avatar {
+    width: 48px;
+    height: 48px;
+    font-size: var(--fs-h4);
+  }
+
+  .account-dash__actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-top: var(--sp-1);
+  }
+
+  .account-dash__actions .btn--logout {
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+
+  html[dir="rtl"] .account-dash__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  html[dir="rtl"] .booking-card__right {
+    padding: 0 var(--sp-3) var(--sp-3);
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}

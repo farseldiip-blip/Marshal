@@ -1,0 +1,9 @@
+{
+  "html": "<div class=\"dash-loading\">Loading…</div>",
+  "hasLoading": true,
+  "hasError": false,
+  "hasTable": false,
+  "hasCards": false,
+  "hasForm": false,
+  "childCount": 1
+}

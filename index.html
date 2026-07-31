@@ -1,547 +1,1273 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="dark" dir="ltr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Marshal Al-Gezira Hotel — Luxury Concept Redesign</title>
-  <meta name="description" content="A premium concept redesign of Marshal Al-Gezira Hotel — an editorial, minimal luxury experience inspired by the world's finest resorts." />
-  <meta name="theme-color" content="#0F172A" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Marshal Al-Gezira Hotel — Luxury Concept Redesign</title>
+    <meta
+      name="description"
+      content="A premium concept redesign of Marshal Al-Gezira Hotel — an editorial, minimal luxury experience inspired by the world's finest resorts."
+    />
+    <meta name="theme-color" content="#0F172A" />
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/variables.css" />
-  <link rel="stylesheet" href="css/base.css" />
-  <link rel="stylesheet" href="css/layout.css" />
-  <link rel="stylesheet" href="css/components.css" />
-  <link rel="stylesheet" href="css/animations.css?v=20260718" />
-  <link rel="stylesheet" href="css/responsive.css" />
-  <!-- Leaflet CSS (interactive map) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-</head>
-<body class="custom-cursor">
-
-  <!-- ===== Loading Screen ===== -->
-  <div class="loader" id="loader">
-    <div class="loader__inner">
-      <div class="loader__logo">Marshal<span style="color:var(--accent)">.</span></div>
-      <div class="loader__sub">Al-Gezira · Concept</div>
-      <div class="loader__bar"><span id="loaderBar"></span></div>
-      <div class="loader__count" id="loaderCount">0</div>
-    </div>
-  </div>
-
-  <div class="scroll-progress" id="scrollProgress"></div>
-  <div class="page-transition" id="pageTransition"></div>
-
-  <!-- ===== Custom Cursor ===== -->
-  <div class="cursor-ring" id="cursorRing"></div>
-  <div class="cursor-dot" id="cursorDot"></div>
-
-  <!-- ===== Navbar ===== -->
-  <header class="navbar" id="navbar">
-    <div class="navbar__pill">
-      <a href="index.html" class="brand" aria-label="Marshal Al-Gezira Hotel home">
-        <img src="assets/images/308674245_488260833312990_3605187729512632128_n.jpg" alt="Marshal Al-Gezira Hotel" onerror="this.style.display='none'" />
-        <span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span>
-      </a>
-      <nav class="nav-links" aria-label="Primary">
-        <a href="#experience" data-i18n="nav_experience">Experience</a>
-        <a href="#rooms" data-i18n="nav_rooms">Rooms</a>
-        <a href="#amenities" data-i18n="nav_amenities">Amenities</a>
-        <a href="#gallery" data-i18n="nav_gallery">Gallery</a>
-        <a href="#dining" data-i18n="nav_dining">Dining</a>
-        <a href="#contact" data-i18n="nav_contact">Contact</a>
-      </nav>
-      <div class="nav-actions">
-        <button class="lang-toggle" id="langToggle" aria-label="Switch language">EN / ع</button>
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>
-        </button>
-        <a href="#booking" class="btn btn--primary" data-i18n="nav_book">Book Stay</a>
-        <button class="nav-burger" id="navBurger" aria-label="Open menu"><span></span><span></span><span></span></button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Mobile menu -->
-  <div class="mobile-menu" id="mobileMenu">
-    <button class="nav-close" id="navClose" aria-label="Close menu">×</button>
-    <a href="#experience" data-i18n="nav_experience">Experience</a>
-    <a href="#rooms" data-i18n="nav_rooms">Rooms</a>
-    <a href="#amenities" data-i18n="nav_amenities">Amenities</a>
-    <a href="#gallery" data-i18n="nav_gallery">Gallery</a>
-    <a href="#dining" data-i18n="nav_dining">Dining</a>
-    <a href="#contact" data-i18n="nav_contact">Contact</a>
-  </div>
-
-  <main>
-    <!-- ===== Hero ===== -->
-    <section class="hero" id="hero">
-      <div class="hero__bg" id="heroBg">
-        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=2000&q=80" alt="Luxury hotel exterior at dusk" />
-      </div>
-      <div class="hero__overlay"></div>
-      <div class="float-deco float-deco--ring" aria-hidden="true"></div>
-      <div class="float-deco float-deco--line" aria-hidden="true"></div>
-      <div class="container">
-        <div class="hero__content">
-          <span class="eyebrow" style="color:var(--accent-soft)" data-i18n="hero_kicker">Island of Stillness</span>
-          <h1 class="hero__title" id="heroTitle">
-            <span class="line"><span data-i18n="hero_t1">A Quiet</span></span>
-            <span class="line"><span data-i18n="hero_t2">Luxury on the</span></span>
-            <span class="line"><span data-i18n="hero_t3">Nile's Edge</span></span>
-          </h1>
-          <p class="hero__sub" data-i18n="hero_sub">An editorial concept retreat where modern calm meets timeless Egyptian elegance.</p>
-          <div class="hero__cta">
-            <a href="#booking" class="btn btn--primary btn--hero" data-i18n="hero_cta1">Reserve a Suite</a>
-            <a href="#experience" class="btn btn--outline btn--hero" data-i18n="hero_cta2">Discover</a>
-          </div>
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/variables.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/layout.css" />
+    <link rel="stylesheet" href="css/components.css" />
+    <link rel="stylesheet" href="css/components.auth.css" />
+    <link rel="stylesheet" href="css/animations.css?v=20260718" />
+    <link rel="stylesheet" href="css/responsive.css" />
+    <!-- Leaflet CSS (interactive map) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      crossorigin=""
+    />
+  </head>
+  <body class="custom-cursor">
+    <!-- ===== Loading Screen ===== -->
+    <div class="loader" id="loader">
+      <div class="loader__inner">
+        <div class="loader__logo">
+          Marshal<span style="color: var(--accent)">.</span>
         </div>
-      </div>
-      <div class="scroll-indicator">
-        <span data-i18n="scroll">Scroll</span>
-        <div class="scroll-indicator__line"><span></span></div>
-      </div>
-    </section>
-
-    <!-- ===== Booking Widget ===== -->
-    <section class="section--tight booking-section" id="booking">
-      <div class="container">
-        <div class="booking reveal">
-          <div class="field">
-            <label data-i18n="bk_checkin">Check-in</label>
-            <input type="date" class="input" id="bkCheckin" />
-          </div>
-          <div class="field">
-            <label data-i18n="bk_checkout">Check-out</label>
-            <input type="date" class="input" id="bkCheckout" />
-          </div>
-          <div class="field">
-            <label data-i18n="bk_guests">Guests</label>
-            <select class="select" id="bkGuests">
-              <option data-i18n="g1">1 Guest</option>
-              <option data-i18n="g2" selected>2 Guests</option>
-              <option data-i18n="g3">3 Guests</option>
-              <option data-i18n="g4">4 Guests</option>
-              <option data-i18n="g5">5+ Guests</option>
-            </select>
-          </div>
-          <div class="field">
-            <label data-i18n="bk_room">Room Type</label>
-            <select class="select" id="bkRoom">
-              <option value="">Loading rooms…</option>
-            </select>
-          </div>
-          <button class="btn btn--primary" id="bkSearch" data-i18n="bk_search">Search</button>
-        </div>
-
-        <!-- Booking result / summary (js/booking-core.js + booking.js) -->
-        <div id="bkResult" class="booking-result" hidden></div>
-
-        <!-- My Booking lookup (js/site-booking-lookup.js) -->
-        <div class="booking-lookup reveal" id="bkLookup">
-          <div class="booking-lookup__head">
-            <span class="eyebrow" data-i18n="lk_kicker">Your Stay</span>
-            <h3 data-i18n="lk_title">Find my booking</h3>
-            <p class="text-muted" data-i18n="lk_sub">Enter your booking reference and the email or phone you booked with.</p>
-          </div>
-          <div class="booking-lookup__form">
-            <div class="field">
-              <label data-i18n="lk_ref">Booking Reference</label>
-              <input class="input" id="lkRef" placeholder="pb_…" autocomplete="off" />
-            </div>
-            <div class="field">
-              <label data-i18n="lk_email">Email <span class="text-muted">(optional if phone provided)</span></label>
-              <input class="input" id="lkEmail" type="email" placeholder="you@email.com" autocomplete="off" />
-            </div>
-            <div class="field">
-              <label data-i18n="lk_phone">Phone <span class="text-muted">(optional if email provided)</span></label>
-              <input class="input" id="lkPhone" type="tel" placeholder="+20 …" autocomplete="off" />
-            </div>
-            <button class="btn btn--primary" id="lkSearch" data-i18n="lk_search">Look up</button>
-          </div>
-          <div id="lkStates" class="booking-result" hidden></div>
-          <div id="lkResult" class="booking-result" hidden></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Marquee ===== -->
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee__track" id="marqueeTrack">
-        <div class="marquee__group">
-          <span>Spa &amp; Wellness</span><span>Fine Dining</span><span>Private Marina</span><span>Rooftop Pool</span><span>Butler Service</span><span>Art Collection</span>
-        </div>
-        <div class="marquee__group" aria-hidden="true">
-          <span>Spa &amp; Wellness</span><span>Fine Dining</span><span>Private Marina</span><span>Rooftop Pool</span><span>Butler Service</span><span>Art Collection</span>
-        </div>
+        <div class="loader__sub">Al-Gezira · Concept</div>
+        <div class="loader__bar"><span id="loaderBar"></span></div>
+        <div class="loader__count" id="loaderCount">0</div>
       </div>
     </div>
 
-    <!-- ===== Experience ===== -->
-    <section class="section" id="experience">
-      <div class="container">
-        <div class="split">
-          <div class="split__text">
-            <span class="eyebrow reveal" data-i18n="exp_kicker">The Experience</span>
-            <h2 class="reveal" data-i18n="exp_title">Designed for the art of slowing down</h2>
-            <p class="text-muted reveal" data-i18n="exp_p1">Set apart from the city's rhythm, Marshal Al-Gezira is a concept of restraint and warmth — pale stone, soft linen, and light that moves across the day.</p>
-            <p class="text-muted reveal" data-i18n="exp_p2">Every corridor, every terrace, every quiet corner is composed like a photograph you want to keep.</p>
-            <div class="reveal mt-4">
-              <a href="pages/about.html" class="btn btn--outline" data-i18n="exp_cta">Our Philosophy</a>
-            </div>
-          </div>
-          <div class="split__media media-frame reveal-scale" data-parallax="0.08">
-            <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80" alt="Calm hotel interior" />
-          </div>
-        </div>
-      </div>
-    </section>
+    <div class="scroll-progress" id="scrollProgress"></div>
+    <div class="page-transition" id="pageTransition"></div>
 
-    <!-- ===== Stats ===== -->
-    <section class="section--tight">
-      <div class="container grid grid-4">
-        <div class="stat reveal"><div class="stat__num" data-target="120">0</div><div class="stat__label" data-i18n="st_rooms">Suites</div></div>
-        <div class="stat reveal"><div class="stat__num" data-target="5">0</div><div class="stat__label" data-i18n="st_dining">Restaurants</div></div>
-        <div class="stat reveal"><div class="stat__num" data-target="9">0</div><div class="stat__label" data-i18n="st_awards">Awards</div></div>
-        <div class="stat reveal"><div class="stat__num" data-target="100" data-suffix="%">0</div><div class="stat__label" data-i18n="st_rate">% Recommending</div></div>
-      </div>
-    </section>
+    <!-- ===== Custom Cursor ===== -->
+    <div class="cursor-ring" id="cursorRing"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
 
-    <!-- ===== Featured Rooms ===== -->
-    <section class="section" id="rooms">
-      <div class="container">
-        <div class="section-head section-head--center">
-          <span class="eyebrow reveal" data-i18n="rooms_kicker">Accommodation</span>
-          <h2 class="reveal" data-i18n="rooms_title">Featured Residences</h2>
-        </div>
-        <div class="grid grid-3" id="roomGrid" data-limit="3">
-          <!-- Rooms injected from Firestore (rooms collection); demo seed fallback. -->
-          <div class="dash-loading" id="roomGridLoading" style="grid-column:1/-1">Loading…</div>
-          <p class="text-center text-muted" id="roomGridEmpty" style="grid-column:1/-1;display:none">No residences available yet.</p>
-        </div>
-        <div class="text-center mt-5 reveal">
-          <a href="pages/rooms.html" class="btn btn--primary" data-i18n="all_rooms">All Residences</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Amenities ===== -->
-    <section class="section" id="amenities" style="background:var(--surface)">
-      <div class="container">
-        <div class="section-head section-head--center">
-          <span class="eyebrow reveal" data-i18n="am_kicker">Hotel Services</span>
-          <h2 class="reveal" data-i18n="am_title">Everything, effortlessly</h2>
-        </div>
-        <div class="grid grid-4" id="amenityGrid" data-stagger>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 21s-7-4.5-7-10a7 7 0 0114 0c0 5.5-7 10-7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>
-            <h4 data-i18n="am_spa">Spa &amp; Wellness</h4><p data-i18n="am_spa_d">Hammam rituals and river-facing treatment suites.</p>
-          </div>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 11h18M5 11V7a2 2 0 012-2h10a2 2 0 012 2v4M4 11v6a1 1 0 001 1h14a1 1 0 001-1v-6"/></svg>
-            <h4 data-i18n="am_rest">Restaurant</h4><p data-i18n="am_rest_d">Five venues from Levantine to omakase.</p>
-          </div>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 7v10M18 7v10M3 12h18M6 7l2-3h8l2 3"/></svg>
-            <h4 data-i18n="am_gym">Fitness</h4><p data-i18n="am_gym_d">24h studio with trainers and river views.</p>
-          </div>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M8 7V5h8v2M8 12h8M8 15h5"/></svg>
-            <h4 data-i18n="am_conf">Conference</h4><p data-i18n="am_conf_d">Light-filled rooms for up to 300 guests.</p>
-          </div>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 13a14 14 0 0114 0M8 16a9 9 0 018 0"/><circle cx="12" cy="19" r="1.5"/></svg>
-            <h4 data-i18n="am_wifi">Free WiFi</h4><p data-i18n="am_wifi_d">Fibre throughout, including gardens.</p>
-          </div>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 6V4h10v2M7 18v2M17 18v2"/></svg>
-            <h4 data-i18n="am_park">Valet Parking</h4><p data-i18n="am_park_d">Secure underground with EV charge.</p>
-          </div>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19h16M6 19V9a6 6 0 0112 0v10M9 19v-5h6v5"/></svg>
-            <h4 data-i18n="am_room">Room Service</h4><p data-i18n="am_room_d">All-day dining to your door, 24 hours.</p>
-          </div>
-          <div class="amenity reveal">
-            <svg class="amenity__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0M3 13c2-3 4-3 6 0s4 3 6 0 4-3 6 0M7 9a5 5 0 0110 0"/></svg>
-            <h4 data-i18n="am_pool">Rooftop Pool</h4><p data-i18n="am_pool_d">Infinity edge above the city skyline.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Gallery ===== -->
-    <section class="section" id="gallery">
-      <div class="container">
-        <div class="section-head section-head--center">
-          <span class="eyebrow reveal" data-i18n="gal_kicker">Visual Diary</span>
-          <h2 class="reveal" data-i18n="gal_title">The Gallery</h2>
-        </div>
-        <div class="masonry" id="masonry">
-          <!-- Gallery injected from Firestore (gallery collection); demo seed fallback. -->
-          <div class="dash-loading" style="grid-column:1/-1">Loading…</div>
-          <p class="text-center text-muted gallery-empty" style="grid-column:1/-1;display:none">No images yet.</p>
-        </div>
-        <div class="text-center mt-5 reveal">
-          <a href="pages/gallery.html" class="btn btn--outline" data-i18n="gal_all">Full Gallery</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Dining ===== -->
-    <section class="section" id="dining" style="background:var(--surface)">
-      <div class="container">
-        <div class="split split--img-right">
-          <div class="split__media media-frame reveal-scale" data-parallax="0.08">
-            <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80" alt="Fine dining" />
-          </div>
-          <div class="split__text">
-            <span class="eyebrow reveal" data-i18n="din_kicker">Gastronomy</span>
-            <h2 class="reveal" data-i18n="din_title">A table worth the journey</h2>
-            <p class="text-muted reveal" data-i18n="din_p">Five distinct venues, each with its own kitchen, its own mood, and its own view of the river. From a courtyard Levantine grill to an intimate chef's counter.</p>
-            <ul class="stack reveal mt-3" style="list-style:none">
-              <li class="mb-2"><strong data-i18n="din_1n">Lumen</strong> — <span class="text-muted" data-i18n="din_1d">modern Levantine, courtyard seating</span></li>
-              <li class="mb-2"><strong data-i18n="din_2n">Kawa</strong> — <span class="text-muted" data-i18n="din_2d">all-day café &amp; patisserie</span></li>
-              <li class="mb-2"><strong data-i18n="din_3n">Sato</strong> — <span class="text-muted" data-i18n="din_3d">omakase counter, 10 seats</span></li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Data-driven Restaurant / Menu grid (js/site-menu.js) -->
-        <div class="mt-5">
-          <div class="section-head section-head--center" style="margin-bottom:1.5rem">
-            <span class="eyebrow reveal" data-i18n="menu_kicker">The Table</span>
-            <h3 class="reveal" data-i18n="menu_title">Restaurant &amp; Menus</h3>
-          </div>
-          <div class="menu-filters" id="menuFilters"></div>
-          <div class="grid grid-auto" id="diningMenu"></div>
-          <div class="voices__status" id="menuLoading" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">Loading menu…</div>
-          <div class="voices__status" id="menuEmpty" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">No menu items yet.</div>
-          <div class="voices__status" id="menuError" hidden style="text-align:center;color:#c0392b;padding:2rem 0"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Testimonials ===== -->
-    <section class="section testimonials" id="testimonials">
-      <div class="container">
-        <div class="section-head section-head--center">
-          <span class="eyebrow reveal" data-i18n="tst_kicker">Guest Voices</span>
-          <h2 class="reveal" data-i18n="tst_title">Quietly unforgettable</h2>
-        </div>
-        <div class="voices">
-          <button class="voices__arrow voices__arrow--prev" id="testiPrev" aria-label="Previous">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 5l-7 7 7 7"/></svg>
+    <!-- ===== Navbar ===== -->
+    <header class="navbar" id="navbar">
+      <div class="navbar__pill">
+        <a
+          href="index.html"
+          class="brand"
+          aria-label="Marshal Al-Gezira Hotel home"
+        >
+          <img
+            src="assets/images/308674245_488260833312990_3605187729512632128_n.jpg"
+            alt="Marshal Al-Gezira Hotel"
+            onerror="this.style.display = 'none'"
+          />
+          <span class="brand__mark" data-setting="hotelName"
+            >Marshal<small class="brand__sub" data-i18n="brand_sub"
+              >Al-Gezira</small
+            ></span
+          >
+        </a>
+        <nav class="nav-links" aria-label="Primary">
+          <a href="#experience" data-i18n="nav_experience">Experience</a>
+          <a href="#rooms" data-i18n="nav_rooms">Rooms</a>
+          <a href="#amenities" data-i18n="nav_amenities">Amenities</a>
+          <a href="#gallery" data-i18n="nav_gallery">Gallery</a>
+          <a href="#dining" data-i18n="nav_dining">Dining</a>
+          <a href="#contact" data-i18n="nav_contact">Contact</a>
+        </nav>
+        <div class="nav-actions">
+          <button
+            class="lang-toggle"
+            id="langToggle"
+            aria-label="Switch language"
+          >
+            <span class="lang-toggle__globe" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path
+                  d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"
+                />
+              </svg>
+            </span>
+            <span class="lang-toggle__label">EN / ع</span>
           </button>
-          <div class="swiper voices__swiper" id="testiSwiper">
-            <div class="swiper-wrapper" id="testiWrap">
-              <!-- Guest Voices slides injected from the `reviews` collection (js/site-reviews.js) -->
-            </div>
-            <div class="swiper-pagination voices__dots"></div>
-            <div class="voices__status" id="testiLoading" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">Loading guest voices…</div>
-            <div class="voices__status" id="testiEmpty" hidden style="text-align:center;color:var(--text-muted);padding:2rem 0">No guest voices yet.</div>
-            <div class="voices__status" id="testiError" hidden style="text-align:center;color:#c0392b;padding:2rem 0"></div>
-          </div>
-          <button class="voices__arrow voices__arrow--next" id="testiNext" aria-label="Next">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5l7 7-7 7"/></svg>
+          <button
+            class="theme-toggle"
+            id="themeToggle"
+            aria-label="Toggle dark mode"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z" />
+            </svg>
+          </button>
+          <a href="pages/account.html" class="nav-login" aria-label="Login">
+            <svg
+              class="nav-login__icon"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5" />
+            </svg>
+            <span class="nav-login__label">Login</span>
+          </a>
+          <a href="#booking" class="btn btn--primary" data-i18n="nav_book"
+            >Book Stay</a
+          >
+          <button class="nav-burger" id="navBurger" aria-label="Open menu">
+            <span></span><span></span><span></span>
           </button>
         </div>
-        <!-- Write a Review CTA -->
-        <div class="tst-cta reveal" style="text-align:center;margin-top:var(--sp-5)">
-          <button class="btn btn--outline" id="openReviewModal" data-i18n="tst_write">Write a Review</button>
-        </div>
       </div>
-    </section>
+    </header>
 
-    <!-- Write a Review Modal -->
-    <div class="review-modal" id="reviewModal" hidden>
-      <div class="review-modal__backdrop" data-review-close></div>
-      <div class="review-modal__box" role="dialog" aria-labelledby="reviewModalTitle">
-        <button class="review-modal__close" data-review-close aria-label="Close">&times;</button>
-        <h3 id="reviewModalTitle" class="review-modal__title" data-i18n="tst_write_title">Share Your Experience</h3>
-        <p class="review-modal__sub" data-i18n="tst_write_sub">Your review will appear after moderation.</p>
-        <form id="reviewForm" class="review-form" novalidate>
-          <div class="review-form__group">
-            <label for="rvName" data-i18n="tst_name">Your Name</label>
-            <input type="text" id="rvName" name="name" required maxlength="100" autocomplete="name" class="review-form__input" placeholder="">
-          </div>
-          <div class="review-form__group">
-            <label for="rvEmail" data-i18n="tst_email">Email <span data-i18n="tst_optional">(optional)</span></label>
-            <input type="email" id="rvEmail" name="email" maxlength="254" autocomplete="email" class="review-form__input" placeholder="">
-          </div>
-          <div class="review-form__group">
-            <label data-i18n="tst_rating">Rating</label>
-            <div class="review-form__stars" id="rvStars" role="radiogroup" aria-label="Rating">
-              <button type="button" class="rv-star" data-star="1" aria-label="1 star">★</button>
-              <button type="button" class="rv-star" data-star="2" aria-label="2 stars">★</button>
-              <button type="button" class="rv-star" data-star="3" aria-label="3 stars">★</button>
-              <button type="button" class="rv-star" data-star="4" aria-label="4 stars">★</button>
-              <button type="button" class="rv-star" data-star="5" aria-label="5 stars">★</button>
-            </div>
-            <input type="hidden" id="rvRating" name="rating" value="0">
-            <div class="review-form__error" id="rvRatingError" hidden data-i18n="tst_error_rating">Please select a rating</div>
-          </div>
-          <div class="review-form__group">
-            <label for="rvReview" data-i18n="tst_review">Your Review</label>
-            <textarea id="rvReview" name="review" required rows="4" minlength="10" maxlength="2000" class="review-form__input review-form__textarea" placeholder=""></textarea>
-          </div>
-          <div class="review-form__error" id="rvGeneralError" hidden></div>
-          <div class="review-form__success" id="rvSuccess" hidden>
-            <p data-i18n="tst_success">Thank you for sharing your experience. Your review has been submitted and is awaiting moderation.</p>
-          </div>
-          <div class="review-form__actions">
-            <button type="button" class="btn btn--outline btn--sm" data-review-close data-i18n="tst_cancel">Cancel</button>
-            <button type="submit" class="btn btn--gold btn--sm" id="rvSubmitBtn" data-i18n="tst_submit">Submit Review</button>
-          </div>
-        </form>
-      </div>
+    <!-- Mobile menu -->
+    <div class="mobile-menu" id="mobileMenu">
+      <button class="nav-close" id="navClose" aria-label="Close menu">×</button>
+      <a href="#experience" data-i18n="nav_experience">Experience</a>
+      <a href="#rooms" data-i18n="nav_rooms">Rooms</a>
+      <a href="#amenities" data-i18n="nav_amenities">Amenities</a>
+      <a href="#gallery" data-i18n="nav_gallery">Gallery</a>
+      <a href="#dining" data-i18n="nav_dining">Dining</a>
+      <a href="#contact" data-i18n="nav_contact">Contact</a>
+      <a href="pages/account.html" data-i18n="nav_login">Login</a>
     </div>
 
-    <!-- ===== FAQ ===== -->
-    <section class="section" id="faq" style="background:var(--surface)">
-      <div class="container" style="max-width:880px">
-        <div class="section-head section-head--center">
-          <span class="eyebrow reveal" data-i18n="faq_kicker">Good to Know</span>
-          <h2 class="reveal" data-i18n="faq_title">Frequently asked</h2>
+    <main>
+      <!-- ===== Hero ===== -->
+      <section class="hero" id="hero">
+        <div class="hero__bg" id="heroBg">
+          <img
+            src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=2000&q=80"
+            alt="Luxury hotel exterior at dusk"
+          />
         </div>
-        <div class="accordion reveal" id="faqAcc">
-          <div class="acc-item"><button class="acc-head" data-i18n="faq1_q">What time is check-in and check-out?<span class="acc-icon"></span></button><div class="acc-body"><div class="acc-body__inner" data-i18n="faq1_a">Check-in from 15:00, check-out until 12:00. Early and late options available on request.</div></div></div>
-          <div class="acc-item"><button class="acc-head" data-i18n="faq2_q">Is breakfast included?<span class="acc-icon"></span></button><div class="acc-body"><div class="acc-body__inner" data-i18n="faq2_a">A curated breakfast at Kawa is included in all residence rates.</div></div></div>
-          <div class="acc-item"><button class="acc-head" data-i18n="faq3_q">Do you offer airport transfers?<span class="acc-icon"></span></button><div class="acc-body"><div class="acc-body__inner" data-i18n="faq3_a">Private transfers from the international airport can be arranged at booking.</div></div></div>
-          <div class="acc-item"><button class="acc-head" data-i18n="faq4_q">Is the hotel family friendly?<span class="acc-icon"></span></button><div class="acc-body"><div class="acc-body__inner" data-i18n="faq4_a">Yes — children are welcome, with family suites, a kids' pool, and babysitting on request.</div></div></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Location ===== -->
-    <section class="section" id="location">
-      <div class="container">
-        <div class="section-head section-head--center">
-          <span class="eyebrow reveal" data-i18n="loc_kicker">Where We Are</span>
-          <h2 class="reveal" data-i18n="loc_title">Mansoura, Dakahlia, Egypt</h2>
-        </div>
-        <div class="media-frame reveal" style="aspect-ratio:21/9">
-          <div id="hotelMap" style="width:100%;height:100%" role="img" aria-label="Hotel location map showing Marshal Al-Gezira in Mansoura, Dakahlia, Egypt"></div>
-        </div>
-        <div class="grid grid-3 mt-4 reveal">
-          <div><h4 class="fs-h4" data-i18n="loc1_n">Mansoura Corniche</h4><p class="text-muted" data-i18n="loc1_d">Along the riverfront</p></div>
-          <div><h4 class="fs-h4" data-i18n="loc2_n">Museum District</h4><p class="text-muted" data-i18n="loc2_d">12 min by car</p></div>
-          <div><h4 class="fs-h4" data-i18n="loc3_n">Nile Promenade</h4><p class="text-muted" data-i18n="loc3_d">Steps from the door</p></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ===== Contact ===== -->
-    <section class="section" id="contact" style="background:var(--surface)">
-      <div class="container">
-        <div class="split">
-          <div class="split__text">
-            <span class="eyebrow reveal" data-i18n="con_kicker">Reservations</span>
-            <h2 class="reveal" data-i18n="con_title">Begin your stay</h2>
-            <p class="text-muted reveal" data-i18n="con_p">Our concierge replies within the hour. Tell us what you're imagining.</p>
-            <div class="stack reveal mt-3">
-              <div><strong data-i18n="con_e">Email</strong><div class="text-muted" data-setting="email" data-setting-href="email">stay@marshalgezira.concept</div></div>
-              <div><strong data-i18n="con_t">Phone</strong><div class="text-muted" data-setting="phone" data-setting-href="phone">+20 2 000 0000</div></div>
+        <div class="hero__overlay"></div>
+        <div class="float-deco float-deco--ring" aria-hidden="true"></div>
+        <div class="float-deco float-deco--line" aria-hidden="true"></div>
+        <div class="container">
+          <div class="hero__content">
+            <span
+              class="eyebrow"
+              style="color: var(--accent-soft)"
+              data-i18n="hero_kicker"
+              >Island of Stillness</span
+            >
+            <h1 class="hero__title" id="heroTitle">
+              <span class="line"><span data-i18n="hero_t1">A Quiet</span></span>
+              <span class="line"
+                ><span data-i18n="hero_t2">Luxury on the</span></span
+              >
+              <span class="line"
+                ><span data-i18n="hero_t3">Nile's Edge</span></span
+              >
+            </h1>
+            <p class="hero__sub" data-i18n="hero_sub">
+              An editorial concept retreat where modern calm meets timeless
+              Egyptian elegance.
+            </p>
+            <div class="hero__cta">
+              <a
+                href="#booking"
+                class="btn btn--primary btn--hero"
+                data-i18n="hero_cta1"
+                >Reserve a Suite</a
+              >
+              <a
+                href="#experience"
+                class="btn btn--outline btn--hero"
+                data-i18n="hero_cta2"
+                >Discover</a
+              >
             </div>
           </div>
-          <form class="card reveal" style="padding:var(--sp-5)" id="contactForm">
-            <div class="grid grid-2">
-              <div class="field"><label data-i18n="con_name">Name</label><input class="input" required placeholder="Your name" /></div>
-              <div class="field"><label data-i18n="con_email">Email</label><input class="input" type="email" required placeholder="you@email.com" /></div>
+        </div>
+        <div class="scroll-indicator">
+          <span data-i18n="scroll">Scroll</span>
+          <div class="scroll-indicator__line"><span></span></div>
+        </div>
+      </section>
+
+      <!-- ===== Booking Widget ===== -->
+      <section class="section--tight booking-section" id="booking">
+        <div class="container">
+          <div class="booking reveal">
+            <div class="field">
+              <label data-i18n="bk_checkin">Check-in</label>
+              <input type="date" class="input" id="bkCheckin" />
             </div>
-            <div class="field mt-2"><label data-i18n="con_msg">Message</label><textarea class="input" rows="4" placeholder="Tell us about your stay..."></textarea></div>
-            <button class="btn btn--primary btn--block mt-3" type="submit" data-i18n="con_send">Send Inquiry</button>
+            <div class="field">
+              <label data-i18n="bk_checkout">Check-out</label>
+              <input type="date" class="input" id="bkCheckout" />
+            </div>
+            <div class="field">
+              <label data-i18n="bk_guests">Guests</label>
+              <select class="select" id="bkGuests">
+                <option data-i18n="g1">1 Guest</option>
+                <option data-i18n="g2" selected>2 Guests</option>
+                <option data-i18n="g3">3 Guests</option>
+                <option data-i18n="g4">4 Guests</option>
+                <option data-i18n="g5">5+ Guests</option>
+              </select>
+            </div>
+            <div class="field">
+              <label data-i18n="bk_room">Room Type</label>
+              <select class="select" id="bkRoom">
+                <option value="">Loading rooms…</option>
+              </select>
+            </div>
+            <button
+              class="btn btn--primary"
+              id="bkSearch"
+              data-i18n="bk_search"
+            >
+              Search
+            </button>
+          </div>
+
+          <!-- Booking result / summary (js/booking-core.js + booking.js) -->
+          <div id="bkResult" class="booking-result" hidden></div>
+
+          <!-- My Booking lookup (js/site-booking-lookup.js) -->
+          <div class="booking-lookup reveal" id="bkLookup">
+            <div class="booking-lookup__head">
+              <span class="eyebrow" data-i18n="lk_kicker">Your Stay</span>
+              <h3 data-i18n="lk_title">Find my booking</h3>
+              <p class="text-muted" data-i18n="lk_sub">
+                Enter your booking reference and the email or phone you booked
+                with.
+              </p>
+            </div>
+            <div class="booking-lookup__form">
+              <div class="field">
+                <label data-i18n="lk_ref">Booking Reference</label>
+                <input
+                  class="input"
+                  id="lkRef"
+                  placeholder="pb_…"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="field">
+                <label data-i18n="lk_email"
+                  >Email
+                  <span class="text-muted"
+                    >(optional if phone provided)</span
+                  ></label
+                >
+                <input
+                  class="input"
+                  id="lkEmail"
+                  type="email"
+                  placeholder="you@email.com"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="field">
+                <label data-i18n="lk_phone"
+                  >Phone
+                  <span class="text-muted"
+                    >(optional if email provided)</span
+                  ></label
+                >
+                <input
+                  class="input"
+                  id="lkPhone"
+                  type="tel"
+                  placeholder="+20 …"
+                  autocomplete="off"
+                />
+              </div>
+              <button
+                class="btn btn--primary"
+                id="lkSearch"
+                data-i18n="lk_search"
+              >
+                Look up
+              </button>
+            </div>
+            <div id="lkStates" class="booking-result" hidden></div>
+            <div id="lkResult" class="booking-result" hidden></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Marquee ===== -->
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee__track" id="marqueeTrack">
+          <div class="marquee__group">
+            <span>Spa &amp; Wellness</span><span>Fine Dining</span
+            ><span>Private Marina</span><span>Rooftop Pool</span
+            ><span>Butler Service</span><span>Art Collection</span>
+          </div>
+          <div class="marquee__group" aria-hidden="true">
+            <span>Spa &amp; Wellness</span><span>Fine Dining</span
+            ><span>Private Marina</span><span>Rooftop Pool</span
+            ><span>Butler Service</span><span>Art Collection</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== Experience ===== -->
+      <section class="section" id="experience">
+        <div class="container">
+          <div class="split">
+            <div class="split__text">
+              <span class="eyebrow reveal" data-i18n="exp_kicker"
+                >The Experience</span
+              >
+              <h2 class="reveal" data-i18n="exp_title">
+                Designed for the art of slowing down
+              </h2>
+              <p class="text-muted reveal" data-i18n="exp_p1">
+                Set apart from the city's rhythm, Marshal Al-Gezira is a concept
+                of restraint and warmth — pale stone, soft linen, and light that
+                moves across the day.
+              </p>
+              <p class="text-muted reveal" data-i18n="exp_p2">
+                Every corridor, every terrace, every quiet corner is composed
+                like a photograph you want to keep.
+              </p>
+            <div class="mt-4" data-reveal="up">
+              <a
+                href="pages/about.html"
+                class="btn btn--outline"
+                data-i18n="exp_cta"
+                >Our Philosophy</a
+              >
+            </div>
+            </div>
+            <div
+              class="split__media media-frame reveal-scale"
+              data-parallax="0.08"
+              data-reveal-img
+            >
+              <img
+                src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80"
+                alt="Calm hotel interior"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Stats ===== -->
+      <section class="section--tight">
+        <div class="container grid grid-4">
+          <div class="stat reveal">
+            <div class="stat__num" data-target="120">0</div>
+            <div class="stat__label" data-i18n="st_rooms">Suites</div>
+          </div>
+          <div class="stat reveal">
+            <div class="stat__num" data-target="5">0</div>
+            <div class="stat__label" data-i18n="st_dining">Restaurants</div>
+          </div>
+          <div class="stat reveal">
+            <div class="stat__num" data-target="9">0</div>
+            <div class="stat__label" data-i18n="st_awards">Awards</div>
+          </div>
+          <div class="stat reveal">
+            <div class="stat__num" data-target="100" data-suffix="%">0</div>
+            <div class="stat__label" data-i18n="st_rate">% Recommending</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Featured Rooms ===== -->
+      <section class="section" id="rooms">
+        <div class="container">
+          <div class="section-head section-head--center">
+            <span class="eyebrow reveal" data-i18n="rooms_kicker"
+              >Accommodation</span
+            >
+            <h2 class="reveal" data-i18n="rooms_title">Featured Residences</h2>
+          </div>
+          <div class="grid grid-3" id="roomGrid" data-limit="3">
+            <!-- Rooms injected from Firestore (rooms collection); demo seed fallback. -->
+            <div
+              class="dash-loading"
+              id="roomGridLoading"
+              style="grid-column: 1/-1"
+            >
+              Loading…
+            </div>
+            <p
+              class="text-center text-muted"
+              id="roomGridEmpty"
+              style="grid-column: 1/-1; display: none"
+            >
+              No residences available yet.
+            </p>
+          </div>
+          <div class="text-center mt-5" data-reveal="up">
+            <a
+              href="pages/rooms.html"
+              class="btn btn--primary"
+              data-i18n="all_rooms"
+              >All Residences</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Amenities ===== -->
+      <section
+        class="section"
+        id="amenities"
+        style="background: var(--surface)"
+      >
+        <div class="container">
+          <div class="section-head section-head--center">
+            <span class="eyebrow reveal" data-i18n="am_kicker"
+              >Hotel Services</span
+            >
+            <h2 class="reveal" data-i18n="am_title">
+              Everything, effortlessly
+            </h2>
+          </div>
+          <div class="grid grid-4" id="amenityGrid" data-stagger>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M12 21s-7-4.5-7-10a7 7 0 0114 0c0 5.5-7 10-7 10z" />
+                <circle cx="12" cy="11" r="2.5" />
+              </svg>
+              <h4 data-i18n="am_spa">Spa &amp; Wellness</h4>
+              <p data-i18n="am_spa_d">
+                Hammam rituals and river-facing treatment suites.
+              </p>
+            </div>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M3 11h18M5 11V7a2 2 0 012-2h10a2 2 0 012 2v4M4 11v6a1 1 0 001 1h14a1 1 0 001-1v-6"
+                />
+              </svg>
+              <h4 data-i18n="am_rest">Restaurant</h4>
+              <p data-i18n="am_rest_d">
+                Five venues from Levantine to omakase.
+              </p>
+            </div>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M6 7v10M18 7v10M3 12h18M6 7l2-3h8l2 3" />
+              </svg>
+              <h4 data-i18n="am_gym">Fitness</h4>
+              <p data-i18n="am_gym_d">
+                24h studio with trainers and river views.
+              </p>
+            </div>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="3" y="7" width="18" height="12" rx="2" />
+                <path d="M8 7V5h8v2M8 12h8M8 15h5" />
+              </svg>
+              <h4 data-i18n="am_conf">Conference</h4>
+              <p data-i18n="am_conf_d">
+                Light-filled rooms for up to 300 guests.
+              </p>
+            </div>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M5 13a14 14 0 0114 0M8 16a9 9 0 018 0" />
+                <circle cx="12" cy="19" r="1.5" />
+              </svg>
+              <h4 data-i18n="am_wifi">Free WiFi</h4>
+              <p data-i18n="am_wifi_d">Fibre throughout, including gardens.</p>
+            </div>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <rect x="3" y="6" width="18" height="12" rx="2" />
+                <path d="M7 6V4h10v2M7 18v2M17 18v2" />
+              </svg>
+              <h4 data-i18n="am_park">Valet Parking</h4>
+              <p data-i18n="am_park_d">Secure underground with EV charge.</p>
+            </div>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M4 19h16M6 19V9a6 6 0 0112 0v10M9 19v-5h6v5" />
+              </svg>
+              <h4 data-i18n="am_room">Room Service</h4>
+              <p data-i18n="am_room_d">
+                All-day dining to your door, 24 hours.
+              </p>
+            </div>
+            <div class="amenity reveal">
+              <svg
+                class="amenity__icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  d="M3 18c2-3 4-3 6 0s4 3 6 0 4-3 6 0M3 13c2-3 4-3 6 0s4 3 6 0 4-3 6 0M7 9a5 5 0 0110 0"
+                />
+              </svg>
+              <h4 data-i18n="am_pool">Rooftop Pool</h4>
+              <p data-i18n="am_pool_d">Infinity edge above the city skyline.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Gallery ===== -->
+      <section class="section" id="gallery">
+        <div class="container">
+          <div class="section-head section-head--center">
+            <span class="eyebrow reveal" data-i18n="gal_kicker"
+              >Visual Diary</span
+            >
+            <h2 class="reveal" data-i18n="gal_title">The Gallery</h2>
+          </div>
+          <div class="masonry" id="masonry">
+            <!-- Gallery injected from Firestore (gallery collection); demo seed fallback. -->
+            <div class="dash-loading" style="grid-column: 1/-1">Loading…</div>
+            <p
+              class="text-center text-muted gallery-empty"
+              style="grid-column: 1/-1; display: none"
+            >
+              No images yet.
+            </p>
+          </div>
+          <div class="text-center mt-5 reveal">
+            <a
+              href="pages/gallery.html"
+              class="btn btn--outline"
+              data-i18n="gal_all"
+              >Full Gallery</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Dining ===== -->
+      <section class="section" id="dining" style="background: var(--surface)">
+        <div class="container">
+          <div class="split split--img-right">
+            <div
+              class="split__media media-frame reveal-scale"
+              data-parallax="0.08"
+              data-reveal-img
+            >
+              <img
+                src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=1200&q=80"
+                alt="Fine dining"
+              />
+            </div>
+            <div class="split__text">
+              <span class="eyebrow reveal" data-i18n="din_kicker"
+                >Gastronomy</span
+              >
+              <h2 class="reveal" data-i18n="din_title">
+                A table worth the journey
+              </h2>
+              <p class="text-muted reveal" data-i18n="din_p">
+                Five distinct venues, each with its own kitchen, its own mood,
+                and its own view of the river. From a courtyard Levantine grill
+                to an intimate chef's counter.
+              </p>
+              <ul class="stack reveal mt-3" style="list-style: none">
+                <li class="mb-2">
+                  <strong data-i18n="din_1n">Lumen</strong> —
+                  <span class="text-muted" data-i18n="din_1d"
+                    >modern Levantine, courtyard seating</span
+                  >
+                </li>
+                <li class="mb-2">
+                  <strong data-i18n="din_2n">Kawa</strong> —
+                  <span class="text-muted" data-i18n="din_2d"
+                    >all-day café &amp; patisserie</span
+                  >
+                </li>
+                <li class="mb-2">
+                  <strong data-i18n="din_3n">Sato</strong> —
+                  <span class="text-muted" data-i18n="din_3d"
+                    >omakase counter, 10 seats</span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Data-driven Restaurant / Menu grid (js/site-menu.js) -->
+          <div class="mt-5">
+            <div
+              class="section-head section-head--center"
+              style="margin-bottom: 1.5rem"
+            >
+              <span class="eyebrow reveal" data-i18n="menu_kicker"
+                >The Table</span
+              >
+              <h3 class="reveal" data-i18n="menu_title">
+                Restaurant &amp; Menus
+              </h3>
+            </div>
+            <div class="menu-filters" id="menuFilters"></div>
+            <div class="grid grid-auto" id="diningMenu"></div>
+            <div
+              class="voices__status"
+              id="menuLoading"
+              hidden
+              style="
+                text-align: center;
+                color: var(--text-muted);
+                padding: 2rem 0;
+              "
+            >
+              Loading menu…
+            </div>
+            <div
+              class="voices__status"
+              id="menuEmpty"
+              hidden
+              style="
+                text-align: center;
+                color: var(--text-muted);
+                padding: 2rem 0;
+              "
+            >
+              No menu items yet.
+            </div>
+            <div
+              class="voices__status"
+              id="menuError"
+              hidden
+              style="text-align: center; color: #c0392b; padding: 2rem 0"
+            ></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Testimonials ===== -->
+      <section class="section testimonials" id="testimonials">
+        <div class="container">
+          <div class="section-head section-head--center">
+            <span class="eyebrow reveal" data-i18n="tst_kicker"
+              >Guest Voices</span
+            >
+            <h2 class="reveal" data-i18n="tst_title">Quietly unforgettable</h2>
+          </div>
+          <div class="voices">
+            <button
+              class="voices__arrow voices__arrow--prev"
+              id="testiPrev"
+              aria-label="Previous"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M15 5l-7 7 7 7" />
+              </svg>
+            </button>
+            <div class="swiper voices__swiper" id="testiSwiper">
+              <div class="swiper-wrapper" id="testiWrap">
+                <!-- Guest Voices slides injected from the `reviews` collection (js/site-reviews.js) -->
+              </div>
+              <div class="swiper-pagination voices__dots"></div>
+              <div
+                class="voices__status"
+                id="testiLoading"
+                hidden
+                style="
+                  text-align: center;
+                  color: var(--text-muted);
+                  padding: 2rem 0;
+                "
+              >
+                Loading guest voices…
+              </div>
+              <div
+                class="voices__status"
+                id="testiEmpty"
+                hidden
+                style="
+                  text-align: center;
+                  color: var(--text-muted);
+                  padding: 2rem 0;
+                "
+              >
+                No guest voices yet.
+              </div>
+              <div
+                class="voices__status"
+                id="testiError"
+                hidden
+                style="text-align: center; color: #c0392b; padding: 2rem 0"
+              ></div>
+            </div>
+            <button
+              class="voices__arrow voices__arrow--next"
+              id="testiNext"
+              aria-label="Next"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          <!-- Write a Review CTA -->
+          <div
+            class="tst-cta reveal"
+            style="text-align: center; margin-top: var(--sp-5)"
+          >
+            <button
+              class="btn btn--outline"
+              id="openReviewModal"
+              data-i18n="tst_write"
+            >
+              Write a Review
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Write a Review Modal -->
+      <div class="review-modal" id="reviewModal" hidden>
+        <div class="review-modal__backdrop" data-review-close></div>
+        <div
+          class="review-modal__box"
+          role="dialog"
+          aria-labelledby="reviewModalTitle"
+        >
+          <button
+            class="review-modal__close"
+            data-review-close
+            aria-label="Close"
+          >
+            &times;
+          </button>
+          <h3
+            id="reviewModalTitle"
+            class="review-modal__title"
+            data-i18n="tst_write_title"
+          >
+            Share Your Experience
+          </h3>
+          <p class="review-modal__sub" data-i18n="tst_write_sub">
+            Your review will appear after moderation.
+          </p>
+          <form id="reviewForm" class="review-form" novalidate>
+            <div class="review-form__group">
+              <label for="rvName" data-i18n="tst_name">Your Name</label>
+              <input
+                type="text"
+                id="rvName"
+                name="name"
+                required
+                maxlength="100"
+                autocomplete="name"
+                class="review-form__input"
+                placeholder=""
+              />
+            </div>
+            <div class="review-form__group">
+              <label for="rvEmail" data-i18n="tst_email"
+                >Email <span data-i18n="tst_optional">(optional)</span></label
+              >
+              <input
+                type="email"
+                id="rvEmail"
+                name="email"
+                maxlength="254"
+                autocomplete="email"
+                class="review-form__input"
+                placeholder=""
+              />
+            </div>
+            <div class="review-form__group">
+              <label data-i18n="tst_rating">Rating</label>
+              <div
+                class="review-form__stars"
+                id="rvStars"
+                role="radiogroup"
+                aria-label="Rating"
+              >
+                <button
+                  type="button"
+                  class="rv-star"
+                  data-star="1"
+                  aria-label="1 star"
+                >
+                  ★
+                </button>
+                <button
+                  type="button"
+                  class="rv-star"
+                  data-star="2"
+                  aria-label="2 stars"
+                >
+                  ★
+                </button>
+                <button
+                  type="button"
+                  class="rv-star"
+                  data-star="3"
+                  aria-label="3 stars"
+                >
+                  ★
+                </button>
+                <button
+                  type="button"
+                  class="rv-star"
+                  data-star="4"
+                  aria-label="4 stars"
+                >
+                  ★
+                </button>
+                <button
+                  type="button"
+                  class="rv-star"
+                  data-star="5"
+                  aria-label="5 stars"
+                >
+                  ★
+                </button>
+              </div>
+              <input type="hidden" id="rvRating" name="rating" value="0" />
+              <div
+                class="review-form__error"
+                id="rvRatingError"
+                hidden
+                data-i18n="tst_error_rating"
+              >
+                Please select a rating
+              </div>
+            </div>
+            <div class="review-form__group">
+              <label for="rvReview" data-i18n="tst_review">Your Review</label>
+              <textarea
+                id="rvReview"
+                name="review"
+                required
+                rows="4"
+                minlength="10"
+                maxlength="2000"
+                class="review-form__input review-form__textarea"
+                placeholder=""
+              ></textarea>
+            </div>
+            <div class="review-form__error" id="rvGeneralError" hidden></div>
+            <div class="review-form__success" id="rvSuccess" hidden>
+              <p data-i18n="tst_success">
+                Thank you for sharing your experience. Your review has been
+                submitted and is awaiting moderation.
+              </p>
+            </div>
+            <div class="review-form__actions">
+              <button
+                type="button"
+                class="btn btn--outline btn--sm"
+                data-review-close
+                data-i18n="tst_cancel"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn btn--gold btn--sm"
+                id="rvSubmitBtn"
+                data-i18n="tst_submit"
+              >
+                Submit Review
+              </button>
+            </div>
           </form>
         </div>
       </div>
-    </section>
-  </main>
 
-  <!-- ===== Footer ===== -->
-  <footer class="footer">
-    <div class="container">
-      <div>
-        <div class="brand"><span class="brand__mark" data-setting="hotelName">Marshal<small class="brand__sub" data-i18n="brand_sub">Al-Gezira</small></span></div>
-        <p class="mt-2" style="max-width:320px" data-i18n="foot_p">A premium concept redesign — original content inspired by the hotel, not affiliated.</p>
-        <div class="footer__social">
-          <a href="#" aria-label="Instagram">IG</a><a href="#" aria-label="X">X</a><a href="#" aria-label="LinkedIn">in</a>
+      <!-- ===== FAQ ===== -->
+      <section class="section" id="faq" style="background: var(--surface)">
+        <div class="container" style="max-width: 880px">
+          <div class="section-head section-head--center">
+            <span class="eyebrow reveal" data-i18n="faq_kicker"
+              >Good to Know</span
+            >
+            <h2 class="reveal" data-i18n="faq_title">Frequently asked</h2>
+          </div>
+          <div class="accordion reveal" id="faqAcc">
+            <div class="acc-item">
+              <button class="acc-head" data-i18n="faq1_q">
+                What time is check-in and check-out?<span
+                  class="acc-icon"
+                ></span>
+              </button>
+              <div class="acc-body">
+                <div class="acc-body__inner" data-i18n="faq1_a">
+                  Check-in from 15:00, check-out until 12:00. Early and late
+                  options available on request.
+                </div>
+              </div>
+            </div>
+            <div class="acc-item">
+              <button class="acc-head" data-i18n="faq2_q">
+                Is breakfast included?<span class="acc-icon"></span>
+              </button>
+              <div class="acc-body">
+                <div class="acc-body__inner" data-i18n="faq2_a">
+                  A curated breakfast at Kawa is included in all residence
+                  rates.
+                </div>
+              </div>
+            </div>
+            <div class="acc-item">
+              <button class="acc-head" data-i18n="faq3_q">
+                Do you offer airport transfers?<span class="acc-icon"></span>
+              </button>
+              <div class="acc-body">
+                <div class="acc-body__inner" data-i18n="faq3_a">
+                  Private transfers from the international airport can be
+                  arranged at booking.
+                </div>
+              </div>
+            </div>
+            <div class="acc-item">
+              <button class="acc-head" data-i18n="faq4_q">
+                Is the hotel family friendly?<span class="acc-icon"></span>
+              </button>
+              <div class="acc-body">
+                <div class="acc-body__inner" data-i18n="faq4_a">
+                  Yes — children are welcome, with family suites, a kids' pool,
+                  and babysitting on request.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Location ===== -->
+      <section class="section" id="location">
+        <div class="container">
+          <div class="section-head section-head--center">
+            <span class="eyebrow reveal" data-i18n="loc_kicker"
+              >Where We Are</span
+            >
+            <h2 class="reveal" data-i18n="loc_title">
+              Mansoura, Dakahlia, Egypt
+            </h2>
+          </div>
+          <div class="media-frame reveal" style="aspect-ratio: 21/9">
+            <div
+              id="hotelMap"
+              style="width: 100%; height: 100%"
+              role="img"
+              aria-label="Hotel location map showing Marshal Al-Gezira in Mansoura, Dakahlia, Egypt"
+            ></div>
+          </div>
+          <div class="grid grid-3 mt-4 reveal">
+            <div>
+              <h4 class="fs-h4" data-i18n="loc1_n">Mansoura Corniche</h4>
+              <p class="text-muted" data-i18n="loc1_d">Along the riverfront</p>
+            </div>
+            <div>
+              <h4 class="fs-h4" data-i18n="loc2_n">Museum District</h4>
+              <p class="text-muted" data-i18n="loc2_d">12 min by car</p>
+            </div>
+            <div>
+              <h4 class="fs-h4" data-i18n="loc3_n">Nile Promenade</h4>
+              <p class="text-muted" data-i18n="loc3_d">Steps from the door</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Contact ===== -->
+      <section class="section" id="contact" style="background: var(--surface)">
+        <div class="container">
+          <div class="split">
+            <div class="split__text">
+              <span class="eyebrow reveal" data-i18n="con_kicker"
+                >Reservations</span
+              >
+              <h2 class="reveal" data-i18n="con_title">Begin your stay</h2>
+              <p class="text-muted reveal" data-i18n="con_p">
+                Our concierge replies within the hour. Tell us what you're
+                imagining.
+              </p>
+              <div class="stack reveal mt-3">
+                <div>
+                  <strong data-i18n="con_e">Email</strong>
+                  <div
+                    class="text-muted"
+                    data-setting="email"
+                    data-setting-href="email"
+                  >
+                    stay@marshalgezira.concept
+                  </div>
+                </div>
+                <div>
+                  <strong data-i18n="con_t">Phone</strong>
+                  <div
+                    class="text-muted"
+                    data-setting="phone"
+                    data-setting-href="phone"
+                  >
+                    +20 2 000 0000
+                  </div>
+                </div>
+              </div>
+            </div>
+            <form
+              class="card reveal"
+              style="padding: var(--sp-5)"
+              id="contactForm"
+            >
+              <div class="grid grid-2">
+                <div class="field">
+                  <label data-i18n="con_name">Name</label
+                  ><input class="input" required placeholder="Your name" />
+                </div>
+                <div class="field">
+                  <label data-i18n="con_email">Email</label
+                  ><input
+                    class="input"
+                    type="email"
+                    required
+                    placeholder="you@email.com"
+                  />
+                </div>
+              </div>
+              <div class="field mt-2">
+                <label data-i18n="con_msg">Message</label
+                ><textarea
+                  class="input"
+                  rows="4"
+                  placeholder="Tell us about your stay..."
+                ></textarea>
+              </div>
+              <button
+                class="btn btn--primary btn--block mt-3"
+                type="submit"
+                data-i18n="con_send"
+              >
+                Send Inquiry
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer class="footer">
+      <div class="container">
+        <div>
+          <div class="brand">
+            <span class="brand__mark" data-setting="hotelName"
+              >Marshal<small class="brand__sub" data-i18n="brand_sub"
+                >Al-Gezira</small
+              ></span
+            >
+          </div>
+          <p class="mt-2" style="max-width: 320px" data-i18n="foot_p">
+            A premium concept redesign — original content inspired by the hotel,
+            not affiliated.
+          </p>
+          <div class="footer__social">
+            <a href="#" aria-label="Instagram">IG</a
+            ><a href="#" aria-label="X">X</a
+            ><a href="#" aria-label="LinkedIn">in</a>
+          </div>
+        </div>
+        <div>
+          <h4 data-i18n="f_explore">Explore</h4>
+          <a href="#rooms" data-i18n="nav_rooms">Rooms</a>
+          <a href="#amenities" data-i18n="nav_amenities">Amenities</a>
+          <a href="#dining" data-i18n="nav_dining">Dining</a>
+          <a href="pages/gallery.html" data-i18n="nav_gallery">Gallery</a>
+        </div>
+        <div>
+          <h4 data-i18n="f_pages">Pages</h4>
+          <a href="pages/rooms.html" data-i18n="all_rooms">All Rooms</a>
+          <a href="pages/room-details.html" data-i18n="room_details"
+            >Room Details</a
+          >
+          <a href="pages/about.html" data-i18n="nav_experience">About</a>
+          <a href="pages/contact.html" data-i18n="nav_contact">Contact</a>
+        </div>
+        <div>
+          <h4 data-i18n="f_contact">Contact</h4>
+          <a href="#" data-setting="email" data-setting-href="email"
+            >stay@marshalgezira.concept</a
+          >
+          <a href="#" data-setting="phone" data-setting-href="phone"
+            >+20 2 000 0000</a
+          >
+          <a href="#location" data-setting="address"
+            >Mansoura, Dakahlia, Egypt</a
+          >
         </div>
       </div>
-      <div>
-        <h4 data-i18n="f_explore">Explore</h4>
-        <a href="#rooms" data-i18n="nav_rooms">Rooms</a>
-        <a href="#amenities" data-i18n="nav_amenities">Amenities</a>
-        <a href="#dining" data-i18n="nav_dining">Dining</a>
-        <a href="pages/gallery.html" data-i18n="nav_gallery">Gallery</a>
+      <div class="footer__bottom">
+        <span
+          >© <span id="year"></span> Marshal Al-Gezira — Concept. Not
+          affiliated.</span
+        >
+        <span data-i18n="foot_note"
+          >Designed as a portfolio concept · Original content</span
+        >
       </div>
-      <div>
-        <h4 data-i18n="f_pages">Pages</h4>
-        <a href="pages/rooms.html" data-i18n="all_rooms">All Rooms</a>
-        <a href="pages/room-details.html" data-i18n="room_details">Room Details</a>
-        <a href="pages/about.html" data-i18n="nav_experience">About</a>
-        <a href="pages/contact.html" data-i18n="nav_contact">Contact</a>
-      </div>
-      <div>
-        <h4 data-i18n="f_contact">Contact</h4>
-        <a href="#" data-setting="email" data-setting-href="email">stay@marshalgezira.concept</a>
-        <a href="#" data-setting="phone" data-setting-href="phone">+20 2 000 0000</a>
-        <a href="#location" data-setting="address">Mansoura, Dakahlia, Egypt</a>
-      </div>
+    </footer>
+
+    <!-- Floating + Back to top -->
+    <button class="float-book" id="floatBook" data-i18n="float_book">
+      Book a Stay
+    </button>
+    <button class="back-to-top" id="backTop" aria-label="Back to top">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path d="M12 19V5M5 12l7-7 7 7" />
+      </svg>
+    </button>
+
+    <!-- Lightbox -->
+    <div class="lightbox" id="lightbox">
+      <button class="lightbox__close" aria-label="Close">×</button
+      ><img src="" alt="Enlarged" />
     </div>
-    <div class="footer__bottom">
-      <span>© <span id="year"></span> Marshal Al-Gezira — Concept. Not affiliated.</span>
-      <span data-i18n="foot_note">Designed as a portfolio concept · Original content</span>
-    </div>
-  </footer>
 
-  <!-- Floating + Back to top -->
-  <button class="float-book" id="floatBook" data-i18n="float_book">Book a Stay</button>
-  <button class="back-to-top" id="backTop" aria-label="Back to top">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-  </button>
-
-  <!-- Lightbox -->
-  <div class="lightbox" id="lightbox"><button class="lightbox__close" aria-label="Close">×</button><img src="" alt="Enlarged" /></div>
-
-  <!-- ===== Scripts ===== -->
-  <!-- Public data layer -->
-  <script src="js/api-config.js"></script>
-  <script src="js/sanitize.js"></script>
-  <script src="js/shared.js"></script>
-  <script src="js/api-client.js"></script>
-  <script src="js/site-settings.js"></script>
-  <script src="js/seed-data.js"></script>
-  <script src="js/site-data.js"></script>
-  <script src="js/site-rooms.js"></script>
-  <script src="js/site-gallery.js"></script>
-  <script src="js/site-reviews.js"></script>
-  <script src="js/site-menu.js"></script>
-  <script src="js/booking-core.js"></script>
-  <script src="js/site-booking-lookup.js"></script>
-  <script src="js/payment-config.js"></script>
-  <script src="js/site-payment.js"></script>
-  <!-- Core UI (counters + marquee) runs FIRST and independently of the CDNs,
+    <!-- ===== Scripts ===== -->
+    <!-- Public data layer -->
+    <script src="js/api-config.js"></script>
+    <script src="js/sanitize.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/api-client.js"></script>
+    <script src="js/customer-api.js"></script>
+    <script src="js/site-settings.js"></script>
+    <script src="js/seed-data.js"></script>
+    <script src="js/site-data.js"></script>
+    <script src="js/site-rooms.js"></script>
+    <script src="js/site-gallery.js"></script>
+    <script src="js/site-reviews.js"></script>
+    <script src="js/site-menu.js"></script>
+    <script src="js/booking-core.js"></script>
+    <script src="js/site-booking-lookup.js"></script>
+    <script src="js/payment-config.js"></script>
+    <script src="js/site-payment.js"></script>
+    <!-- Core UI (counters + marquee) runs FIRST and independently of the CDNs,
        so a slow/blocked animation CDN can never stop it. -->
-  <script src="js/ui-core.js?v=20260718"></script>
-  <!-- CDN libs are async so a slow/blocked CDN never stalls the page -->
-  <script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-  <script async src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script async src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
-  <script async src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-  <script src="js/i18n/en.js"></script>
-  <script src="js/i18n/ar.js"></script>
-  <script src="js/i18n.js"></script>
-  <script src="js/app.js"></script>
-  <script src="js/cursor.js"></script>
-  <script src="js/animations.js"></script>
-  <script src="js/booking.js?v=20260718"></script>
-  <script src="js/site-review-form.js"></script>
-  <!-- Leaflet JS + interactive hotel map (defer: non-blocking, lazy-init via IntersectionObserver) -->
-  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script defer src="js/site-map.js"></script>
-</body>
+    <script src="js/ui-core.js?v=20260718"></script>
+    <!-- CDN libs are async so a slow/blocked CDN never stalls the page -->
+    <script
+      async
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+    ></script>
+    <script
+      async
+      src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"
+    ></script>
+    <script
+      async
+      src="https://unpkg.com/@studio-freight/lenis@1.0.42/dist/lenis.min.js"
+    ></script>
+    <script
+      async
+      src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"
+    ></script>
+    <script src="js/i18n/en.js"></script>
+    <script src="js/i18n/ar.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/cursor.js"></script>
+    <script src="js/animations.js"></script>
+    <script src="js/booking.js?v=20260718"></script>
+    <script src="js/site-review-form.js"></script>
+    <!-- Leaflet JS + interactive hotel map (defer: non-blocking, lazy-init via IntersectionObserver) -->
+    <script
+      defer
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      crossorigin=""
+    ></script>
+    <script defer src="js/site-map.js"></script>
+    <script src="js/nav-auth.js"></script>
+  </body>
 </html>

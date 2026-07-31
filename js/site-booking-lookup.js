@@ -15,17 +15,11 @@
 (function () {
   "use strict";
 
-  var t = (window.MGShared && MGShared.t) || function (key, en, ar) {
-    var lang = window.MGLang && window.MGLang.get && window.MGLang.get();
-    return lang === "ar" ? (ar || en) : en;
-  };
-  var esc = (window.MGShared && MGShared.esc) || function (s) {
-    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
-      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]);
-    });
-  };
-  var money = (window.MGShared && MGShared.money) || function (n) { return (window.MGSettings ? MGSettings.formatMoney(n) : new Intl.NumberFormat("en-US", { style: "currency", currency: (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD", currencyDisplay: "symbol", minimumFractionDigits: 2 }).format(Number(n || 0))); };
-  var normalizeBooking = (window.MGShared && MGShared.normalizeBooking) || function (b) { return b; };
+  // shared.js is always loaded before this file (verified in all HTML pages).
+  var t = MGShared.t;
+  var esc = MGShared.esc;
+  var money = MGShared.money;
+  var normalizeBooking = MGShared.normalizeBooking;
 
   function statusClass(s) {
     return { "Checked In": "tag-CheckedIn", "Checked Out": "tag-CheckedOut" }[s] || ("tag-" + s);

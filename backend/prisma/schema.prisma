@@ -19,7 +19,13 @@ model User {
   role         UserRole @default(USER)
   createdAt    DateTime @default(now())
 
-  bookings Booking[] // future linkage if bookings are tied to users
+  name          String?
+  phone         String?
+  preferredLang String   @default("en")
+  lastLoginAt   DateTime?
+  isActive      Boolean  @default(true)
+
+  bookings Booking[]
 }
 
 enum UserRole {

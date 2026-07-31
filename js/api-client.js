@@ -122,15 +122,9 @@
      =========================================================== */
 
   // Enum maps: UPPERCASE (DB) → Title Case (dashboard)
-  var BOOKING_STATUS_MAP = (window.MGShared && MGShared.STATUS_MAP) || {
-    "PENDING": "Pending", "CONFIRMED": "Confirmed",
-    "CHECKED_IN": "Checked In", "CHECKED_OUT": "Checked Out",
-    "CANCELLED": "Cancelled"
-  };
-  var PAYMENT_STATUS_MAP = (window.MGShared && MGShared.PAY_STATUS_MAP) || {
-    "UNPAID": "Unpaid", "PENDING": "Pending", "PAID": "Paid",
-    "FAILED": "Failed", "REFUNDED": "Refunded"
-  };
+  // shared.js is always loaded before this file (verified in all HTML pages).
+  var BOOKING_STATUS_MAP = MGShared.STATUS_MAP;
+  var PAYMENT_STATUS_MAP = MGShared.PAY_STATUS_MAP;
 
   // Reverse maps: Title Case (dashboard) → UPPERCASE (DB)
   var BOOKING_STATUS_REV = {};

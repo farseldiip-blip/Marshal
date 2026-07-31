@@ -25,11 +25,8 @@
     return "★".repeat(r) + "☆".repeat(5 - r);
   }
 
-  var esc = (window.MGShared && MGShared.esc) || function (s) {
-    return String(s == null ? "" : s)
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  };
+  // shared.js is always loaded before this file (verified in all HTML pages).
+  var esc = MGShared.esc;
 
   function cardHTML(r) {
     const avatar = initials(r.author);

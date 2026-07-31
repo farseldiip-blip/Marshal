@@ -295,6 +295,233 @@ html[data-theme="light"] .btn--ghost:active {
 /* ---------- Full Width Utility ---------- */
 .btn--block { width: 100%; }
 
+/* ---------- Size Variants ---------- */
+.btn--sm {
+  --btn-pad-x: 20px;
+  --btn-pad-y: 10px;
+  --btn-radius: 100px;
+  --btn-fs: 0.8rem;
+  --btn-weight: 500;
+  --btn-gap: 8px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-fs);
+  font-weight: var(--btn-weight);
+  gap: var(--btn-gap);
+}
+.btn--lg {
+  --btn-pad-x: 48px;
+  --btn-pad-y: 20px;
+  --btn-radius: 100px;
+  --btn-fs: 1.05rem;
+  --btn-weight: 600;
+  --btn-gap: 14px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-fs);
+  font-weight: var(--btn-weight);
+  gap: var(--btn-gap);
+}
+
+/* ---------- Success Button (green) ---------- */
+.btn--success {
+  --btn-pad-x: 32px;
+  --btn-pad-y: 16px;
+  --btn-radius: 100px;
+  --btn-fs: 0.9rem;
+  --btn-weight: 600;
+  --btn-gap: 10px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-fs);
+  font-weight: var(--btn-weight);
+  letter-spacing: 0.05em;
+  gap: var(--btn-gap);
+  color: #fff;
+  background: linear-gradient(135deg, #1a8a4a 0%, #22c55e 50%, #1a8a4a 100%);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.25);
+}
+.btn--success:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 16px 48px rgba(34, 197, 94, 0.35);
+  background-position: 100% 50%;
+}
+.btn--success:active {
+  transform: scale(0.98);
+  background-position: 0% 50%;
+}
+
+/* ---------- Danger Button (red) ---------- */
+.btn--danger {
+  --btn-pad-x: 32px;
+  --btn-pad-y: 16px;
+  --btn-radius: 100px;
+  --btn-fs: 0.9rem;
+  --btn-weight: 600;
+  --btn-gap: 10px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-fs);
+  font-weight: var(--btn-weight);
+  letter-spacing: 0.05em;
+  gap: var(--btn-gap);
+  color: #fff;
+  background: linear-gradient(135deg, #b91c1c 0%, #ef4444 50%, #b91c1c 100%);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.25);
+}
+.btn--danger:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 16px 48px rgba(220, 38, 38, 0.35);
+  background-position: 100% 50%;
+}
+.btn--danger:active {
+  transform: scale(0.98);
+  background-position: 0% 50%;
+}
+
+/* ---------- Gold Button (for payment CTAs, same visual as primary) ---------- */
+.btn--gold {
+  --btn-pad-x: 36px;
+  --btn-pad-y: 16px;
+  --btn-radius: 16px;
+  --btn-fs: 1rem;
+  --btn-weight: 600;
+  --btn-gap: 10px;
+  padding: var(--btn-pad-y) var(--btn-pad-x);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-fs);
+  font-weight: var(--btn-weight);
+  letter-spacing: 0.04em;
+  gap: var(--btn-gap);
+  color: #0B0D12;
+  background: linear-gradient(135deg, #E2C06B 0%, #C79B45 50%, #E2C06B 100%);
+  background-size: 200% 100%;
+  background-position: 0% 50%;
+  box-shadow: 0 8px 24px rgba(226, 192, 107, 0.25);
+  height: 56px;
+}
+.btn--gold::before {
+  background: linear-gradient(
+    110deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 60%
+  );
+}
+.btn--gold:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 20px 50px rgba(226, 192, 107, 0.35);
+  background-position: 100% 50%;
+}
+.btn--gold:hover::before {
+  transform: translateX(100%);
+}
+.btn--gold:active {
+  transform: scale(0.98);
+  box-shadow: 0 4px 16px rgba(226, 192, 107, 0.2);
+}
+.btn--gold:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(226, 192, 107, 0.4), 0 8px 24px rgba(226, 192, 107, 0.25);
+}
+.btn--gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ---------- Loading State ---------- */
+.btn--loading {
+  pointer-events: none;
+  position: relative;
+  color: transparent !important;
+}
+.btn--loading::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: btnSpin 0.6s linear infinite;
+}
+@keyframes btnSpin {
+  to { transform: rotate(360deg); }
+}
+.btn--gold.btn--loading::after,
+.btn--primary.btn--loading::after {
+  border-color: #0B0D12;
+  border-right-color: transparent;
+}
+.btn--success.btn--loading::after {
+  border-color: #fff;
+  border-right-color: transparent;
+}
+.btn--danger.btn--loading::after {
+  border-color: #fff;
+  border-right-color: transparent;
+}
+
+/* ---------- Payment Card (premium gold-bordered container) ---------- */
+.payment-card {
+  background: var(--surface);
+  border: 1px solid rgba(198, 161, 91, 0.25);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.08), var(--shadow-md);
+  transition: border-color 0.4s var(--ease), box-shadow 0.4s var(--ease), transform 0.4s var(--ease);
+}
+.payment-card:hover {
+  border-color: rgba(198, 161, 91, 0.45);
+  box-shadow: 0 0 0 1px rgba(198, 161, 91, 0.18), 0 20px 60px rgba(0, 0, 0, 0.5);
+  transform: translateY(-4px);
+}
+.payment-card__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.payment-card__label {
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.payment-card__value {
+  font-family: var(--font-head);
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  color: var(--primary);
+  font-weight: 600;
+  line-height: 1.1;
+}
+.payment-card__meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+@media (max-width: 768px) {
+  .payment-card__row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .payment-card__value {
+    text-align: center;
+  }
+}
+
 /* ---------- Magnetic (cursor follow) ---------- */
 .magnetic { display: inline-flex; will-change: transform; }
 
@@ -508,6 +735,27 @@ html[data-theme="dark"] .navbar--scrolled .navbar__pill {
 .nav-links a.active::after { width: 22px; }
 
 .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+.nav-login {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--secondary);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.35s var(--ease), background 0.35s var(--ease);
+}
+.nav-login:hover {
+  color: var(--primary);
+  background: var(--border-soft);
+}
 
 .lang-toggle, .theme-toggle {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -958,21 +1206,6 @@ html[data-theme="dark"] .navbar--scrolled .navbar__pill {
 
 /* CTA button style */
 .tst-cta { margin-top: var(--sp-5); }
-.btn--outline {
-  background: transparent; border: 1px solid var(--border, #262B36);
-  color: var(--accent, #C6A15B); border-radius: var(--radius-pill, 999px);
-  padding: 10px 28px; font-size: 0.88rem; font-weight: 600;
-  letter-spacing: 0.04em; cursor: pointer;
-  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), transform 0.25s var(--ease);
-}
-.btn--outline:hover {
-  background: rgba(198,161,91,0.1); border-color: var(--accent, #C6A15B);
-  transform: translateY(-1px);
-}
-.btn--outline:focus-visible {
-  outline: none; box-shadow: 0 0 0 2px var(--bg, #0B0D12), 0 0 0 4px var(--accent, #C6A15B);
-}
-.btn--sm { padding: 8px 20px; font-size: 0.82rem; }
 
 /* Responsive */
 @media (max-width: 540px) {

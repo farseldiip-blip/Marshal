@@ -1,0 +1,46 @@
+{
+  "errorDiv": {
+    "text": "Dashboard error:\nPromise: seed is not a function",
+    "rect": {
+      "x": 12,
+      "y": 828,
+      "width": 1416,
+      "height": 60,
+      "top": 828,
+      "right": 1428,
+      "bottom": 888,
+      "left": 12
+    }
+  },
+  "toast": null,
+  "viewContent": "<div class=\"dash-loading\">Loading…</div>",
+  "hasCards": false,
+  "cardsChildren": 0,
+  "panelCount": 0,
+  "hasTable": false,
+  "hasTabs": false,
+  "tabCount": 0,
+  "hasFilter": false,
+  "hasBreadcrumbs": false,
+  "hasModal": false,
+  "dashExists": true,
+  "dashDisplay": "grid",
+  "hasSeed": false,
+  "seedType": "undefined",
+  "scripts": [
+    "http://127.0.0.1:8000/js/sanitize.js",
+    "http://127.0.0.1:8000/js/shared.js",
+    "http://127.0.0.1:8000/js/api-config.js",
+    "http://127.0.0.1:8000/js/api-client.js",
+    "http://127.0.0.1:8000/js/i18n/en.js",
+    "http://127.0.0.1:8000/js/i18n/ar.js",
+    "http://127.0.0.1:8000/js/i18n.js",
+    "http://127.0.0.1:8000/js/site-settings.js",
+    "http://127.0.0.1:8000/js/dashboard.js"
+  ],
+  "hasDemoData": false,
+  "brand": {
+    "text": "MarshalAl-Gezira",
+    "parent": "dash-side"
+  }
+}
