@@ -18,6 +18,28 @@
   const MQ_MOBILE = window.matchMedia("(max-width: 767px)");
   const isMobile = () => MQ_MOBILE.matches;
 
+  /* ---------- is-loading watchdog ----------
+     html.is-loading is normally cleared by js/app.js (loader exit). If that
+     path never runs (blocked/broken script), never trap the visitor in a
+     hidden hero or locked scroll: clear it and reveal the page. Applies to
+     every path, including reduced-motion. */
+  (function armWatchdog() {
+    let cleared = false;
+    const clear = () => {
+      if (cleared) return;
+      cleared = true;
+      if (root.classList.contains("is-loading")) {
+        root.classList.remove("is-loading");
+        const loaderEl = document.getElementById("loader");
+        if (loaderEl) loaderEl.classList.add("done");
+        if (window.__playHero) window.__playHero();
+      }
+    };
+    if (document.readyState === "complete") setTimeout(clear, 7000);
+    else window.addEventListener("load", () => setTimeout(clear, 7000));
+    setTimeout(clear, 12000);
+  })();
+
   /* ---------- Dependency-free SplitType (lines + words) ---------- */
   function splitLines(el) {
     if (!el) return [];
@@ -64,6 +86,12 @@
      makes every element visible so the page is never left broken. ---------- */
   let engineInitialized = false;
   let failSafeApplied = false;
+  /* True when the engine became ready while the loader was still up. In that
+     case the hero is still in its pre-load start state (CSS / GSAP set) and
+     the entrance timeline can play. If the engine only becomes ready AFTER the
+     loader already revealed the hero, __playHero must NOT snap it back to the
+     start state (that is exactly the FOUC we are fixing) — leave it static. */
+  let engineReadyDuringLoad = false;
 
   function initAnimationEngine() {
     if (engineInitialized) return true;
@@ -71,6 +99,7 @@
 
     try {
       gsap.registerPlugin(ScrollTrigger);
+      engineReadyDuringLoad = root.classList.contains("is-loading");
       root.classList.add("has-anim");
       console.log("[MG Animations] animation system initialized");
 
@@ -112,7 +141,30 @@
     const title = document.getElementById("heroTitle");
     if (!title) return;
     const lines = splitLines(title);
+
+    /* Deferred-engine guard: if GSAP only became ready after the loader had
+       already revealed the hero (is-loading already cleared), snapping the
+       elements back to their start states would re-trigger the exact
+       "show → reset → animate" flash this module exists to prevent. Leave the
+       hero static — it is already fully visible. */
+    if (!engineReadyDuringLoad && !root.classList.contains("is-loading")) return;
+
     gsap.set(title, { autoAlpha: 1 });
+
+    /* Apply the full start state synchronously — identical to the
+       html.is-loading CSS values — so the CSS→GSAP hand-off on loader exit
+       (is-loading removed + __playHero on the same tick) has zero visible
+       jump for ANY element, even ones whose tween starts later in the
+       timeline. */
+    gsap.set(".hero__bg", { scale: 1.05 });
+    gsap.set(".navbar", { y: -24, autoAlpha: 0 });
+    gsap.set(".hero .eyebrow", { y: isMobile() ? 16 : 24, autoAlpha: 0 });
+    gsap.set(lines, { yPercent: 115 });
+    gsap.set(".hero__sub", { y: isMobile() ? 18 : 28, autoAlpha: 0 });
+    gsap.set(".hero__cta > *", { y: isMobile() ? 18 : 28, autoAlpha: 0 });
+    gsap.set(".scroll-indicator", { y: isMobile() ? 12 : 18, autoAlpha: 0 });
+    gsap.set(".float-deco", { scale: 0.9, autoAlpha: 0 });
+
     const tl = gsap.timeline({ defaults: { ease: EASE } });
     tl.fromTo(".hero__bg", { scale: 1.05 }, { scale: 1.12, duration: 2.2, ease: "power2.out" }, 0)
       .fromTo(".navbar", { y: -24, autoAlpha: 0 }, {

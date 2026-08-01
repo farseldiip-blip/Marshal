@@ -88,6 +88,27 @@ html.is-loading, html.is-loading body { overflow: hidden; height: 100%; }
 .float-deco--line { width: 1px; height: 200px; background: linear-gradient(rgba(255,255,255,0.4), transparent); bottom: 10%; left: 12%; animation: floaty 7s ease-in-out infinite reverse; }
 @keyframes floaty { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-22px) rotate(4deg); } }
 
+/* ---------- Hero pre-load start state (FOUC guard) ----------
+   html.is-loading is added synchronously in <head> (index.html), so the
+   hero's very first paint is already its animation start state — no
+   "show final → snap hidden → animate" flash on production.
+   These values MUST mirror the fromTo() start values in js/animations.js
+   __playHero so the CSS→GSAP hand-off on loader exit is invisible. */
+html.is-loading .hero__bg { transform: scale(1.05); }
+html.is-loading .navbar { transform: translateY(-24px); opacity: 0; visibility: hidden; }
+html.is-loading .hero .eyebrow { transform: translateY(24px); opacity: 0; visibility: hidden; }
+html.is-loading .hero__title .line > span { transform: translateY(115%); }
+html.is-loading .hero__sub { transform: translateY(28px); opacity: 0; visibility: hidden; }
+html.is-loading .hero__cta > * { transform: translateY(28px); opacity: 0; visibility: hidden; }
+html.is-loading .scroll-indicator { transform: translateX(-50%) translateY(18px); opacity: 0; visibility: hidden; }
+html.is-loading .float-deco { transform: scale(0.9); opacity: 0; visibility: hidden; }
+@media (max-width: 767px) {
+  html.is-loading .hero .eyebrow { transform: translateY(16px); }
+  html.is-loading .hero__sub { transform: translateY(18px); }
+  html.is-loading .hero__cta > * { transform: translateY(18px); }
+  html.is-loading .scroll-indicator { transform: translateX(-50%) translateY(12px); }
+}
+
 /* ---------- Marquee ---------- */
 .marquee { overflow: hidden; white-space: nowrap; border-block: 1px solid var(--border); padding-block: var(--sp-3); }
 /* The track is forced LTR so the duplicated [Group][Group] layout — and

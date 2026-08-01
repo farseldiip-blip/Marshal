@@ -10,6 +10,14 @@
     />
     <meta name="theme-color" content="#0F172A" />
 
+    <!-- FOUC guard: mark the page "loading" synchronously (before first paint)
+         so CSS can first-render the hero in its animation start state instead of
+         the final state. js/app.js clears it on loader exit; the animations.js
+         watchdog clears it if that path ever fails. -->
+    <script>
+      document.documentElement.classList.add("is-loading");
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
