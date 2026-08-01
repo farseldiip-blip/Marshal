@@ -12,5 +12,5 @@
 window.MGApiConfig = {
   // Base URL of the REST API (with /api)
   // e.g. "http://localhost:8080/api" or "https://api.marshal-hotel.com/api"
-  baseUrl: "http://localhost:8080/api"
+  baseUrl: "https://marshal-production.up.railway.app/api",
 };
