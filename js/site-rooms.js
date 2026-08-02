@@ -15,24 +15,41 @@
     return lang === "ar" ? "عرض التفاصيل" : "View Details";
   }
 
+  function nightLabel(lang) {
+    if (window.MGLang && window.MGLang.t) {
+      var v = window.MGLang.t("night");
+      if (v != null && v !== "night") return v;
+    }
+    return lang === "ar" ? "ليلة" : "night";
+  }
+
   function cardHTML(r, lang) {
-    const name = lang === "ar" && r.name_ar ? r.name_ar : (r.name || "");
-    const desc = lang === "ar" && r.desc_ar ? r.desc_ar : (r.desc || "");
-    const price = typeof r.price === "number" ? (window.MGSettings ? MGSettings.formatMoney(r.price) : new Intl.NumberFormat("en-US", { style: "currency", currency: (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD", currencyDisplay: "symbol", minimumFractionDigits: 2 }).format(r.price)) : (r.price || "");
-    const amenities = (r.amenities || []).map(x => `<span>${esc(x)}</span>`).join("");
-    const inPages = window.location.pathname.replace(/\\/g, "/").includes("/pages/");
-    const detailsBase = inPages ? "room-details.html" : "pages/room-details.html";
-    return `<article class="card room-card reveal">
-      <div class="media-frame room-card__media"><img src="${esc(r.image || "")}" alt="${esc(name)}" loading="lazy"><span class="room-card__avail" data-avail-badge="${esc(r.id)}"></span></div>
-      <div class="room-card__body">
-        <span class="badge">${esc(r.type || "")}</span>
-        <h3 class="fs-h4">${esc(name)}</h3>
-        <p class="text-muted">${esc(desc)}</p>
-        <div class="room-card__price">${price} <span>/ night</span></div>
-        <div class="room-card__amen">${amenities}</div>
-        <a href="${detailsBase}?id=${encodeURIComponent(r.id)}" class="btn btn--outline btn--block mt-2 room-card__cta">${esc(viewLabel(lang))}</a>
-      </div>
-    </article>`;
+    // Normalize both live-API and demo-seed shapes; skip unusable rows.
+    var room = MGShared.normalizeRoom(r);
+    if (!room) return "";
+    var name = lang === "ar" && room.name_ar ? room.name_ar : room.name;
+    var desc = lang === "ar" && room.desc_ar ? room.desc_ar : room.description;
+    var price = (room.price == null || isNaN(room.price))
+      ? ""
+      : (window.MGSettings && MGSettings.formatMoney
+          ? MGSettings.formatMoney(room.price)
+          : new Intl.NumberFormat("en-US", { style: "currency", currency: (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD", currencyDisplay: "symbol", minimumFractionDigits: 2 }).format(room.price));
+    var amenities = room.amenities.map(function (x) { return "<span>" + esc(x) + "</span>"; }).join("");
+    var badge = room.type ? '<span class="badge">' + esc(room.type) + "</span>" : "";
+    var inPages = window.location.pathname.replace(/\\/g, "/").includes("/pages/");
+    var detailsBase = inPages ? "room-details.html" : "pages/room-details.html";
+    return '<article class="card room-card reveal">' +
+      '<a class="room-card__link" href="' + detailsBase + '?id=' + encodeURIComponent(room.id) + '" tabindex="-1" aria-hidden="true"></a>' +
+      '<div class="media-frame room-card__media"><img src="' + esc(room.images[0] || "") + '" alt="' + esc(name) + '" loading="lazy"><span class="room-card__avail" data-avail-badge="' + esc(room.id) + '"></span></div>' +
+      '<div class="room-card__body">' +
+        badge +
+        '<h3 class="fs-h4 room-card__name">' + esc(name) + "</h3>" +
+        (desc ? '<p class="text-muted room-card__desc">' + esc(desc) + "</p>" : "") +
+        (price ? '<div class="room-card__price">' + price + ' <span>' + esc(nightLabel(lang)) + "</span></div>" : "") +
+        (amenities ? '<div class="room-card__amen">' + amenities + "</div>" : "") +
+        '<a href="' + detailsBase + '?id=' + encodeURIComponent(room.id) + '" class="btn btn--outline btn--block room-card__cta">' + esc(viewLabel(lang)) + "</a>" +
+      "</div>" +
+    "</article>";
   }
 
   async function renderRoomsGrid(grid, opts) {
@@ -51,6 +68,10 @@
     } catch (e) { rooms = []; }
 
     if (loading) loading.style.display = "none";
+
+    // Drop unusable rows BEFORE slicing the limit so malformed data
+    // never steals a card slot or renders garbage.
+    rooms = (rooms || []).map(function (r) { return MGShared.normalizeRoom(r); }).filter(function (room) { return room && room.name; });
 
     if (!rooms.length) {
       if (empty) empty.style.display = "";

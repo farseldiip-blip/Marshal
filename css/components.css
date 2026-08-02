@@ -614,18 +614,26 @@ html[data-theme="light"] .btn--ghost:active {
 .booking-note { font-size: 0.8rem; margin-top: 0.5rem; }
 
 /* Room card premium micro-interactions */
-.room-card { transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease), border-color 0.55s var(--ease); }
+.room-card { position: relative; transition: transform 0.55s var(--ease), box-shadow 0.55s var(--ease), border-color 0.55s var(--ease); }
 .room-card:hover { transform: translateY(-12px); box-shadow: var(--shadow-lg); border-color: rgba(198,161,91,0.32); }
+.room-card__link { position: absolute; inset: 0; z-index: 1; border-radius: inherit; }
 .room-card__media { overflow: hidden; }
 .room-card__media img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.9s var(--ease); }
 .room-card:hover .room-card__media img { transform: scale(1.08); }
+/* CTA: always visible, full-width, sits above the full-card link so it
+   stays the primary, reliably-clickable action on every input method. */
 .room-card__body .btn {
-  opacity: 0; transform: translateY(14px);
-  transition: opacity 0.45s var(--ease), transform 0.45s var(--ease), color 0.4s var(--ease), background 0.4s var(--ease);
+  position: relative; z-index: 2; margin-top: auto;
+  transition: color 0.4s var(--ease), background 0.4s var(--ease), border-color 0.4s var(--ease), box-shadow 0.4s var(--ease);
 }
-.room-card:hover .room-card__body .btn { opacity: 1; transform: translateY(0); }
 .room-card__amen span { transition: border-color 0.3s var(--ease), color 0.3s var(--ease); }
 .room-card:hover .room-card__amen span { border-color: rgba(198,161,91,0.4); }
+/* Equal-height hierarchy: clamp name/desc so rows stay aligned. */
+.room-card__name { line-height: 1.25; }
+.room-card__desc {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; min-height: calc(1.6em * 2);
+}
 
 /* Booking field focus polish */
 .field label { transition: color 0.3s var(--ease), letter-spacing 0.3s var(--ease); }
@@ -970,8 +978,10 @@ html[data-theme="dark"] .navbar--scrolled .navbar__pill {
 .room-card__avail--none { color: #F0A0A0; background: rgba(90, 30, 30, 0.52); border-color: rgba(240, 140, 140, 0.35); }
 @keyframes availPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 .room-card--unavailable .room-card__media img { filter: saturate(0.65) brightness(0.82); }
-.room-card--unavailable .room-card__body .btn--outline { opacity: 0.45; pointer-events: none; }
-.room-card--unavailable .room-card__body .btn--outline:hover { transform: none; }
+/* Unavailable rooms keep a working "View Details" CTA — the availability
+   badge + media treatment signal the state, and the booking flow on the
+   details page enforces it. Never trap the visitor with a dead button. */
+.room-card--unavailable .room-card__body .btn { opacity: 1; pointer-events: auto; transform: none; }
 
 .bk-avail {
   max-width: 640px; margin: 1.15rem auto 0; padding: 0.75rem 1rem;

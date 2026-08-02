@@ -157,16 +157,6 @@
     if (!card) return;
     var unavailable = units <= 0;
     card.classList.toggle("room-card--unavailable", unavailable);
-    var cta = card.querySelector(".room-card__cta");
-    if (cta) {
-      if (unavailable) {
-        cta.setAttribute("aria-disabled", "true");
-        cta.setAttribute("tabindex", "-1");
-      } else {
-        cta.removeAttribute("aria-disabled");
-        cta.removeAttribute("tabindex");
-      }
-    }
   }
 
   function scanBadges(seq) {

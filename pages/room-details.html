@@ -480,13 +480,13 @@
     document.title = (room.name || "Room") + " — Marshal Al-Gezira";
 
     /* ── Map fields from API (handles both raw DB and normalized) ── */
-    var roomName = room.name || "";
+    var roomName = (lang === "ar" && room.name_ar) ? room.name_ar : (room.name || "");
     var roomType = room.type || "";
-    var roomDesc = room.desc || room.description || "";
+    var roomDesc = (lang === "ar" && room.desc_ar) ? room.desc_ar : (room.desc || room.description || "");
     var roomPrice = typeof room.price === "number" ? room.price : (parseFloat(room.price) || 0);
     var roomCapacity = room.capacity || 2;
     var roomQuantity = typeof room.quantity === "number" ? room.quantity : 1;
-    var roomAmenities = Array.isArray(room.amenities) ? room.amenities : [];
+    var roomAmenities = (window.MGShared && MGShared.sanitizeAmenities) ? MGShared.sanitizeAmenities(room.amenities) : (Array.isArray(room.amenities) ? room.amenities : []);
     var roomImages = Array.isArray(room.images) ? room.images.filter(Boolean) : [];
     if (!roomImages.length && room.image) roomImages = [room.image];
 
