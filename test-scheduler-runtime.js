@@ -43,7 +43,7 @@ function die(msg) {
   created.push(seed.id);
   await prisma.booking.update({
     where: { id: seed.id },
-    data: { createdAt: new Date(Date.now() - (ENV.BOOKING_PAYMENT_EXPIRY_MINUTES + 30) * 60 * 1000) }
+    data: { createdAt: new Date(Date.now() - (ENV.BOOKING_PAYMENT_TIMEOUT_MINUTES + 30) * 60 * 1000) }
   });
 
   const fresh = await createBooking({
@@ -92,7 +92,7 @@ function die(msg) {
   };
 
   const checks = {
-    expiredCancelled: seedAfter.status === "CANCELLED" && !!seedAfter.cancelReason && seedAfter.cancelReason.includes("automatically cancelled"),
+    expiredCancelled: seedAfter.status === "CANCELLED" && seedAfter.cancelReason === "PAYMENT_TIMEOUT",
     roomFreed: availAfter.availableUnits === availBefore.availableUnits + 1,
     freshUntouched: freshAfter.status === "PENDING" && freshAfter.paymentStatus === "UNPAID",
     paidUntouched: paidAfter.status === "CONFIRMED" && paidAfter.paymentStatus === "PAID",

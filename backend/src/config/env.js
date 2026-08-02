@@ -32,8 +32,13 @@ const ENV = {
   PAYMOB_INTEGRATION_ID: process.env.PAYMOB_INTEGRATION_ID || "",
   PAYMOB_BASE_URL: process.env.PAYMOB_BASE_URL || "https://accept.paymob.com",
 
-  // Booking expiration / no-show scheduler
-  BOOKING_PAYMENT_EXPIRY_MINUTES: parseInt(process.env.BOOKING_PAYMENT_EXPIRY_MINUTES || "120", 10),
+  // Booking payment timeout / no-show scheduler.
+  // Canonical var: BOOKING_PAYMENT_TIMEOUT_MINUTES (default 120 = 2 hours).
+  // Legacy alias BOOKING_PAYMENT_EXPIRY_MINUTES still honoured.
+  BOOKING_PAYMENT_TIMEOUT_MINUTES: parseInt(
+    process.env.BOOKING_PAYMENT_TIMEOUT_MINUTES || process.env.BOOKING_PAYMENT_EXPIRY_MINUTES || "120",
+    10
+  ),
   NO_SHOW_GRACE_HOURS: parseInt(process.env.NO_SHOW_GRACE_HOURS || "24", 10),
   SCHEDULER_INTERVAL_MS: parseInt(process.env.SCHEDULER_INTERVAL_MS || String(5 * 60 * 1000), 10)
 };

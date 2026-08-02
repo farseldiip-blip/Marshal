@@ -6,8 +6,8 @@
 
    A) Cancel expired unpaid PENDING bookings.
       Criteria: status=PENDING AND paymentStatus=UNPAID
-                AND createdAt + BOOKING_PAYMENT_EXPIRY_MINUTES < now
-      Effect:   status→CANCELLED, cancelReason set, room freed.
+                AND createdAt + BOOKING_PAYMENT_TIMEOUT_MINUTES < now
+      Effect:   status→CANCELLED, cancelReason="PAYMENT_TIMEOUT", room freed.
 
    B) Mark no-show confirmed paid bookings.
       Criteria: status=CONFIRMED AND paymentStatus=PAID
@@ -15,7 +15,9 @@
       Effect:   status→NO_SHOW (payment preserved).
 
    Both transitions are safe to run repeatedly — only bookings
-   still matching the source criteria will be updated.
+   still matching the source criteria will be updated (atomic
+   updateMany re-checks the status/paymentStatus predicates, so a
+   booking PAID concurrently is never cancelled).
    ========================================================= */
 const prisma = require("../config/database");
 const ENV = require("../config/env");
@@ -26,7 +28,7 @@ let running = false;
 /* ── A. Expire unpaid pending bookings ────────────────── */
 async function cancelExpiredBookings(now) {
   const nowMs = (now instanceof Date ? now : new Date()).getTime();
-  const expiryMs = ENV.BOOKING_PAYMENT_EXPIRY_MINUTES * 60 * 1000;
+  const expiryMs = ENV.BOOKING_PAYMENT_TIMEOUT_MINUTES * 60 * 1000;
   const cutoff = new Date(nowMs - expiryMs);
 
   const expired = await prisma.booking.findMany({
@@ -38,19 +40,28 @@ async function cancelExpiredBookings(now) {
     select: { id: true, guestName: true, roomId: true, createdAt: true }
   });
 
+  console.log("[BOOKING EXPIRY] Found " + expired.length + " expired unpaid bookings");
   if (!expired.length) return 0;
 
   let cancelled = 0;
   for (const b of expired) {
     try {
-      const reason = "Booking automatically cancelled because payment was not completed before the "
-        + ENV.BOOKING_PAYMENT_EXPIRY_MINUTES + "-minute expiry window.";
-
-      await prisma.booking.update({
-        where: { id: b.id },
-        data: { status: "CANCELLED", cancelReason: reason, updatedAt: new Date() }
+      // Atomic + idempotent: only re-checks still-PENDING & still-UNPAID rows.
+      // If a payment is confirmed concurrently, updateMany matches 0 rows and
+      // the booking is left untouched.
+      const res = await prisma.booking.updateMany({
+        where: {
+          id: b.id,
+          status: "PENDING",
+          paymentStatus: "UNPAID",
+          createdAt: { lt: cutoff }
+        },
+        data: { status: "CANCELLED", cancelReason: "PAYMENT_TIMEOUT", updatedAt: new Date() }
       });
 
+      if (res.count === 0) continue; // booking changed since we read it
+
+      console.log("[BOOKING EXPIRY] Cancelled booking " + b.id);
       console.log(JSON.stringify({
         type: "scheduler",
         event: "booking_expired",
@@ -61,6 +72,7 @@ async function cancelExpiredBookings(now) {
 
       cancelled++;
     } catch (err) {
+      console.error("[BOOKING EXPIRY] Error cancelling booking " + b.id + ": " + err.message);
       console.error(JSON.stringify({
         type: "scheduler",
         event: "expire_error",
@@ -143,6 +155,7 @@ async function runSweep() {
         markedNoShow: noShows
       }));
     }
+    console.log("[BOOKING EXPIRY] Completed successfully");
     return { cancelledExpired: cancelled, markedNoShow: noShows };
   } finally {
     running = false;
@@ -157,7 +170,7 @@ function start() {
     type: "scheduler",
     event: "started",
     intervalMs: interval,
-    expiryMinutes: ENV.BOOKING_PAYMENT_EXPIRY_MINUTES,
+    timeoutMinutes: ENV.BOOKING_PAYMENT_TIMEOUT_MINUTES,
     noShowGraceHours: ENV.NO_SHOW_GRACE_HOURS
   }));
 
