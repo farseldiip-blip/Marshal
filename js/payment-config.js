@@ -11,9 +11,9 @@
    "no backend" mode (buttons are inert / show a notice).
    ========================================================= */
 window.MGPaymentConfig = {
-  // Base URL of the backend that hosts the Cloud Functions.
-  // e.g. "https://us-central1-marshal-gezira.cloudfunctions.net"
-  endpoint: "http://localhost:8080/api",
+  // Base URL of the backend that hosts the payment endpoints.
+  // Matches js/api-config.js (single source of truth for the Railway API).
+  endpoint: (window.MGApiConfig && window.MGApiConfig.baseUrl) || "https://marshal-production.up.railway.app/api",
 
   // Where the provider should return the user after paying.
   returnUrl: location.href,

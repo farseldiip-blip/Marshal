@@ -205,7 +205,10 @@
             msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--ok";
             msgEl.innerHTML = `${t("bk_done", "Booking confirmed! Reference: ", "تم تأكيد الحجز! المرجع: ")}<strong>${esc(created.id)}</strong><br> ${t("bk_status", "Status: Pending · Payment: Unpaid", "الحالة: قيد الانتظار · الدفع: غير مدفوع")}`;
             confirmBtn.textContent = t("bk_confirmed", "Booked", "تم الحجز");
-            if (window.MGPayment && window.MGPayment.bindConfirmPanel) {
+            if (window.MGPayment && window.MGPayment.openModal) {
+              // Open the Demo Payment Gateway automatically for the new booking.
+              window.MGPayment.openModal(created);
+            } else if (window.MGPayment && window.MGPayment.bindConfirmPanel) {
               window.MGPayment.bindConfirmPanel();
             }
           } catch (e) {

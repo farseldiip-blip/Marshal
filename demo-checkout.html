@@ -252,7 +252,7 @@
       var accessToken = params.get("accessToken");
       var txnId = params.get("txnId");
 
-      var API = "http://localhost:8080/api";
+      var API = (window.MGApiConfig && window.MGApiConfig.baseUrl) || "https://marshal-production.up.railway.app/api";
       var returnBase = (function () {
         var ref = document.referrer;
         if (ref) { try { return new URL(ref).origin; } catch(e) {} }

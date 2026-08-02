@@ -191,18 +191,261 @@
         btn.textContent = t("pay_success_short", "Payment confirmed", "تم تأكيد الدفع");
         return;
       }
-      var area = document.getElementById("bkPayArea") || (function () {
-        var d = document.createElement("div");
-        d.id = "bkPayArea"; d.className = "booking-result"; d.hidden = true;
-        panel.appendChild(d); return d;
-      })();
-      btn.disabled = true; btn.textContent = t("pay_processing", "Initializing secure payment…", "جارٍ تهيئة الدفع الآمن…");
-      var result = await payBooking(b, { area: area, onState: function () {} });
-      if (!result || !result.redirected) {
-        btn.disabled = false; btn.textContent = btnLabel;
-      }
+      pmOpen(b);
     });
     panel.appendChild(btn);
+  }
+
+  /* =========================================================
+     Demo Payment Modal (in-page, premium).
+     Opens automatically after a successful booking and lets
+     the guest pay through the existing backend demo endpoints:
+       POST {base}/payments/create-intent  → creates session, returns txnId
+       POST {base}/payments/demo/confirm   → marks paymentStatus=PAID
+     Never creates a second booking. Never uses alert()/prompt().
+     ========================================================= */
+  var _pm = { modal: null, booking: null, paying: false, paid: false, bound: false };
+
+  function pmEl(id) { return _pm.modal ? _pm.modal.querySelector(id) : null; }
+
+  function pmBase() {
+    var c = cfg();
+    return c.endpoint || (window.MGApiConfig && window.MGApiConfig.baseUrl) || "";
+  }
+
+  function pmMoney(n) {
+    if (window.MGSettings && MGSettings.formatMoney) return MGSettings.formatMoney(n);
+    if (MGShared.money) return MGShared.money(n);
+    return n;
+  }
+
+  function pmDate(v) {
+    if (!v) return "\u2014";
+    var d = new Date(String(v).length === 10 ? v + "T00:00:00" : v);
+    if (isNaN(d.getTime())) return v;
+    var locale = (document.documentElement.lang === "ar") ? "ar-EG" : "en-GB";
+    return d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+  }
+
+  function pmBuild() {
+    if (_pm.modal && document.body.contains(_pm.modal)) return _pm.modal;
+    var wrap = document.createElement("div");
+    wrap.id = "payment-modal";
+    wrap.className = "payment-modal";
+    wrap.setAttribute("data-payment", "");
+    wrap.setAttribute("role", "dialog");
+    wrap.setAttribute("aria-modal", "true");
+    wrap.setAttribute("aria-labelledby", "pmTitle");
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<div class="payment-modal__backdrop" data-pm-backdrop></div>' +
+      '<div class="payment-modal__box" role="document">' +
+        '<button class="payment-modal__close" type="button" data-pm-x aria-label="' + esc(t("pm_close", "Close", "إغلاق")) + '">&times;</button>' +
+        '<div class="payment-modal__body" id="pmBody">' +
+          '<span class="payment-modal__badge">' + esc(t("pm_badge", "Demo Payment", "دفع تجريبي")) + '</span>' +
+          '<h3 class="payment-modal__title" id="pmTitle">' + esc(t("pm_title", "Secure Checkout", "الدفع الآمن")) + '</h3>' +
+          '<p class="payment-modal__sub">' + esc(t("pm_sub", "This is a simulated payment for development testing. No real money is charged.", "هذه محاكاة دفع لأغراض التطوير. لا يتم خصم أي أموال حقيقية.")) + '</p>' +
+          '<div class="payment-modal__details">' +
+            '<div class="payment-modal__row"><span class="payment-modal__label">' + esc(t("pm_ref", "Booking Reference", "مرجع الحجز")) + '</span><span class="payment-modal__value" id="pmRef">\u2014</span></div>' +
+            '<div class="payment-modal__row"><span class="payment-modal__label">' + esc(t("pm_room", "Room", "الغرفة")) + '</span><span class="payment-modal__value" id="pmRoom">\u2014</span></div>' +
+            '<div class="payment-modal__row"><span class="payment-modal__label">' + esc(t("pm_checkin", "Check-in", "تاريخ الدخول")) + '</span><span class="payment-modal__value" id="pmCheckin">\u2014</span></div>' +
+            '<div class="payment-modal__row"><span class="payment-modal__label">' + esc(t("pm_checkout", "Check-out", "تاريخ الخروج")) + '</span><span class="payment-modal__value" id="pmCheckout">\u2014</span></div>' +
+            '<div class="payment-modal__row"><span class="payment-modal__label">' + esc(t("pm_nights", "Nights", "الليالي")) + '</span><span class="payment-modal__value" id="pmNights">\u2014</span></div>' +
+            '<div class="payment-modal__row"><span class="payment-modal__label">' + esc(t("pm_status", "Payment Status", "حالة الدفع")) + '</span><span class="payment-modal__value" id="pmStatus">\u2014</span></div>' +
+            '<div class="payment-modal__row payment-modal__row--total"><span class="payment-modal__label">' + esc(t("pm_total", "Total", "الإجمالي")) + '</span><span class="payment-modal__value payment-modal__total" id="pmTotal">\u2014</span></div>' +
+          '</div>' +
+          '<div class="payment-modal__status" id="pmMsg" hidden></div>' +
+          '<div class="payment-modal__actions" id="pmActions">' +
+            '<button class="btn btn--outline payment-modal__btn" type="button" id="pmPayLater">' + esc(t("pm_paylater", "Pay Later", "ادفع لاحقًا")) + '</button>' +
+            '<button class="btn btn--gold payment-modal__btn" type="button" id="pmPayNow">' + esc(t("pm_paynow", "Pay Now", "ادفع الآن")) + '</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="payment-modal__success" id="pmSuccess" hidden>' +
+          '<div class="payment-modal__check" aria-hidden="true">&#10003;</div>' +
+          '<h3 class="payment-modal__title">' + esc(t("pm_done_title", "Payment Confirmed", "تم تأكيد الدفع")) + '</h3>' +
+          '<p class="payment-modal__sub">' + esc(t("pm_done_sub", "Your booking is confirmed and secured.", "تم تأكيد حجزك وتأمينه.")) + '</p>' +
+          '<div class="payment-modal__ref"><span class="payment-modal__label">' + esc(t("pm_ref", "Booking Reference", "مرجع الحجز")) + '</span><strong id="pmSuccessRef">\u2014</strong></div>' +
+          '<button class="btn btn--primary payment-modal__btn" type="button" id="pmDone">' + esc(t("pm_done", "Done", "تم")) + '</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(wrap);
+    _pm.modal = wrap;
+
+    if (!_pm.bound) {
+      _pm.bound = true;
+      var backdrop = wrap.querySelector("[data-pm-backdrop]");
+      var closeX = wrap.querySelector("[data-pm-x]");
+      if (backdrop) backdrop.addEventListener("click", function () { pmClose(); });
+      if (closeX) closeX.addEventListener("click", function () { pmClose(); });
+      var payNow = wrap.querySelector("#pmPayNow");
+      var payLater = wrap.querySelector("#pmPayLater");
+      var done = wrap.querySelector("#pmDone");
+      if (payNow) payNow.addEventListener("click", pmPay);
+      if (payLater) payLater.addEventListener("click", function () { pmClose(); });
+      if (done) done.addEventListener("click", function () { pmClose(); });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && _pm.modal && !_pm.modal.hidden) pmClose();
+      });
+    }
+    return wrap;
+  }
+
+  function pmMsg(kind, msg) {
+    var el = pmEl("#pmMsg");
+    if (!el) return;
+    el.hidden = false;
+    el.className = "payment-modal__status" + (kind === "error" ? " payment-modal__status--error" : "");
+    el.textContent = msg;
+  }
+
+  function pmRender(b) {
+    if (!b) return;
+    pmEl("#pmRef").textContent = b.id || "\u2014";
+    pmEl("#pmRoom").textContent = b.roomName || b.room || b.roomType || "\u2014";
+    pmEl("#pmCheckin").textContent = pmDate(b.checkin || b.checkIn);
+    pmEl("#pmCheckout").textContent = pmDate(b.checkout || b.checkOut);
+    pmEl("#pmNights").textContent = (b.nights != null) ? String(b.nights) : "\u2014";
+    pmEl("#pmTotal").textContent = pmMoney(b.total);
+    var ps = b.paymentStatus || "Unpaid";
+    var statusEl = pmEl("#pmStatus");
+    if (statusEl) {
+      statusEl.textContent = ps;
+      statusEl.className = "payment-modal__value tag tag-" + ps;
+    }
+    var payBtn = pmEl("#pmPayNow");
+    if (payBtn) {
+      var label = t("pm_paynow", "Pay Now", "ادفع الآن");
+      if (b.total != null) label += " \u2014 " + pmMoney(b.total);
+      payBtn.textContent = label;
+      payBtn.disabled = false;
+      payBtn.classList.remove("btn--loading");
+    }
+    var laterBtn = pmEl("#pmPayLater");
+    if (laterBtn) laterBtn.disabled = false;
+  }
+
+  function pmShowSuccess(b) {
+    _pm.paid = true;
+    var body = pmEl("#pmBody");
+    var succ = pmEl("#pmSuccess");
+    if (body) body.hidden = true;
+    if (succ) {
+      var ref = pmEl("#pmSuccessRef");
+      if (ref) ref.textContent = (b && b.id) || "\u2014";
+      succ.hidden = false;
+    }
+  }
+
+  function pmOpen(booking) {
+    var modal = pmBuild();
+    _pm.booking = booking || (window.__mgCurrentBooking || null);
+    _pm.paying = false;
+    _pm.paid = false;
+    var b = _pm.booking;
+    if (!b) return;
+
+    var body = pmEl("#pmBody");
+    var succ = pmEl("#pmSuccess");
+    if (body) body.hidden = false;
+    if (succ) succ.hidden = true;
+    var msg = pmEl("#pmMsg");
+    if (msg) msg.hidden = true;
+
+    pmRender(b);
+    if (/^paid$/i.test(String(b.paymentStatus || ""))) {
+      pmShowSuccess(b);
+    }
+
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    var payBtn = pmEl("#pmPayNow");
+    if (payBtn) setTimeout(function () { if (payBtn) payBtn.focus({ preventScroll: true }); }, 60);
+  }
+
+  function pmClose() {
+    if (_pm.modal) _pm.modal.hidden = true;
+    document.body.style.overflow = "";
+    _pm.paying = false;
+  }
+
+  async function pmPay() {
+    var b = _pm.booking;
+    if (!b || _pm.paying || _pm.paid) return;
+    var base = pmBase();
+    if (!base) {
+      pmMsg("error", t("pm_no_cfg", "Payment is temporarily unavailable. Your booking is saved.", "الدفع غير متاح مؤقتًا. تم حفظ حجزك."));
+      return;
+    }
+
+    _pm.paying = true;
+    var payBtn = pmEl("#pmPayNow");
+    var laterBtn = pmEl("#pmPayLater");
+    if (payBtn) {
+      payBtn.disabled = true;
+      payBtn.classList.add("btn--loading");
+      payBtn.textContent = t("pm_processing", "Processing\u2026", "جارٍ المعالجة…");
+    }
+    if (laterBtn) laterBtn.disabled = true;
+    pmMsg("", t("pm_connecting", "Connecting to secure payment\u2026", "جارٍ الاتصال بالدفع الآمن…"));
+
+    try {
+      // 1) Create the payment session via the existing backend endpoint.
+      var resp = await fetch(base + "/payments/create-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ bookingId: b.id, accessToken: b.accessToken || "" })
+      });
+      var intent = await resp.json().catch(function () { return {}; });
+      if (!resp.ok || !intent || !intent.ok) {
+        throw new Error((intent && intent.error && intent.error.message) || "intent_failed");
+      }
+
+      // 2) Confirm via the existing demo endpoint (sets paymentStatus=PAID server-side).
+      var txnId = intent.txnId;
+      var checkoutUrl = intent.checkoutUrl || null;
+      var confirmResp, confirmJson;
+      try {
+        confirmResp = await fetch(base + "/payments/demo/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body: JSON.stringify({ bookingId: b.id, txnId: txnId, accessToken: b.accessToken || "" })
+        });
+        confirmJson = await confirmResp.json().catch(function () { return {}; });
+      } catch (e) {
+        confirmJson = null;
+      }
+
+      // Fallback: if the backend exposes a hosted checkout page and the
+      // demo-confirm endpoint is not available, open it in a new tab.
+      if (!confirmJson || !confirmJson.ok || confirmResp.status === 404) {
+        if (checkoutUrl) {
+          pmMsg("", t("pm_redirect", "Redirecting to secure payment\u2026", "جارٍ التحويل إلى صفحة الدفع الآمنة…"));
+          window.open(checkoutUrl, "_blank", "noopener");
+          return;
+        }
+        throw new Error((confirmJson && confirmJson.error && confirmJson.error.message) || "confirm_failed");
+      }
+
+      // 3) Reflect the paid state on the in-memory booking.
+      if (window.__mgCurrentBooking && window.__mgCurrentBooking.id === b.id) {
+        window.__mgCurrentBooking.paymentStatus = "Paid";
+        window.__mgCurrentBooking.status = "Confirmed";
+      }
+      _pm.paying = false;
+      pmShowSuccess(b);
+    } catch (e) {
+      _pm.paying = false;
+      if (payBtn) {
+        payBtn.disabled = false;
+        payBtn.classList.remove("btn--loading");
+        var label = t("pm_paynow", "Pay Now", "ادفع الآن");
+        if (b.total != null) label += " \u2014 " + pmMoney(b.total);
+        payBtn.textContent = label;
+      }
+      if (laterBtn) laterBtn.disabled = false;
+      pmMsg("error", t("pm_failed", "Payment could not be completed: ", "تعذّر إتمام الدفع: ") + (e && e.message ? e.message : ""));
+    }
   }
 
   // If we returned from the provider (returnUrl), show "processing" and poll.
@@ -234,5 +477,11 @@
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();
 
-  window.MGPayment = { payBooking: payBooking, waitForVerified: waitForVerified, bindConfirmPanel: bindConfirmPanel };
+  window.MGPayment = {
+    payBooking: payBooking,
+    waitForVerified: waitForVerified,
+    bindConfirmPanel: bindConfirmPanel,
+    openModal: pmOpen,
+    closeModal: pmClose
+  };
 })();
