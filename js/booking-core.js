@@ -37,8 +37,16 @@
 
   /* ---- room resolution (always from database/seed, never hardcoded) ---- */
 
+  var _roomsPromise = null;
   function getRooms() {
-    return (window.MGSiteData && window.MGSiteData.getList("rooms")) || Promise.resolve([]);
+    // Memoized: rooms are stable per page load, and every availability check
+    // would otherwise re-fetch /api/rooms (slow on cold Railway instances).
+    if (!_roomsPromise) {
+      _roomsPromise = Promise.resolve(
+        (window.MGSiteData && window.MGSiteData.getList("rooms")) || []
+      ).catch(function () { return []; });
+    }
+    return _roomsPromise;
   }
 
   function roomById(rooms, id) {
