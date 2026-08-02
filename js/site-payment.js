@@ -115,14 +115,32 @@
     }
 
     // 2) Open the provider's HOSTED page with the safe client token/session.
+    //    Only real hosted providers (e.g. Paymob) navigate away. Demo intent
+    //    returns checkoutUrl=null + demo:true and stays in the page.
     var checkoutUrl = res.checkoutUrl || res.clientToken || null;
-    if (checkoutUrl) {
+    var demoMode = res.demo === true || res.mode === "demo";
+    if (checkoutUrl && !demoMode) {
       setArea(area, "", t("pay_redirect", "Redirecting to secure payment…", "جارٍ التحويل إلى صفحة الدفع الآمنة…"));
       window.location.href = checkoutUrl;
       return { ok: true, redirected: true };
     }
 
-    // 3) If backend returns verified state immediately (test mode), poll.
+    // 3) Demo payments never leave the page: prefer the in-page payment modal.
+    if (typeof pmOpen === "function") {
+      pmOpen(booking);
+      onState("processing");
+      return { ok: true, modal: true };
+    }
+
+    // 4) Last-resort fallback (no modal): hosted demo-checkout page built on the
+    //    real app base path (works locally AND on GitHub Pages under /Marshal/).
+    if (checkoutUrl || res.txnId) {
+      setArea(area, "", t("pay_redirect", "Redirecting to secure payment…", "جارٍ التحويل إلى صفحة الدفع الآمنة…"));
+      window.location.href = demoCheckoutUrl(booking.id, res.txnId, booking.accessToken || "");
+      return { ok: true, redirected: true };
+    }
+
+    // 5) If backend returns verified state immediately (test mode), poll.
     if (res.poll !== false) {
       setArea(area, "", t("pay_verify", "Verifying payment…", "جارٍ التحقق من الدفع…"));
       var v = await waitForVerified(booking.id, res.pollTimeoutMs);
@@ -213,6 +231,30 @@
     return c.endpoint || (window.MGApiConfig && window.MGApiConfig.baseUrl) || "";
   }
 
+  // Robust application base path derived from the CURRENT location. Never
+  // hardcodes the root domain, so it works locally (http://localhost:5500/)
+  // AND on GitHub Pages project sites (https://farseldiip-blip.github.io/Marshal/).
+  function appBase() {
+    var origin = window.location.origin;
+    var path = (window.location.pathname || "/").replace(/\\/g, "/");
+    var dir = path;
+    var li = dir.lastIndexOf("/");
+    if (li > 0) dir = dir.substring(0, li);
+    else dir = "";
+    if (!dir.endsWith("/")) dir += "/";
+    // Pages served from a /pages/ subfolder live one level below the app root.
+    if (/\/pages\/$/.test(dir)) dir = dir.replace(/\/pages\/$/, "/");
+    return origin + dir;
+  }
+
+  // Fallback hosted checkout URL (demo-checkout.html) built on the app base path.
+  function demoCheckoutUrl(bookingId, txnId, accessToken) {
+    var u = appBase() + "demo-checkout.html?bookingId=" + encodeURIComponent(bookingId)
+      + "&txnId=" + encodeURIComponent(txnId || "");
+    if (accessToken) u += "&accessToken=" + encodeURIComponent(accessToken);
+    return u;
+  }
+
   function pmMoney(n) {
     if (window.MGSettings && MGSettings.formatMoney) return MGSettings.formatMoney(n);
     if (MGShared.money) return MGShared.money(n);
@@ -256,8 +298,11 @@
           '</div>' +
           '<div class="payment-modal__status" id="pmMsg" hidden></div>' +
           '<div class="payment-modal__actions" id="pmActions">' +
-            '<button class="btn btn--outline payment-modal__btn" type="button" id="pmPayLater">' + esc(t("pm_paylater", "Pay Later", "ادفع لاحقًا")) + '</button>' +
-            '<button class="btn btn--gold payment-modal__btn" type="button" id="pmPayNow">' + esc(t("pm_paynow", "Pay Now", "ادفع الآن")) + '</button>' +
+            '<button class="btn btn--outline payment-modal__btn payment-modal__btn--secondary" type="button" id="pmPayLater">' + esc(t("pm_paylater", "Pay Later", "ادفع لاحقًا")) + '</button>' +
+            '<button class="btn btn--gold payment-modal__btn payment-modal__btn--pay" type="button" id="pmPayNow">' +
+              '<svg class="payment-modal__lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>' +
+              '<span class="payment-modal__label">' + esc(t("pm_paynow", "Pay Now", "ادفع الآن")) + '</span>' +
+            '</button>' +
           '</div>' +
         '</div>' +
         '<div class="payment-modal__success" id="pmSuccess" hidden>' +
@@ -299,6 +344,14 @@
     el.textContent = msg;
   }
 
+  // Set the Pay Now label without clobbering the lock icon / label span.
+  function pmSetPayLabel(btn, label) {
+    if (!btn) return;
+    var labelEl = btn.querySelector(".payment-modal__label");
+    if (labelEl) labelEl.textContent = label;
+    else btn.textContent = label;
+  }
+
   function pmRender(b) {
     if (!b) return;
     pmEl("#pmRef").textContent = b.id || "\u2014";
@@ -317,7 +370,7 @@
     if (payBtn) {
       var label = t("pm_paynow", "Pay Now", "ادفع الآن");
       if (b.total != null) label += " \u2014 " + pmMoney(b.total);
-      payBtn.textContent = label;
+      pmSetPayLabel(payBtn, label);
       payBtn.disabled = false;
       payBtn.classList.remove("btn--loading");
     }
@@ -385,7 +438,8 @@
     if (payBtn) {
       payBtn.disabled = true;
       payBtn.classList.add("btn--loading");
-      payBtn.textContent = t("pm_processing", "Processing\u2026", "جارٍ المعالجة…");
+      payBtn.setAttribute("aria-busy", "true");
+      pmSetPayLabel(payBtn, t("pm_processing", "Processing payment\u2026", "جارٍ معالجة الدفع…"));
     }
     if (laterBtn) laterBtn.disabled = true;
     pmMsg("", t("pm_connecting", "Connecting to secure payment\u2026", "جارٍ الاتصال بالدفع الآمن…"));
@@ -405,6 +459,7 @@
       // 2) Confirm via the existing demo endpoint (sets paymentStatus=PAID server-side).
       var txnId = intent.txnId;
       var checkoutUrl = intent.checkoutUrl || null;
+      var demoMode = intent.demo === true || intent.mode === "demo";
       var confirmResp, confirmJson;
       try {
         confirmResp = await fetch(base + "/payments/demo/confirm", {
@@ -419,10 +474,13 @@
 
       // Fallback: if the backend exposes a hosted checkout page and the
       // demo-confirm endpoint is not available, open it in a new tab.
+      // Demo URLs are rebuilt on the app base path (fixes the GitHub Pages
+      // /Marshal/ 404); hosted provider URLs (Paymob) are used as returned.
       if (!confirmJson || !confirmJson.ok || confirmResp.status === 404) {
-        if (checkoutUrl) {
+        var fallbackUrl = demoMode ? demoCheckoutUrl(b.id, txnId, b.accessToken || "") : (checkoutUrl || null);
+        if (fallbackUrl) {
           pmMsg("", t("pm_redirect", "Redirecting to secure payment\u2026", "جارٍ التحويل إلى صفحة الدفع الآمنة…"));
-          window.open(checkoutUrl, "_blank", "noopener");
+          window.open(fallbackUrl, "_blank", "noopener");
           return;
         }
         throw new Error((confirmJson && confirmJson.error && confirmJson.error.message) || "confirm_failed");
@@ -440,9 +498,10 @@
       if (payBtn) {
         payBtn.disabled = false;
         payBtn.classList.remove("btn--loading");
+        payBtn.removeAttribute("aria-busy");
         var label = t("pm_paynow", "Pay Now", "ادفع الآن");
         if (b.total != null) label += " \u2014 " + pmMoney(b.total);
-        payBtn.textContent = label;
+        pmSetPayLabel(payBtn, label);
       }
       if (laterBtn) laterBtn.disabled = false;
       pmMsg("error", t("pm_failed", "Payment could not be completed: ", "تعذّر إتمام الدفع: ") + (e && e.message ? e.message : ""));

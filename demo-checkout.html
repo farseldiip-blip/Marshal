@@ -253,10 +253,19 @@
       var txnId = params.get("txnId");
 
       var API = (window.MGApiConfig && window.MGApiConfig.baseUrl) || "https://marshal-production.up.railway.app/api";
+      // App base derived from the current location — never the bare origin.
+      // Works locally and on GitHub Pages project sites (/Marshal/), so the
+      // return link never lands on a root-domain 404.
       var returnBase = (function () {
-        var ref = document.referrer;
-        if (ref) { try { return new URL(ref).origin; } catch(e) {} }
-        return location.origin;
+        var origin = window.location.origin;
+        var path = (window.location.pathname || "/").replace(/\\/g, "/");
+        var dir = path;
+        var li = dir.lastIndexOf("/");
+        if (li > 0) dir = dir.substring(0, li);
+        else dir = "";
+        if (!dir.endsWith("/")) dir += "/";
+        if (/\/pages\/$/.test(dir)) dir = dir.replace(/\/pages\/$/, "/");
+        return origin + dir;
       })();
 
       var $loading = document.getElementById("state-loading");
@@ -269,7 +278,7 @@
         [$loading, $main, $success, $error].forEach(function(el) { el.style.display = "none"; });
         if (name === "loading") $loading.style.display = "";
         if (name === "main") $main.style.display = "";
-        if (name === "success") $success.style.display = "";
+        if (name === "success") $success.style.display = "block";
         if (name === "error") $error.style.display = "";
       }
 
@@ -347,7 +356,7 @@
             throw new Error(res.body.error || res.body.message || "Confirmation failed");
           }
           showState("success");
-          setTimeout(function () { window.location.href = returnBase + "/#booking=" + bookingId; }, 1800);
+          setTimeout(function () { window.location.href = returnBase + "#booking=" + bookingId; }, 1800);
         })
         .catch(function(err) {
           $status.textContent = err.message || "Payment confirmation failed.";
@@ -360,7 +369,7 @@
 
       // Cancel \u2192 return to site
       document.getElementById("btn-cancel").addEventListener("click", function () {
-        window.location.href = returnBase + "/#booking=" + bookingId;
+        window.location.href = returnBase + "#booking=" + bookingId;
       });
 
       // Retry from error state

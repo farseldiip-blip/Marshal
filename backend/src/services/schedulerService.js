@@ -166,6 +166,8 @@ async function runSweep() {
 function start() {
   if (timer) return;
   const interval = ENV.SCHEDULER_INTERVAL_MS;
+  console.log("[BOOKING EXPIRY] Scheduler started (interval=" + interval + "ms, timeout="
+    + ENV.BOOKING_PAYMENT_TIMEOUT_MINUTES + "min, no-show-grace=" + ENV.NO_SHOW_GRACE_HOURS + "h)");
   console.log(JSON.stringify({
     type: "scheduler",
     event: "started",
@@ -176,11 +178,15 @@ function start() {
 
   // Run once immediately on startup, then on interval.
   runSweep().catch(function (err) {
+    console.error("[BOOKING EXPIRY] Startup sweep failed: " + err.message);
     console.error(JSON.stringify({ type: "scheduler", event: "startup_sweep_error", error: err.message }));
   });
 
+  // Each sweep is guarded by runSweep()'s own try/finally + this catch, so one
+  // failed sweep can never stop future intervals.
   timer = setInterval(function () {
     runSweep().catch(function (err) {
+      console.error("[BOOKING EXPIRY] Sweep failed: " + err.message);
       console.error(JSON.stringify({ type: "scheduler", event: "sweep_error", error: err.message }));
     });
   }, interval);

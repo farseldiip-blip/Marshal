@@ -86,10 +86,15 @@ async function createDemoIntent({ bookingId, accessToken }) {
     data: { paymentStatus: "PENDING", updatedAt: new Date() }
   });
 
-  const frontendBase = (ENV.FRONTEND_ORIGIN || "http://localhost:5500").split(",")[0];
-  const checkoutUrl = `${frontendBase}/demo-checkout.html?bookingId=${bookingId}&accessToken=${encodeURIComponent(accessToken)}&txnId=${txnId}`;
-
-  return { ok: true, checkoutUrl, clientToken: null, txnId };
+  // Demo mode NEVER leaves the page: confirmation happens entirely through
+  // POST /payments/demo/confirm, so we deliberately return checkoutUrl=null.
+  //
+  // Previously this returned `${FRONTEND_ORIGIN}/demo-checkout.html?...`. That was
+  // broken on GitHub Pages: FRONTEND_ORIGIN is an *origin* (CORS allowlist entries
+  // never include a path), so it cannot carry the /Marshal/ project sub-path and the
+  // URL 404'd. The frontend builds any demo-checkout.html fallback URL itself from
+  // its own deployed location (works locally AND on GitHub Pages under /Marshal/).
+  return { ok: true, checkoutUrl: null, clientToken: null, txnId, demo: true };
 }
 
 // 1b) Confirm demo payment — idempotent, atomic.

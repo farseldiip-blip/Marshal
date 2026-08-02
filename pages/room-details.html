@@ -202,9 +202,10 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      height: 56px;
-      min-width: 220px;
-      padding: 0 32px;
+      height: 52px;
+      min-width: 200px;
+      max-width: 100%;
+      padding: 0 30px;
       border: none;
       border-radius: 16px;
       background: linear-gradient(135deg, #E2C06B 0%, #C79B45 50%, #E2C06B 100%);
@@ -752,6 +753,12 @@
           payBtn.addEventListener("click", async function () {
             var b = window.__mgCurrentBooking;
             if (!b) return;
+            // Prefer the in-page Demo Payment Modal — payment never leaves the
+            // current page (avoids the broken hosted checkout redirect).
+            if (window.MGPayment && window.MGPayment.openModal) {
+              window.MGPayment.openModal(b);
+              return;
+            }
             payBtn.disabled = true;
             var originalHTML = payBtn.innerHTML;
             payBtn.innerHTML = '<span>' + t("Initializing secure payment…", "جارٍ تهيئة الدفع الآمن…") + '</span>';

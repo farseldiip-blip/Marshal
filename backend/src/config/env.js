@@ -35,13 +35,21 @@ const ENV = {
   // Booking payment timeout / no-show scheduler.
   // Canonical var: BOOKING_PAYMENT_TIMEOUT_MINUTES (default 120 = 2 hours).
   // Legacy alias BOOKING_PAYMENT_EXPIRY_MINUTES still honoured.
-  BOOKING_PAYMENT_TIMEOUT_MINUTES: parseInt(
+  BOOKING_PAYMENT_TIMEOUT_MINUTES: positiveInt(
     process.env.BOOKING_PAYMENT_TIMEOUT_MINUTES || process.env.BOOKING_PAYMENT_EXPIRY_MINUTES || "120",
-    10
+    120
   ),
-  NO_SHOW_GRACE_HOURS: parseInt(process.env.NO_SHOW_GRACE_HOURS || "24", 10),
-  SCHEDULER_INTERVAL_MS: parseInt(process.env.SCHEDULER_INTERVAL_MS || String(5 * 60 * 1000), 10)
+  NO_SHOW_GRACE_HOURS: positiveInt(process.env.NO_SHOW_GRACE_HOURS || "24", 24),
+  SCHEDULER_INTERVAL_MS: positiveInt(process.env.SCHEDULER_INTERVAL_MS || String(5 * 60 * 1000), 5 * 60 * 1000)
 };
+
+// Scheduler/lifecycle numbers must be sane positive integers. A NaN or zero
+// timeout would make the expiry cutoff an Invalid Date (no bookings ever match);
+// a NaN/zero interval would corrupt setInterval. Fall back to safe defaults.
+function positiveInt(v, fallback) {
+  const n = parseInt(v, 10);
+  return (Number.isInteger(n) && n > 0) ? n : fallback;
+}
 
 ENV.IS_PRODUCTION = ENV.NODE_ENV === "production";
 

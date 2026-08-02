@@ -1336,8 +1336,42 @@ html[dir="rtl"] .payment-modal__close { right: auto; left: 14px; }
 }
 .payment-modal__status[hidden] { display: none; }
 .payment-modal__status--error { color: #E57373; border-color: rgba(229,115,115,0.3); }
-.payment-modal__actions { display: flex; gap: var(--sp-2); }
-.payment-modal__btn { flex: 1; justify-content: center; }
+
+/* Payment actions — controlled width, centered, premium.
+   Desktop: Pay Later (outline, compact) + Pay Now (gold, balanced, 52px).
+   Never full-screen on desktop; stacks full-width on small screens. */
+.payment-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  max-width: 400px;
+  margin: 0 auto;
+}
+.payment-modal__btn { flex: 0 1 auto; justify-content: center; }
+.payment-modal__btn--secondary { min-width: 132px; }
+.payment-modal__actions .payment-modal__btn--pay {
+  --btn-pad-x: 30px;
+  --btn-pad-y: 13px;
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 264px;
+  height: 52px;
+  letter-spacing: 0.02em;
+}
+.payment-modal__lock {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.payment-modal__btn .payment-modal__label {
+  pointer-events: none;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+}
 .payment-modal__success { text-align: center; padding: var(--sp-2) 0; }
 .payment-modal__success[hidden] { display: none; }
 .payment-modal__check {
@@ -1360,8 +1394,19 @@ html[dir="rtl"] .payment-modal__close { right: auto; left: 14px; }
 .payment-modal__ref strong { color: var(--accent, #C6A15B); font-weight: 600; word-break: break-all; }
 
 /* Responsive */
+@media (max-width: 640px) {
+  .payment-modal__actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .payment-modal__btn,
+  .payment-modal__btn--pay,
+  .payment-modal__btn--secondary {
+    width: 100%;
+    max-width: none;
+    flex: 1 0 100%;
+  }
+}
 @media (max-width: 540px) {
   .payment-modal__box { padding: var(--sp-4) var(--sp-3) var(--sp-3); }
-  .payment-modal__actions { flex-direction: column; }
-  .payment-modal__actions .payment-modal__btn { width: 100%; }
 }
