@@ -23,14 +23,14 @@
     const inPages = window.location.pathname.replace(/\\/g, "/").includes("/pages/");
     const detailsBase = inPages ? "room-details.html" : "pages/room-details.html";
     return `<article class="card room-card reveal">
-      <div class="media-frame room-card__media"><img src="${esc(r.image || "")}" alt="${esc(name)}" loading="lazy"></div>
+      <div class="media-frame room-card__media"><img src="${esc(r.image || "")}" alt="${esc(name)}" loading="lazy"><span class="room-card__avail" data-avail-badge="${esc(r.id)}"></span></div>
       <div class="room-card__body">
         <span class="badge">${esc(r.type || "")}</span>
         <h3 class="fs-h4">${esc(name)}</h3>
         <p class="text-muted">${esc(desc)}</p>
         <div class="room-card__price">${price} <span>/ night</span></div>
         <div class="room-card__amen">${amenities}</div>
-        <a href="${detailsBase}?id=${encodeURIComponent(r.id)}" class="btn btn--outline btn--block mt-2">${esc(viewLabel(lang))}</a>
+        <a href="${detailsBase}?id=${encodeURIComponent(r.id)}" class="btn btn--outline btn--block mt-2 room-card__cta">${esc(viewLabel(lang))}</a>
       </div>
     </article>`;
   }
@@ -62,6 +62,7 @@
     const lang = (window.MGLang && window.MGLang.get && window.MGLang.get()) || "en";
     grid.querySelectorAll(".room-card").forEach(n => n.remove());
     grid.insertAdjacentHTML("beforeend", rooms.map(r => cardHTML(r, lang)).join(""));
+    document.dispatchEvent(new CustomEvent("rooms:rendered"));
   }
 
   window.renderRoomsGrid = renderRoomsGrid;

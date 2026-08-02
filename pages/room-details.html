@@ -444,6 +444,7 @@
   <script src="../js/seed-data.js"></script>
   <script src="../js/site-data.js"></script>
   <script src="../js/booking-core.js"></script>
+  <script src="../js/availability.js"></script>
   <script src="../js/payment-config.js"></script>
   <script src="../js/site-payment.js"></script>
   <script>
@@ -456,6 +457,10 @@
     var lang = (window.MGLang && window.MGLang.get && window.MGLang.get()) || "en";
     function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
     function t(en, ar) { return lang === "ar" ? ar : en; }
+    function dictT(key, en, ar) {
+      if (window.MGLang && MGLang.t) { var v = MGLang.t(key); if (v != null && v !== key) return v; }
+      return lang === "ar" ? ar : en;
+    }
     function fmt(n) { return window.MGSettings ? MGSettings.formatMoney(n) : new Intl.NumberFormat("en-US", { style: "currency", currency: (window.MGSettings && MGSettings.getCurrency) ? MGSettings.getCurrency() : "USD", currencyDisplay: "symbol", minimumFractionDigits: 2 }).format(Number(n)); }
 
     if (!roomId) {
@@ -605,8 +610,10 @@
         if (!window.MGBooking) throw new Error("Booking system not loaded");
         var avail = await window.MGBooking.getAvailability(room.id, ci, co);
         if (avail.available) {
-          var units = avail.availableUnits || 1;
-          availMsg(t("Available! " + units + " unit(s) free.", "متاح! " + units + " وحدة متاحة."), "ok");
+          var units = (typeof avail.availableUnits === "number") ? avail.availableUnits : 1;
+          var availCountLabel = dictT("av_count", "Available: {{x}} of {{y}}", "الغرف المتاحة: {{x}} من {{y}}")
+            .replace("{{x}}", String(units)).replace("{{y}}", String(roomQuantity));
+          availMsg(availCountLabel, "ok");
           guestForm.classList.add("show");
           confirmed = false;
         } else {
@@ -647,6 +654,20 @@
       if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { cMsg(t("Please enter a valid email.", "يرجى إدخال بريد صحيح."), "err"); return; }
       if (!phone || phone.replace(/\D/g, "").length < 8) { cMsg(t("Please enter a valid phone.", "يرجى إدخال هاتف صحيح."), "err"); return; }
 
+      // Pre-submit backend re-check — guards against late over-booking.
+      try {
+        if (window.MGBooking && window.MGBooking.getAvailability) {
+          var pre = await window.MGBooking.getAvailability(room.id, ci, co);
+          var preUnits = (typeof pre.availableUnits === "number") ? pre.availableUnits : (pre.available ? 1 : 0);
+          if (!pre.available || preUnits < units) {
+            cMsg(dictT("av_overbooked", "The requested number of rooms is not available for the selected period.", "عدد الغرف المطلوب غير متاح للفترة المحددة."), "err");
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = t("Confirm Booking", "تأكيد الحجز");
+            return;
+          }
+        }
+      } catch (e) { /* backend create will surface the truth */ }
+
       confirmBtn.disabled = true;
       confirmBtn.textContent = t("Submitting…", "جارٍ الإرسال…");
       cMsg(t("Creating your booking…", "جارٍ إنشاء الحجز…"), "");
@@ -663,6 +684,7 @@
         searchBtn.style.display = "none";
         availEl.textContent = "";
         window.__mgCurrentBooking = booking;
+        document.dispatchEvent(new CustomEvent("avail:refresh"));
         var bookingCard = document.getElementById("rdBookingCard");
         var payStatus = (booking.paymentStatus || "Unpaid").toLowerCase();
         var isPaid = payStatus === "paid";

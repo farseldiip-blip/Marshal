@@ -126,7 +126,7 @@
     if (res.poll !== false) {
       setArea(area, "", t("pay_verify", "Verifying payment…", "جارٍ التحقق من الدفع…"));
       var v = await waitForVerified(booking.id, res.pollTimeoutMs);
-      if (v.ok) { setArea(area, "ok", t("pay_success", "Payment successful. Your booking is confirmed.", "تم الدفع بنجاح وتأكد حجزك.")); onState("success"); }
+      if (v.ok) { setArea(area, "ok", t("pay_success", "Payment successful. Your booking is confirmed.", "تم الدفع بنجاح وتأكد حجزك.")); onState("success"); document.dispatchEvent(new CustomEvent("avail:refresh")); }
       else if (v.reason === "failed") { setArea(area, "error", t("pay_failed", "Payment failed. Please try again.", "فشل الدفع. يرجى المحاولة.")); onState("failed"); }
       else { setArea(area, "error", t("pay_pending", "Payment is still processing. We'll confirm by email/SMS.", "الدفع قيد المعالجة. سنتأكد لك لاحقًا.")); onState("pending"); }
       return v;
@@ -326,6 +326,7 @@
   }
 
   function pmShowSuccess(b) {
+    document.dispatchEvent(new CustomEvent("avail:refresh"));
     _pm.paid = true;
     var body = pmEl("#pmBody");
     var succ = pmEl("#pmSuccess");

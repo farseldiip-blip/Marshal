@@ -44,6 +44,7 @@
       const label = lang === "ar" && r.name_ar ? r.name_ar : (r.name || r.type || "");
       return "<option value=\"" + esc(r.id) + "\">" + esc(label) + " — " + esc(r.type || "") + "</option>";
     }).join("");
+    document.dispatchEvent(new CustomEvent("avail:refresh"));
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => { setTimeout(populateRoomSelect, 300); });
@@ -190,6 +191,19 @@
             return;
           }
 
+          // Pre-submit backend re-check — guards against late over-booking.
+          try {
+            const re = await window.MGBooking.getAvailability(room.id, ci.value, co.value);
+            const reUnits = (typeof re.availableUnits === "number") ? re.availableUnits : (re.available ? 1 : 0);
+            if (!re.available || reUnits < 1) {
+              msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--error";
+              msgEl.textContent = t("av_overbooked", "The requested number of rooms is not available for the selected period.", "عدد الغرف المطلوب غير متاح للفترة المحددة.");
+              confirmBtn.disabled = false;
+              confirmBtn.textContent = t("bk_confirm", "Confirm Booking", "تأكيد الحجز");
+              return;
+            }
+          } catch (e) { /* backend create will surface the truth */ }
+
           confirmBtn.disabled = true;
           confirmBtn.textContent = t("bk_submitting", "Submitting…", "جارٍ الإرسال…");
           try {
@@ -211,6 +225,7 @@
             } else if (window.MGPayment && window.MGPayment.bindConfirmPanel) {
               window.MGPayment.bindConfirmPanel();
             }
+            document.dispatchEvent(new CustomEvent("avail:refresh"));
           } catch (e) {
             msgEl.hidden = false; msgEl.className = "booking-msg booking-msg--error";
             msgEl.textContent = t("bk_fail", "Could not complete booking: " + e.message, "تعذّر إتمام الحجز: " + e.message);

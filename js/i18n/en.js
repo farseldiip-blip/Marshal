@@ -75,6 +75,16 @@ window.__I18N_EN = {
   pay_pending: "Payment is still processing. We'll confirm by email/SMS.",
   pay_error: "Could not start payment. Please try again.",
   pay_err: "Missing booking information.",
+
+  /* Availability indicator (js/availability.js) */
+  av_ok: "Available now",
+  av_few: "{{n}} rooms left",
+  av_one: "Only 1 room left",
+  av_none: "Currently unavailable",
+  av_checking: "Checking availability…",
+  av_count: "Available: {{x}} of {{y}}",
+  av_overbooked: "The requested number of rooms is not available for the selected period.",
+
   g1: "1 Guest",
   g2: "2 Guests",
   g3: "3 Guests",

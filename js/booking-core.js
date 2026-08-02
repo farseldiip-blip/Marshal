@@ -150,7 +150,10 @@
           })
           .then(function (json) {
             if (json.ok !== true || !json.data) throw new Error("Malformed response");
-            return { available: !!json.data.available, conflicting: [], reason: json.data.available ? null : "overlap" };
+            var units = (typeof json.data.availableUnits === "number")
+              ? json.data.availableUnits
+              : (json.data.available ? 1 : 0);
+            return { available: !!json.data.available, availableUnits: units, conflicting: [], reason: json.data.available ? null : "overlap" };
           });
       }).catch(function () {
         return demoAvailability(roomId, inStr, outStr);
@@ -168,7 +171,7 @@
       if (st === "Cancelled" || st === "Checked Out") return false;
       return isOverlap(inStr, outStr, b.checkin, b.checkout);
     });
-    return { available: conflicting.length === 0, conflicting: conflicting, reason: conflicting.length ? "overlap" : null };
+    return { available: conflicting.length === 0, availableUnits: conflicting.length ? 0 : 1, conflicting: conflicting, reason: conflicting.length ? "overlap" : null };
   }
 
   function priceFor(room, nightCount, roomsCount) {

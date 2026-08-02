@@ -949,6 +949,42 @@ html[data-theme="dark"] .navbar--scrolled .navbar__pill {
 .room-card__amen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 .room-card__amen span { font-size: var(--fs-xs); color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; }
 
+/* ---------- Room availability indicator (js/availability.js) ---------- */
+.room-card__media { position: relative; }
+.room-card__avail {
+  position: absolute; inset-inline-start: 12px; top: 12px; z-index: 3;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 12px; border-radius: 999px;
+  font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--secondary); background: rgba(11, 13, 18, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  transition: color 0.4s var(--ease), background 0.4s var(--ease), border-color 0.4s var(--ease);
+}
+.room-card__avail:empty { display: none; }
+.room-card__avail::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.room-card__avail--checking::before { animation: availPulse 1.4s var(--ease) infinite; }
+.room-card__avail--ok { color: #7BE0A0; background: rgba(25, 55, 40, 0.62); border-color: rgba(123, 224, 160, 0.35); }
+.room-card__avail--few { color: #E7D8B8; background: rgba(154, 123, 62, 0.55); border-color: rgba(198, 161, 91, 0.5); }
+.room-card__avail--one { color: #FFD9A0; background: rgba(120, 80, 20, 0.58); border-color: rgba(255, 190, 90, 0.45); }
+.room-card__avail--none { color: #F0A0A0; background: rgba(90, 30, 30, 0.52); border-color: rgba(240, 140, 140, 0.35); }
+@keyframes availPulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+.room-card--unavailable .room-card__media img { filter: saturate(0.65) brightness(0.82); }
+.room-card--unavailable .room-card__body .btn--outline { opacity: 0.45; pointer-events: none; }
+.room-card--unavailable .room-card__body .btn--outline:hover { transform: none; }
+
+.bk-avail {
+  max-width: 640px; margin: 1.15rem auto 0; padding: 0.75rem 1rem;
+  font-size: var(--fs-sm); border-radius: var(--radius); text-align: center;
+  color: var(--text-muted); background: var(--surface); border: 1px solid var(--border);
+}
+.bk-avail--checking { color: var(--muted); }
+.bk-avail--ok { color: #2E7D4F; background: rgba(46, 160, 89, 0.08); border-color: rgba(46, 160, 89, 0.28); }
+.bk-avail--few { color: var(--accent-deep); background: rgba(198, 161, 91, 0.08); border-color: rgba(198, 161, 91, 0.32); }
+.bk-avail--one { color: var(--accent-deep); background: rgba(198, 161, 91, 0.1); border-color: rgba(198, 161, 91, 0.45); }
+.bk-avail--none { color: #B13A32; background: rgba(192, 57, 43, 0.08); border-color: rgba(192, 57, 43, 0.3); }
+.bk-avail[hidden] { display: none; }
+
 /* ---------- Gallery masonry ---------- */
 .masonry { columns: 3; column-gap: var(--sp-3); }
 .masonry .g-item { break-inside: avoid; margin-bottom: var(--sp-3); border-radius: var(--radius); overflow: hidden; position: relative; cursor: pointer; display: block; }
