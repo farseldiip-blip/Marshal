@@ -43,8 +43,13 @@
   }
 
   var _dates = readDates();
+  var _datesSig = _dates.checkIn + "|" + _dates.checkOut;
   function dates() { return _dates; }
-  function setDates() { _dates = readDates(); }
+  function setDates() {
+    _dates = readDates();
+    var sig = _dates.checkIn + "|" + _dates.checkOut;
+    if (sig !== _datesSig) { _cache = {}; _datesSig = sig; }
+  }
 
   /* ---- availability check (backend is source of truth) ---- */
   function normalize(a) {
@@ -56,7 +61,7 @@
     };
   }
 
-  function check(roomId) {
+  function doCheck(roomId) {
     if (!roomId) return Promise.resolve({ available: null, availableUnits: null });
     // Prefer the shared booking layer (live + demo), which already wraps the
     // same backend endpoint. Never re-implement the availability calculation.
@@ -79,6 +84,26 @@
       })
       .catch(function () { return { available: null, availableUnits: null }; });
   }
+
+  /* Result cache: roomId|checkIn|checkOut -> Promise<result>.
+     Deduplicates concurrent checks so that rapid grid re-renders (rooms:rendered,
+     settings:loaded, lang:change) reuse the in-flight/fresh result instead of
+     racing a fresh 1s network call on every refresh. */
+  var _cache = {};
+  function checkKey(roomId) { return roomId + "|" + _dates.checkIn + "|" + _dates.checkOut; }
+  function check(roomId) {
+    if (!roomId) return Promise.resolve({ available: null, availableUnits: null });
+    var key = checkKey(roomId);
+    if (_cache[key]) return _cache[key];
+    var p = doCheck(roomId);
+    _cache[key] = p;
+    // Drop failed checks (available null) so a later refresh retries.
+    p.then(function (r) {
+      if (!r || r.available == null) delete _cache[key];
+    });
+    return p;
+  }
+  function clearCache() { _cache = {}; }
 
   /* ---- totals (room quantity, resolved from live/demo data) ---- */
   var _roomsPromise = null;
@@ -151,10 +176,11 @@
       var roomId = el.getAttribute("data-avail-badge");
       if (!roomId) return;
       renderBadge(el, null);
-      Promise.all([check(roomId), totalFor(roomId)]).then(function (r) {
+      check(roomId).then(function (res) {
         if (seq !== _seq) return;
-        _badgeCache[roomId] = r[0];
-        renderBadge(el, r[0].availableUnits);
+        if (!el.isConnected) return;
+        _badgeCache[roomId] = res;
+        renderBadge(el, res.availableUnits);
       });
     });
   }
@@ -190,6 +216,11 @@
     scanCount(seq);
   }
 
+  function forceRefresh() {
+    clearCache();
+    refresh();
+  }
+
   var _deb = null;
   function scheduleRefresh() {
     if (_deb) clearTimeout(_deb);
@@ -206,7 +237,7 @@
   function init() {
     document.addEventListener("change", onFieldChange, true);
     document.addEventListener("input", onFieldChange, true);
-    document.addEventListener("avail:refresh", refresh);
+    document.addEventListener("avail:refresh", forceRefresh);
     document.addEventListener("rooms:rendered", refresh);
     document.addEventListener("lang:change", function () { setTimeout(refresh, 80); });
     setTimeout(refresh, 120);
