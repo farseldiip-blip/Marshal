@@ -317,6 +317,390 @@
 }
 
 /* =========================================================
+   MOBILE ROOM CARDS — compact, scannable, premium.
+   Scoped to <768px so the desktop card stays untouched.
+   Unifies image, availability badge, content and CTA and
+   removes the fragmented auto-margin gaps. Logical
+   properties keep Arabic RTL correct.
+   ========================================================= */
+@media (max-width: 767px) {
+  /* 1 + 8. Stable 16:10 image (no layout shift); drop the media
+        shadow so image and body read as ONE card surface. */
+  .room-card__media { aspect-ratio: 16 / 10; box-shadow: none; }
+
+  /* 3. Subtle dark gradient over the lower image keeps the
+        availability badge + CTA zone legible on bright photos. */
+  .room-card__media::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 46%;
+    background: linear-gradient(180deg, rgba(8, 11, 18, 0) 0%, rgba(8, 11, 18, 0.55) 100%);
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  /* 2. Availability badge stays in the logical inline-start
+        corner, above the gradient, tap-through to the card. */
+  .room-card__avail {
+    z-index: 3;
+    max-width: calc(100% - 24px);
+    white-space: normal;
+    pointer-events: none;
+  }
+
+  /* 4. Body: tight rhythm — no reserved empty lines. */
+  .room-card__body { padding: 16px 18px 18px; gap: 8px; }
+
+  /* Type → small gold uppercase text (eyebrow-style). */
+  .room-card__body > .badge {
+    order: 1;
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    gap: 6px;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  /* Mobile scan order: type → name → price → desc → amenities → CTA. */
+  .room-card__name  { order: 2; font-size: 1.22rem; }
+  .room-card__price { order: 3; }
+  .room-card__desc  { order: 4; }
+  .room-card__amen  { order: 5; }
+  .room-card__cta   { order: 6; }
+
+  /* Price + "per night" on one compact row. */
+  .room-card__price {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    flex-wrap: wrap;
+    font-size: 1.05rem;
+  }
+  .room-card__price .room-card__pernight { font-size: 0.78rem; }
+
+  /* Description: ~2 lines, min-height removed to kill blank space. */
+  .room-card__desc {
+    -webkit-line-clamp: 2;
+    min-height: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+  }
+
+  /* Amenities: compact chips, wrap cleanly. */
+  .room-card__amen { margin-top: 0; gap: 6px; }
+  .room-card__amen span { padding: 4px 10px; font-size: 0.68rem; }
+
+  /* 5-6. CTA: 52px, full width, premium, not dominating. */
+  .room-card__body .room-card__cta {
+    height: 52px;
+    min-height: 52px;
+    margin-top: 10px;
+    padding-inline: 24px;
+    font-size: 0.82rem;
+    letter-spacing: 0.06em;
+  }
+}
+
+/* =========================================================
+   HOME ROOMS PREVIEW — horizontal snap carousel (phones only).
+   Scoped to the homepage grid (.rooms-preview) so the rooms
+   page and all desktop/tablet layouts stay untouched.
+   Native scroll-snap, full-bleed, RTL-safe via logical props.
+   ========================================================= */
+/* Dots are hidden everywhere by default; JS reveals them on the
+   homepage carousel only (and the media query below limits them
+   to phones). */
+.rooms-preview__dots { display: none; }
+
+@media (max-width: 599px) {
+  /* The grid becomes a full-bleed horizontal scroller. Negative
+     margin equals the container gutter, so cards peek past the
+     content edge and hint at more to come. */
+  .rooms-preview {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 6px;
+    overflow-anchor: none;
+    padding-inline: 6px;
+    margin-inline: calc(-1 * clamp(16px, 5vw, 80px));
+    scrollbar-width: none;
+  }
+  .rooms-preview::-webkit-scrollbar { display: none; }
+
+  /* Cards: ~84vw so ~12% of the next card stays visible. */
+  .rooms-preview > .room-card {
+    flex: 0 0 min(84vw, 440px);
+    min-width: 0;
+    scroll-snap-align: start;
+  }
+
+  /* Loading / empty states span the track instead of flexing. */
+  .rooms-preview > .dash-loading,
+  .rooms-preview > #roomGridEmpty { flex: 0 0 100%; }
+
+  /* Pagination dots — 44px touch targets, hidden until populated. */
+  .rooms-preview__dots:not([hidden]) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .rooms-preview__dot {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+  .rooms-preview__dot::after {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--muted);
+    opacity: 0.45;
+    transition: width 0.3s var(--ease), background 0.3s var(--ease), opacity 0.3s var(--ease);
+  }
+  .rooms-preview__dot.is-active::after { width: 20px; background: var(--accent); opacity: 1; }
+  .rooms-preview__dot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 999px; }
+
+  /* Explore All Residences — secondary but easy to find. */
+  .rooms-preview__cta { margin-top: 26px; }
+  .rooms-preview__cta .btn {
+    width: 100%;
+    max-width: 320px;
+    min-width: 0;
+    min-height: 48px;
+    --btn-pad-y: 14px;
+    font-size: 0.82rem;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid rgba(198, 161, 91, 0.45);
+    box-shadow: none;
+  }
+  .rooms-preview__cta .btn::before { display: none; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rooms-preview__dot::after { transition: none; }
+  }
+}
+
+/* =========================================================
+   HOME GALLERY PREVIEW — cinematic featured image + snap strip
+   (phones only). Scoped to the homepage #galleryPreview so the
+   gallery page and all desktop/tablet layouts stay untouched.
+   Featured 4:5 stage, serif gold counter, thumbnail snap strip,
+   and a dedicated full-screen lightbox (swipe/keyboard/back).
+   Hidden by default; JS reveals it via the hidden attribute.
+   ========================================================= */
+.gallery-preview { display: none; }
+
+/* The homepage masonry is replaced by the preview on phones
+   (the "Loading…" row never renders there). */
+@media (max-width: 599px) {
+  #gallery #masonry { display: none; }
+
+  .gallery-preview:not([hidden]) { display: block; }
+
+  .gallery-preview__stage {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface-2);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gallery-preview__stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  .gallery-preview__img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    opacity: 1;
+    transform: scale(1);
+    transition: opacity 0.35s var(--ease), transform 0.8s var(--ease);
+  }
+  .gallery-preview__img.is-loading { opacity: 0.25; transform: scale(1.02); }
+
+  .gallery-preview__veil {
+    position: absolute; inset: auto 0 0 0;
+    height: 46%;
+    background: linear-gradient(to top, rgba(8,10,16,0.72), rgba(8,10,16,0));
+    pointer-events: none;
+  }
+
+  .gallery-preview__count {
+    position: absolute;
+    inset-inline: 16px;
+    bottom: 12px;
+    font-family: var(--font-head);
+    font-size: 1rem;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    text-shadow: 0 1px 12px rgba(8,10,16,0.6);
+  }
+
+  .gallery-preview__expand {
+    position: absolute;
+    top: 14px;
+    inset-inline-end: 14px;
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
+    border-radius: var(--radius-pill);
+    background: rgba(8,10,16,0.5);
+    border: 1px solid var(--glass-border);
+    color: #fff;
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  .gallery-preview__strip {
+    display: flex;
+    gap: 10px;
+    margin-top: 16px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 2px;
+    padding-block: 2px;
+    scrollbar-width: none;
+  }
+  .gallery-preview__strip::-webkit-scrollbar { display: none; }
+
+  .gallery-thumb {
+    flex: 0 0 92px;
+    width: 92px;
+    aspect-ratio: 4 / 5;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface-2);
+    cursor: pointer;
+    scroll-snap-align: start;
+    transition: border-color 0.3s var(--ease), transform 0.3s var(--ease);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .gallery-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .gallery-thumb.is-active { border-color: var(--accent); }
+  .gallery-thumb:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .gallery-preview__empty { padding: 18px 0; }
+}
+
+/* ---------- Gallery preview lightbox (full-screen) ----------
+   Uses the hidden attribute + .open class; [hidden] explicitly
+   wins over display:flex. z-index sits above the shared lightbox. */
+.gallery-lightbox {
+  position: fixed; inset: 0;
+  z-index: calc(var(--z-lightbox) + 1);
+  background: rgba(8, 11, 18, 0.94);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease);
+}
+.gallery-lightbox[hidden] { display: none; }
+.gallery-lightbox.open { opacity: 1; pointer-events: auto; }
+
+.gallery-lightbox__frame {
+  margin: 0;
+  max-width: 92vw;
+  max-height: 88vh;
+  display: grid;
+  place-items: center;
+}
+.gallery-lightbox__img {
+  display: block;
+  max-width: 100%;
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  opacity: 1;
+  transition: opacity 0.35s var(--ease);
+}
+.gallery-lightbox__img.is-loading { opacity: 0.25; }
+
+.gallery-lightbox__count {
+  margin-top: 14px;
+  font-family: var(--font-head);
+  font-size: 0.95rem;
+  letter-spacing: 0.16em;
+  color: var(--accent);
+  text-align: center;
+}
+
+.gallery-lightbox__close,
+.gallery-lightbox__nav {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 48px; height: 48px;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-pill);
+  background: rgba(20, 23, 31, 0.6);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.3s var(--ease), color 0.3s var(--ease), opacity 0.3s var(--ease);
+}
+.gallery-lightbox__close:hover,
+.gallery-lightbox__nav:hover:not(:disabled) { background: var(--accent); color: #0B0D12; }
+.gallery-lightbox__close:focus-visible,
+.gallery-lightbox__nav:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.gallery-lightbox__nav:disabled { opacity: 0.35; cursor: default; }
+
+.gallery-lightbox__close {
+  top: max(16px, env(safe-area-inset-top, 0px));
+  inset-inline-end: max(16px, env(safe-area-inset-right, 0px));
+}
+.gallery-lightbox__nav--prev {
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: max(14px, env(safe-area-inset-left, 0px));
+}
+.gallery-lightbox__nav--next {
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-end: max(14px, env(safe-area-inset-right, 0px));
+}
+
+/* =========================================================
    SHORT PORTRAIT PHONES — keep the hero balanced and free of
    collisions (stacked CTAs occupy the lower area)
    ========================================================= */

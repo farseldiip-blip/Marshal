@@ -110,6 +110,7 @@ window.__I18N_EN = {
   view: "View Details",
   all_rooms: "All Residences",
   room_price_from: "from",
+  rooms_carousel_dot: "Go to residence {{n}} of {{m}}",
 
   /* Amenities */
   am_kicker: "Hotel Services",
@@ -135,6 +136,12 @@ window.__I18N_EN = {
   gal_kicker: "Visual Diary",
   gal_title: "The Gallery",
   gal_all: "Full Gallery",
+  gal_strip_label: "Gallery thumbnails",
+  gal_thumb: "Open image {{n}} of {{m}}",
+  gal_open: "Open image {{n}} of {{m}}",
+  gal_close: "Close",
+  gal_prev: "Previous image",
+  gal_next: "Next image",
 
   /* Dining */
   din_kicker: "Gastronomy",

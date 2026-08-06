@@ -953,7 +953,8 @@ html[data-theme="dark"] .navbar--scrolled .navbar__pill {
 .room-card__media { aspect-ratio: 4/3; }
 .room-card__body { padding: var(--sp-4); display: flex; flex-direction: column; gap: 12px; flex: 1; }
 .room-card__price { font-family: var(--font-head); font-size: 1.4rem; color: var(--primary); }
-.room-card__price span { font-family: var(--font-body); font-size: var(--fs-sm); color: var(--muted); font-weight: 400; }
+.room-card__price .room-card__price-value { font-family: inherit; font-size: inherit; color: inherit; font-weight: inherit; }
+.room-card__price .room-card__pernight { font-family: var(--font-body); font-size: var(--fs-sm); color: var(--muted); font-weight: 400; }
 .room-card__amen { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 .room-card__amen span { font-size: var(--fs-xs); color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; border-radius: 999px; }
 

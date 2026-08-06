@@ -1,0 +1,133 @@
+﻿[
+ {
+  "ok": true,
+  "label": "home 1440: not flex (desktop/tablet grid)",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "home 1440: is grid",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "home 1440: 3 columns",
+  "detail": "3"
+ },
+ {
+  "ok": true,
+  "label": "home 1440: no scroll-snap",
+  "detail": "none"
+ },
+ {
+  "ok": false,
+  "label": "home 1440: dots hidden",
+  "detail": "False"
+ },
+ {
+  "ok": true,
+  "label": "home 1440: no horizontal overflow",
+  "detail": "scrollWidth=1440"
+ },
+ {
+  "ok": true,
+  "label": "home 1440: CTA is primary on desktop",
+  "detail": "btn btn--primary"
+ },
+ {
+  "ok": true,
+  "label": "home 768: not flex (desktop/tablet grid)",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "home 768: is grid",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "home 768: 3 columns",
+  "detail": "3"
+ },
+ {
+  "ok": true,
+  "label": "home 768: no scroll-snap",
+  "detail": "none"
+ },
+ {
+  "ok": false,
+  "label": "home 768: dots hidden",
+  "detail": "False"
+ },
+ {
+  "ok": true,
+  "label": "home 768: no horizontal overflow",
+  "detail": "scrollWidth=768"
+ },
+ {
+  "ok": true,
+  "label": "home 768: CTA is primary on desktop",
+  "detail": "btn btn--primary"
+ },
+ {
+  "ok": true,
+  "label": "rooms 1440: still grid (not carousel)",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "rooms 1440: not flex carousel",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "rooms 1440: no scroll-snap",
+  "detail": "none"
+ },
+ {
+  "ok": true,
+  "label": "rooms 1440: cards rendered",
+  "detail": "3"
+ },
+ {
+  "ok": true,
+  "label": "rooms 1440: no dots markup",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "rooms 1440: no horizontal overflow",
+  "detail": "scrollWidth=1440"
+ },
+ {
+  "ok": true,
+  "label": "rooms 390: still grid (not carousel)",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "rooms 390: not flex carousel",
+  "detail": "grid"
+ },
+ {
+  "ok": true,
+  "label": "rooms 390: no scroll-snap",
+  "detail": "none"
+ },
+ {
+  "ok": true,
+  "label": "rooms 390: cards rendered",
+  "detail": "3"
+ },
+ {
+  "ok": true,
+  "label": "rooms 390: no dots markup",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "rooms 390: no horizontal overflow",
+  "detail": "scrollWidth=390"
+ }
+]
+PASS 24/26

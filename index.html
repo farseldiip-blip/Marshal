@@ -422,7 +422,7 @@
             >
             <h2 class="reveal" data-i18n="rooms_title">Featured Residences</h2>
           </div>
-          <div class="grid grid-3" id="roomGrid" data-limit="3">
+          <div class="grid grid-3 rooms-preview" id="roomGrid" data-limit="3">
             <!-- Rooms injected from Firestore (rooms collection); demo seed fallback. -->
             <div
               class="dash-loading"
@@ -439,7 +439,8 @@
               No residences available yet.
             </p>
           </div>
-          <div class="text-center mt-5" data-reveal="up">
+          <div class="rooms-preview__dots" id="roomGridDots" hidden></div>
+          <div class="text-center mt-5 rooms-preview__cta" data-reveal="up">
             <a
               href="pages/rooms.html"
               class="btn btn--primary"
@@ -601,6 +602,8 @@
             >
             <h2 class="reveal" data-i18n="gal_title">The Gallery</h2>
           </div>
+          <!-- Desktop / tablet masonry: unchanged. On phones (#galleryPreview) the
+               shared renderer swaps to the cinematic featured-image + thumbnail strip. -->
           <div class="masonry" id="masonry">
             <!-- Gallery injected from Firestore (gallery collection); demo seed fallback. -->
             <div class="dash-loading" style="grid-column: 1/-1">Loading…</div>
@@ -611,6 +614,53 @@
               No images yet.
             </p>
           </div>
+
+          <!-- Mobile cinematic preview (phones only) — populated by site-gallery.js -->
+          <div class="gallery-preview" id="galleryPreview" hidden>
+            <button
+              class="gallery-preview__stage"
+              id="galleryStage"
+              type="button"
+              aria-label="Open image 01 of 06"
+            >
+              <img
+                class="gallery-preview__img"
+                id="galleryStageImg"
+                src=""
+                alt=""
+                loading="eager"
+              />
+              <span class="gallery-preview__veil" aria-hidden="true"></span>
+              <span class="gallery-preview__count" id="galleryStageCount"
+                >01 / 06</span
+              >
+              <span class="gallery-preview__expand" aria-hidden="true"
+                ><svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                ><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg
+              ></span>
+            </button>
+            <div
+              class="gallery-preview__strip"
+              id="galleryStrip"
+              role="group"
+              aria-label="Gallery thumbnails"
+            ></div>
+            <p
+              class="text-center text-muted gallery-preview__empty"
+              id="galleryPreviewEmpty"
+              hidden
+            >
+              No images yet.
+            </p>
+          </div>
+
           <div class="text-center mt-5 reveal">
             <a
               href="pages/gallery.html"
@@ -1224,6 +1274,24 @@
     <div class="lightbox" id="lightbox">
       <button class="lightbox__close" aria-label="Close">×</button
       ><img src="" alt="Enlarged" />
+    </div>
+
+    <!-- Mobile gallery preview lightbox (phones only; opened from #galleryStage) -->
+    <div
+      class="gallery-lightbox"
+      id="galleryLightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Gallery viewer"
+      hidden
+    >
+      <button class="gallery-lightbox__close" id="galleryLbClose" type="button" aria-label="Close">×</button>
+      <button class="gallery-lightbox__nav gallery-lightbox__nav--prev" id="galleryLbPrev" type="button" aria-label="Previous image">‹</button>
+      <figure class="gallery-lightbox__frame">
+        <img class="gallery-lightbox__img" id="galleryLbImg" src="" alt="" />
+        <figcaption class="gallery-lightbox__count" id="galleryLbCount">01 / 06</figcaption>
+      </figure>
+      <button class="gallery-lightbox__nav gallery-lightbox__nav--next" id="galleryLbNext" type="button" aria-label="Next image">›</button>
     </div>
 
     <!-- ===== Scripts ===== -->

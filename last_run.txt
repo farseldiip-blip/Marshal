@@ -1,0 +1,344 @@
+﻿[
+ {
+  "ok": true,
+  "label": "[en 390x844] cards rendered",
+  "detail": "count=3"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] track is flex",
+  "detail": "flex"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] scroll-snap mandatory",
+  "detail": "x mandatory"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] card ~84vw",
+  "detail": "w=327.6"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] next-card peek visible",
+  "detail": "peek=46.4px"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] dots count = cards",
+  "detail": "dots=3 cards=3"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] dots visible",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] first dot active",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] dot click scrolls track",
+  "detail": "0 -> 338"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] touch swipe scrolls track",
+  "detail": "338 -> 625"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] keyboard advances",
+  "detail": "0 -> 625"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] card CTA link",
+  "detail": "pages/room-details.html?id=r1"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] All Residences CTA",
+  "detail": "pages/rooms.html"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] no horizontal page overflow",
+  "detail": "scrollWidth=390 viewport=390"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] media aspect-ratio set",
+  "detail": "16 / 10"
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] availability badge present",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[en 390x844] dot tap target >=44px",
+  "detail": "44x44"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] cards rendered",
+  "detail": "count=3"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] track is flex",
+  "detail": "flex"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] scroll-snap mandatory",
+  "detail": "x mandatory"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] card ~84vw",
+  "detail": "w=361.2"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] next-card peek visible",
+  "detail": "peek=52.8px"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] dots count = cards",
+  "detail": "dots=3 cards=3"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] dots visible",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] first dot active",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] dot click scrolls track",
+  "detail": "0 -> 371"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] touch swipe scrolls track",
+  "detail": "371 -> 686"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] keyboard advances",
+  "detail": "0 -> 686"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] card CTA link",
+  "detail": "pages/room-details.html?id=r1"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] All Residences CTA",
+  "detail": "pages/rooms.html"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] no horizontal page overflow",
+  "detail": "scrollWidth=430 viewport=430"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] media aspect-ratio set",
+  "detail": "16 / 10"
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] availability badge present",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[en 430x932] dot tap target >=44px",
+  "detail": "44x44"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] cards rendered",
+  "detail": "count=3"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] track is flex",
+  "detail": "flex"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] scroll-snap mandatory",
+  "detail": "x mandatory"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] card ~84vw",
+  "detail": "w=327.6"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] next-card peek visible",
+  "detail": "peek=671.2px"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] dots count = cards",
+  "detail": "dots=3 cards=3"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] dots visible",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] first dot active",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] dot click scrolls track",
+  "detail": "0 -> -338"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] touch swipe scrolls track",
+  "detail": "-338 -> -37"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] keyboard advances",
+  "detail": "0 -> -338"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] card CTA link",
+  "detail": "pages/room-details.html?id=r1"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] All Residences CTA",
+  "detail": "pages/rooms.html"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] no horizontal page overflow",
+  "detail": "scrollWidth=390 viewport=390"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] media aspect-ratio set",
+  "detail": "16 / 10"
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] availability badge present",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[ar 390x844] dot tap target >=44px",
+  "detail": "44x44"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] cards rendered",
+  "detail": "count=3"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] track is flex",
+  "detail": "flex"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] scroll-snap mandatory",
+  "detail": "x mandatory"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] card ~84vw",
+  "detail": "w=361.2"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] next-card peek visible",
+  "detail": "peek=738.4px"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] dots count = cards",
+  "detail": "dots=3 cards=3"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] dots visible",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] first dot active",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] dot click scrolls track",
+  "detail": "0 -> -371"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] touch swipe scrolls track",
+  "detail": "-371 -> -36"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] keyboard advances",
+  "detail": "0 -> -371"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] card CTA link",
+  "detail": "pages/room-details.html?id=r1"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] All Residences CTA",
+  "detail": "pages/rooms.html"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] no horizontal page overflow",
+  "detail": "scrollWidth=430 viewport=430"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] media aspect-ratio set",
+  "detail": "16 / 10"
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] availability badge present",
+  "detail": ""
+ },
+ {
+  "ok": true,
+  "label": "[ar 430x932] dot tap target >=44px",
+  "detail": "44x44"
+ }
+]
+PAGE_ERRORS: []
+PASS 68/68

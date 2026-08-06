@@ -110,6 +110,7 @@ window.__I18N_AR = {
   view: "عرض التفاصيل",
   all_rooms: "كل الأجنحة",
   room_price_from: "ابتداءً من",
+  rooms_carousel_dot: "الانتقال إلى الجناح {{n}} من {{m}}",
 
   /* Amenities */
   am_kicker: "خدمات الفندق",
@@ -135,6 +136,12 @@ window.__I18N_AR = {
   gal_kicker: "يوميات بصرية",
   gal_title: "المعرض",
   gal_all: "المعرض الكامل",
+  gal_strip_label: "مصغّرات المعرض",
+  gal_thumb: "افتح الصورة {{n}} من {{m}}",
+  gal_open: "افتح الصورة {{n}} من {{m}}",
+  gal_close: "إغلاق",
+  gal_prev: "الصورة السابقة",
+  gal_next: "الصورة التالية",
 
   /* Dining */
   din_kicker: "المأكولات",
